@@ -1,0 +1,53 @@
+SAI Pen Pressure for Android
+Copyright 2026 ametrien
+https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android
+Part of SAI Pen Pressure: https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix
+
+PaintTool SAI Ver.2 with S Pen pressure on Android, created and maintained by
+ametrien.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License, version 3, as published by the
+Free Software Foundation (see LICENSE). It is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Additional terms, under section 7 of the GNU General Public License version 3:
+
+  (b) Anyone who conveys this program, or a work based on it, must keep this
+      NOTICE file with it, and must keep the author attribution
+      "SAI Pen Pressure by ametrien", with a link to
+      https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix,
+      wherever the work shows its credits or its About information, and in
+      its documentation.
+
+  (c) A modified version must be marked as different from the original, by
+      saying that it was changed, and must not be presented as the original
+      SAI Pen Pressure or as made by ametrien.
+
+What it is built on (each keeps its own licence and copyright notices):
+
+  Winlator 11.2 (https://github.com/brunodev85/winlator-app, commit ecd5ab2)
+      by brunodev85, GNU Lesser General Public License, version 2.1. This app
+      is a modified version of it, changed since November 2026: see
+      patches/winlator.patch and src/. The combined app is conveyed under GPL
+      version 3, as LGPL-2.1 section 3 allows.
+  Wine 10.10 (https://www.winehq.org), as built by Winlator's author
+      (https://github.com/brunodev85/wine-10.10-custom), GNU Lesser General
+      Public License, version 2.1 or later. Shipped inside Winlator's rootfs;
+      the build only rewrites the data folder path in it
+      (tools/rewrite_tar.py).
+  Box64 (https://github.com/ptitSeb/box64) by ptitSeb, MIT License. Same
+      path rewrite.
+  The other components in Winlator's archives (glibc, Mesa, DXVK, VKD3D,
+      GStreamer, PulseAudio and more) keep their own licences. THIRD_PARTY.md
+      lists every part inside the APK with its licence and source;
+      LICENSES.txt holds their licence texts and copyright notices.
+  Left out of Winlator's archives: Microsoft's files and the Fraunhofer FDK
+      AAC codec, which may not be passed on with this app.
+  wintab32.dll (third_party/wintab/) is part of SAI Pen Pressure for macOS,
+      GNU GPL version 3 with the same additional terms (see its NOTICE).
+
+PaintTool SAI is proprietary software by SYSTEMAX Software Development and is
+not part of this project. Samsung and S Pen are trademarks of Samsung
+Electronics; this project is not affiliated with Samsung or with Winlator.

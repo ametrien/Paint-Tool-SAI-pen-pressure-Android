@@ -1,0 +1,83 @@
+# Licence texts and copyright notices of every part in the APK (THIRD_PARTY.md).
+# tools/collect-licenses.py fetch   downloads each URL into third_party/licenses/<file>
+# tools/collect-licenses.py         joins them, in this order, into LICENSES.txt
+# Columns, tab-separated: file, title (what it covers), URL ("-" = written by hand here)
+#
+# The licence texts themselves
+GPL-3.0.txt	GNU General Public License 3: SAI Pen, wintab32.dll, the app as a whole, libgnutls-openssl, the GCC runtime	-
+LGPL-2.1.txt	GNU Lesser General Public License 2.1: Winlator, Vortek, Gladio, Wine, glibc, GLib, GStreamer, FFmpeg, FluidSynth, libinstpatch, libsndfile, PulseAudio, alsa-lib, mpg123, GnuTLS, VKD3D-Proton	-
+GPL-2.0.txt	GNU General Public License 2: libmpeg2, the programs of glibc, Nettle (taken under GPL 2 or later)	https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+gcc-exception-3.1.txt	GCC Runtime Library Exception 3.1: libgcc_s, libstdc++	https://raw.githubusercontent.com/gcc-mirror/gcc/master/COPYING.RUNTIME
+Apache-2.0.txt	Apache License 2.0: AndroidX, Material Components, Kotlin, kotlinx.coroutines, Apache Commons, Oboe, Vulkan loader, SONiVOX sound font	https://www.apache.org/licenses/LICENSE-2.0.txt
+#
+# Copyright notices and permissive licences, each project's own file
+wine.txt	Wine	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/LICENSE
+wine-authors.txt	Wine: authors	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/AUTHORS
+wine-lib-capstone-license-txt.txt	Inside Wine: Capstone	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/capstone/LICENSE.TXT
+wine-lib-capstone-license_llvm-txt.txt	Inside Wine: Capstone: LLVM parts	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/capstone/LICENSE_LLVM.TXT
+wine-lib-compiler-rt-license-txt.txt	Inside Wine: compiler-rt	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/compiler-rt/LICENSE.TXT
+wine-lib-faudio-license.txt	Inside Wine: FAudio	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/faudio/LICENSE
+wine-lib-fluidsynth-copying-md.txt	Inside Wine: FluidSynth (Wine's copy)	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/fluidsynth/COPYING.md
+wine-lib-gsm-copyright.txt	Inside Wine: GSM 06.10	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/gsm/COPYRIGHT
+wine-lib-jpeg-license.txt	Inside Wine: libjpeg (Wine's copy)	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/jpeg/LICENSE
+wine-lib-jxr-license.txt	Inside Wine: JPEG XR	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/jxr/LICENSE
+wine-lib-lcms2-copying.txt	Inside Wine: Little CMS	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/lcms2/COPYING
+wine-lib-ldap-copyright.txt	Inside Wine: OpenLDAP: copyright	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/ldap/COPYRIGHT
+wine-lib-ldap-license.txt	Inside Wine: OpenLDAP: licence	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/ldap/LICENSE
+wine-lib-mpg123-license.txt	Inside Wine: mpg123 (Wine's copy)	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/mpg123/LICENSE
+wine-lib-musl-copyright.txt	Inside Wine: musl	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/musl/COPYRIGHT
+wine-lib-png-license.txt	Inside Wine: libpng (Wine's copy)	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/png/LICENSE
+wine-lib-tiff-copyright.txt	Inside Wine: LibTIFF	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/tiff/COPYRIGHT
+wine-lib-tomcrypt-license.txt	Inside Wine: LibTomCrypt	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/tomcrypt/LICENSE
+wine-lib-vkd3d-copying.txt	Inside Wine: vkd3d	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/vkd3d/COPYING
+wine-lib-xml2-copying.txt	Inside Wine: libxml2	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/xml2/COPYING
+wine-lib-xslt-copying.txt	Inside Wine: libxslt	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/xslt/COPYING
+wine-lib-zlib-license.txt	Inside Wine: zlib (Wine's copy)	https://raw.githubusercontent.com/brunodev85/wine-10.10-custom/2b9afc38d953/libs/zlib/LICENSE
+glibc.txt	GNU C Library: what is under which licence	https://sourceware.org/git/?p=glibc.git;a=blob_plain;f=LICENSES;hb=glibc-2.39
+ffmpeg.txt	FFmpeg	https://raw.githubusercontent.com/FFmpeg/FFmpeg/n7.1/LICENSE.md
+box64.txt	Box64	https://raw.githubusercontent.com/ptitSeb/box64/v0.4.4/LICENSE
+mesa.txt	Mesa	https://gitlab.freedesktop.org/mesa/mesa/-/raw/mesa-26.2.0/docs/license.rst
+virglrenderer.txt	VirGL renderer	https://gitlab.freedesktop.org/virgl/virglrenderer/-/raw/main/COPYING
+dxvk.txt	DXVK	https://raw.githubusercontent.com/doitsujin/dxvk/v2.4.1/LICENSE
+d8vk.txt	D8VK	https://raw.githubusercontent.com/AlpyneDreams/d8vk/master/LICENSE
+d7vk.txt	D7VK	https://raw.githubusercontent.com/WinterSnowfall/d7vk/master/LICENSE
+vkd3d-proton.txt	VKD3D-Proton	https://raw.githubusercontent.com/HansKristian-Work/vkd3d-proton/v2.14.1/LICENSE
+cnc-ddraw.txt	cnc-ddraw	https://raw.githubusercontent.com/FunkyFr3sh/cnc-ddraw/v6.6.0.0/LICENSE
+cnc-ddraw-shaders.txt	cnc-ddraw shaders (Hyllian's jinc2, Catmull-Rom by MJP, FSR port)	-
+libadrenotools.txt	libadrenotools	https://raw.githubusercontent.com/bylaws/libadrenotools/master/LICENSE
+linkernsbypass.txt	linkernsbypass	https://raw.githubusercontent.com/bylaws/liblinkernsbypass/master/LICENSE
+mingw-w64.txt	MinGW-w64 runtime (in wintab32.dll and Winlator's .exe files)	https://raw.githubusercontent.com/mingw-w64/mingw-w64/master/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt
+llvm.txt	LLVM libc++ and OpenMP runtime	https://raw.githubusercontent.com/llvm/llvm-project/main/libcxx/LICENSE.TXT
+freetype.txt	FreeType	https://raw.githubusercontent.com/freetype/freetype/master/docs/FTL.TXT
+libjpeg-turbo.txt	libjpeg-turbo	https://raw.githubusercontent.com/libjpeg-turbo/libjpeg-turbo/3.0.4/LICENSE.md
+libjpeg-ijg.txt	libjpeg-turbo: the Independent JPEG Group's notice	https://raw.githubusercontent.com/libjpeg-turbo/libjpeg-turbo/3.0.4/README.ijg
+libpng.txt	libpng	https://raw.githubusercontent.com/pnggroup/libpng/libpng16/LICENSE
+zlib.txt	zlib	https://raw.githubusercontent.com/madler/zlib/v1.3.1/LICENSE
+bzip2.txt	bzip2	https://sourceware.org/git/?p=bzip2.git;a=blob_plain;f=LICENSE;hb=bzip2-1.0.8
+brotli.txt	Brotli	https://raw.githubusercontent.com/google/brotli/v1.1.0/LICENSE
+zstd.txt	Zstandard	https://raw.githubusercontent.com/facebook/zstd/v1.5.6/LICENSE
+zstd-jni.txt	zstd-jni	https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE
+expat.txt	Expat	https://raw.githubusercontent.com/libexpat/libexpat/master/expat/COPYING
+libffi.txt	libffi	https://raw.githubusercontent.com/libffi/libffi/master/LICENSE
+fontconfig.txt	Fontconfig	https://gitlab.freedesktop.org/fontconfig/fontconfig/-/raw/main/COPYING
+libdrm.txt	libdrm	-
+libx11.txt	X11 libraries (libX11 and the libXau, libXext and other X.Org libraries)	https://gitlab.freedesktop.org/xorg/lib/libx11/-/raw/master/COPYING
+libxcb.txt	XCB libraries	https://gitlab.freedesktop.org/xorg/lib/libxcb/-/raw/master/COPYING
+libverto.txt	libverto	https://raw.githubusercontent.com/latchset/libverto/master/COPYING
+krb5.txt	MIT Kerberos	https://raw.githubusercontent.com/krb5/krb5/master/NOTICE
+vulkan-loader.txt	Vulkan loader	https://raw.githubusercontent.com/KhronosGroup/Vulkan-Loader/main/LICENSE.txt
+flac.txt	FLAC	https://raw.githubusercontent.com/xiph/flac/1.4.3/COPYING.Xiph
+ogg.txt	Ogg	https://raw.githubusercontent.com/xiph/ogg/master/COPYING
+vorbis.txt	Vorbis	https://raw.githubusercontent.com/xiph/vorbis/master/COPYING
+opus.txt	Opus	https://raw.githubusercontent.com/xiph/opus/v1.5.2/COPYING
+pcre.txt	PCRE	https://raw.githubusercontent.com/PCRE2Project/pcre2/master/LICENCE.md
+mpg123.txt	mpg123	https://www.mpg123.de/trunk/COPYING
+dmz-cursors.txt	DMZ cursor theme	-
+commons-compress.txt	Apache Commons Compress: NOTICE	https://raw.githubusercontent.com/apache/commons-compress/rel/commons-compress-1.28.0/NOTICE.txt
+commons-io.txt	Apache Commons IO: NOTICE	https://raw.githubusercontent.com/apache/commons-io/master/NOTICE.txt
+commons-lang.txt	Apache Commons Lang: NOTICE	https://raw.githubusercontent.com/apache/commons-lang/master/NOTICE.txt
+commons-codec.txt	Apache Commons Codec: NOTICE	https://raw.githubusercontent.com/apache/commons-codec/master/NOTICE.txt
+kotlin.txt	Kotlin: NOTICE	https://raw.githubusercontent.com/JetBrains/kotlin/master/license/NOTICE.txt
+xz-java.txt	XZ for Java	https://raw.githubusercontent.com/tukaani-project/xz-java/master/COPYING
+sonivox.txt	SONiVOX EAS: NOTICE	-
+flaticon-pen.txt	The app icon: "Pen" by gravisio from Flaticon	-

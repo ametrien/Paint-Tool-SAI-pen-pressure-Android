@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SAI Pen: the app's only screen (SaiLauncherActivity) -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <ImageView
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginTop="24dp"
+            android:contentDescription="@null"
+            android:src="@mipmap/ic_saipen" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/app_name"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/SaiPenStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:textSize="17sp" />
+
+        <!-- a running strip: the round spinner read as a "refresh" button -->
+        <ProgressBar
+            android:id="@+id/SaiPenProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:indeterminate="true" />
+
+        <TextView
+            android:id="@+id/SaiPenPath"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:textSize="13sp"
+            android:alpha="0.7" />
+
+        <Button
+            android:id="@+id/SaiPenStart"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/saipen_start"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <Switch
+            android:id="@+id/SaiPenAutostart"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/saipen_autostart"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <Button
+            android:id="@+id/SaiPenUnzip"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/saipen_unzip"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenSite"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/saipen_site"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenSearch"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/saipen_find_auto"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenChoose"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/saipen_choose"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <TextView
+            android:id="@+id/SaiPenLicenceStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/SaiPenLicenceHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:text="@string/saipen_licence_hint"
+            android:textSize="12sp"
+            android:alpha="0.7"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenAddLicence"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/saipen_add_licence"
+            android:visibility="gone"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:text="@string/saipen_sharpness"
+            android:textSize="14sp" />
+
+        <RadioGroup
+            android:id="@+id/SaiPenSharpness"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:text="@string/saipen_cores"
+            android:textSize="14sp" />
+
+        <RadioGroup
+            android:id="@+id/SaiPenFastCores"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal" />
+
+        <TextView
+            android:id="@+id/SaiPenFastCoresWhat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:textSize="13sp"
+            android:alpha="0.8" />
+
+        <LinearLayout
+            android:id="@+id/SaiPenFastCoresPast"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/saipen_cores_past"
+                android:textSize="13sp"
+                android:alpha="0.8" />
+
+            <TableLayout
+                android:id="@+id/SaiPenFastCoresTable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/SaiPenSpeedLog"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/saipen_speed_log"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <Switch
+            android:id="@+id/SaiPenTimelapse"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/saipen_timelapse"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <LinearLayout
+            android:id="@+id/SaiPenTimelapsePauseBox"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/saipen_frame_when"
+                android:textSize="14sp" />
+
+            <RadioGroup
+                android:id="@+id/SaiPenTimelapsePause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/SaiPenMakeVideo"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:text="@string/saipen_drawings_where"
+            android:textSize="13sp"
+            android:alpha="0.8" />
+
+        <Space
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="32dp" />
+
+        <TextView
+            android:id="@+id/SaiPenCredits"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/SaiPenCoffee"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:maxWidth="560dp"
+            android:textSize="12sp"
+            android:alpha="0.7" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/SaiPenGestures"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="@string/saipen_gestures"
+                android:textSize="12sp"
+                android:alpha="0.7" />
+
+            <TextView
+                android:id="@+id/SaiPenAbout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="@string/saipen_about"
+                android:textSize="12sp"
+                android:alpha="0.7" />
+
+            <TextView
+                android:id="@+id/SaiPenLicences"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="@string/saipen_licences"
+                android:textSize="12sp"
+                android:alpha="0.7" />
+
+            <TextView
+                android:id="@+id/SaiPenSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="@string/saipen_settings"
+                android:textSize="12sp"
+                android:alpha="0.7" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

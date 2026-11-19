@@ -1,0 +1,47 @@
+# The source code of every part of the APK under the GPL or LGPL, as archives to put next to the APK in each release. THIRD_PARTY.md lists the parts.
+#
+#   python3 -I tools/fetch-sources.py           download into dist/sources/, check each SHA-256
+#   python3 -I tools/fetch-sources.py --record  the same, and write the SHA-256 of what came
+#
+# Columns, tab-separated: file (as attached to the release), what it is the source of, licence,
+# URL, SHA-256 (left out until --record), and optionally the only folders to keep: the archive is
+# then repacked with just those (the SHA-256 is of the repacked file). Parts under MIT and similar
+# licences (Box64, Mesa) need no source next to the APK: THIRD_PARTY.md links them. Versions are read from the files in the APK; where the
+# exact commit is not published, the note in the second column says what was chosen and why.
+#
+# Winlator and the parts its author builds (the last commit before Winlator 11.2, 14 Nov 2026)
+winlator-app-ecd5ab2980de.tar.gz	Winlator 11.2, the app SAI Pen is changed from (patches/winlator.patch holds the changes)	LGPL-2.1	https://codeload.github.com/brunodev85/winlator-app/tar.gz/ecd5ab2980de79eb955621cef26a3b4672013875	7997133fca9682faeb5f52eae64a84c3c9847d0d12ca63e988f7d13521e6461d
+wine-10.10-custom-2b9afc38d953.tar.gz	Wine 10.10, Winlator's build (opt/wine, the Wine prefix)	LGPL-2.1 or later	https://codeload.github.com/brunodev85/wine-10.10-custom/tar.gz/2b9afc38d9531d384f038bbaaf3f637e515fb297	46923cb925449b9582eaeec221e7c128a41eb36304a2a1cfbb85b0de09881b95
+vortek-a7746fbd7288.tar.gz	Vortek 2.1, guest side (libvulkan_vortek.so)	LGPL-2.1	https://codeload.github.com/brunodev85/vortek/tar.gz/a7746fbd72882aaf1d1d87d96a36fa6650e454b9	343234d9dc0f7ca0957db2293644a928a8ccb8bf81c8035512b715bba38748c4
+gladio-3861b0a6ed29.tar.gz	Gladio 1.1, guest side (libGL.so)	LGPL-2.1	https://codeload.github.com/brunodev85/gladio/tar.gz/3861b0a6ed290adce2658d01d07db3532d4641e2	1b48d2ec1412702ea73c598f9aa0dffa255adbb72ca238334a5e2e7a41ee6f4e
+winlator-30aafbdb9eea-alsa-glibc.tar.gz	ALSA plugin libasound_module_pcm_android_aserver.so (android_alsa/) and glibc patches (glibc_patches/)	LGPL-2.1	https://codeload.github.com/brunodev85/winlator/tar.gz/30aafbdb9eea47b92669201621e03cd2cf04540d	299d08a451ffc1f297475b66224a868772365d24c1d50be8d8f164392b1526db	android_alsa glibc_patches
+pulseaudio-android-77c8a7217c57.tar.gz	PulseAudio 13.0 for Android (lib/arm64-v8a, pulseaudio.tzst): build scripts, module-aaudio-sink, libsndfile 1.0.28, libltdl; its pulseaudio/ folder is a submodule, see pulseaudio-13.0	LGPL-2.1 or later	https://codeload.github.com/brunodev85/pulseaudio-android/tar.gz/77c8a7217c5746d44787e78f9b141e7503c981f4	77637cae61e6200a8b3340b58080e9cf5b8740b924275009a86cb2ad3ba0b934
+pulseaudio-13.0.tar.xz	PulseAudio 13.0, the submodule of pulseaudio-android (tag v13.0, 200618b32f09)	LGPL-2.1 or later	https://www.freedesktop.org/software/pulseaudio/releases/pulseaudio-13.0.tar.xz	961b23ca1acfd28f2bc87414c27bb40e12436efcf2158d29721b1e89f3f28057
+#
+# Upstream projects in Winlator's rootfs (rootfs.tzst)
+glibc-2.39.tar.xz	GNU C Library 2.39	LGPL-2.1 or later; programs GPL-2.0 or later	https://ftp.gnu.org/gnu/glibc/glibc-2.39.tar.xz	f77bd47cf8170c57365ae7bf86696c118adb3b120d3259c64c502d3dc1e2d926
+glibc-packages-5f6b1f58d2ab.tar.gz	Termux's patches to glibc (gpkg/glibc); the last commit with glibc 2.39, which one Winlator's build used is not published	GPL-3.0 (scripts), patches as glibc	https://codeload.github.com/termux-pacman/glibc-packages/tar.gz/5f6b1f58d2abb8260233dd984588916393be30cd	534a9f3804150cfbbc644e99c972ed9b08bdaec04fbf64d7553adb0bb5437cea
+gcc-13.2.0.tar.xz	GCC 13.2.0 runtime (libgcc_s, libstdc++)	GPL-3.0 or later with the GCC Runtime Library Exception	https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz	e275e76442a6067341a27f04c5c6b83d8613144004c0413528863dc6b5c743da
+gstreamer-1.25.1.tar.xz	GStreamer 1.25.1 core	LGPL-2.1 or later	https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-1.25.1.tar.xz	755fd5ca09502d1031f4f33d6c85914176853a8fdd648f8c73c31d89ae0a0644
+gst-plugins-base-1.25.1.tar.xz	GStreamer 1.25.1 base plugins	LGPL-2.1 or later	https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-base-1.25.1.tar.xz	c2db4a186462ccaea9dc63a7015e391f4a10571f8f4fd2fd0502f0cf0039104f
+gst-plugins-good-1.25.1.tar.xz	GStreamer 1.25.1 good plugins	LGPL-2.1 or later	https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.25.1.tar.xz	55be81509f8d5c85d3719884bef1fa8ef70a08f52ab42b3a8c73d4184d188ac9
+gst-plugins-bad-1.25.1.tar.xz	GStreamer 1.25.1 bad plugins	LGPL-2.1 or later	https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad-1.25.1.tar.xz	9a65acd9f348b54ab3e1b62aa7c20129a0ae27b5de16853c8e62d6166e19a157
+gst-plugins-ugly-1.25.1.tar.xz	GStreamer 1.25.1 ugly plugins (mpeg2dec, GPL through libmpeg2)	LGPL-2.1 or later; mpeg2dec GPL-2.0 or later	https://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-1.25.1.tar.xz	de7e71a7ead4712bfb78af15c4c25ca747e480b2ad2f27887775b7b634fbedcc
+gst-libav-1.25.1.tar.xz	GStreamer 1.25.1 libav plugin (libgstlibav.so)	LGPL-2.1 or later	https://gstreamer.freedesktop.org/src/gst-libav/gst-libav-1.25.1.tar.xz	ad00382c1f173b3a96037250c34c955d3dc214e2ed16aae25a2489766055e28d
+ffmpeg-meson-09b728533508.tar.gz	FFmpeg 7.1, built into libgstlibav.so: GStreamer's meson port (subprojects/FFmpeg.wrap of GStreamer 1.25.1, branch meson-7.1), built as LGPL	LGPL-2.1 or later	https://gitlab.freedesktop.org/gstreamer/meson-ports/ffmpeg/-/archive/09b72853350894a490466b8809e3ab8713357024/ffmpeg-09b72853350894a490466b8809e3ab8713357024.tar.gz	bbe50e3cb54687c0999b82811b7e31e8de8b3fbefd6267ba201affe87ec09e79
+glib-2.82.2.tar.xz	GLib 2.82.2	LGPL-2.1 or later	https://download.gnome.org/sources/glib/2.82/glib-2.82.2.tar.xz	ab45f5a323048b1659ee0fbda5cecd94b099ab3e4b9abf26ae06aeb3e781fd63
+mpeg2dec_0.5.1.orig.tar.gz	libmpeg2 0.5.1 (Debian's copy of the upstream release; libmpeg2.sourceforge.io no longer serves it)	GPL-2.0 or later	https://deb.debian.org/debian/pool/main/m/mpeg2dec/mpeg2dec_0.5.1.orig.tar.gz	dee22e893cb5fc2b2b6ebd60b88478ab8556cb3b93f9a0d7ce8f3b61851871d4
+mpg123-1.32.7.tar.bz2	mpg123 1.32.7 (libmpg123, libout123, libsyn123)	LGPL-2.1	https://www.mpg123.de/download/mpg123-1.32.7.tar.bz2	3c8919243707951cac0e3c39bbf28653bcaffc43c98ff16801a27350db8f0f21
+alsa-lib-1.2.13.tar.bz2	alsa-lib 1.2.13	LGPL-2.1 or later	https://www.alsa-project.org/files/pub/lib/alsa-lib-1.2.13.tar.bz2	8c4ff37553cbe89618e187e4c779f71a9bb2a8b27b91f87ed40987cc9233d8f6
+pulseaudio-17.0.tar.xz	PulseAudio 17.0 client libraries (libpulse, libpulse-simple, libpulsecommon)	LGPL-2.1 or later	https://www.freedesktop.org/software/pulseaudio/releases/pulseaudio-17.0.tar.xz	053794d6671a3e397d849e478a80b82a63cb9d8ca296bd35b73317bb5ceb87b5
+libsndfile-1.2.2.tar.xz	libsndfile 1.2.2 (in rootfs, and in FluidSynth's build in lib/arm64-v8a)	LGPL-2.1 or later	https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2.tar.xz	3799ca9924d3125038880367bf1468e53a1b7e3686a934f098b7e1d286cdb80e
+nettle-3.10.tar.gz	Nettle 3.10 (libnettle, libhogweed)	LGPL-3.0 or later, or GPL-2.0 or later	https://ftp.gnu.org/gnu/nettle/nettle-3.10.tar.gz	b4c518adb174e484cb4acea54118f02380c7133771e7e9beb98a0787194ee47c
+gnutls-3.8.5.tar.xz	GnuTLS 3.8.5	LGPL-2.1 or later; libgnutls-openssl GPL-3.0 or later	https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-3.8.5.tar.xz	66269a2cfe0e1c2dabec87bdbbd8ab656f396edd9a40dd006978e003cfa52bfc
+vkd3d-proton-2.14.1.tar.gz	VKD3D-Proton 2.14.1 (in the DX wrapper archives)	LGPL-2.1 or later	https://codeload.github.com/HansKristian-Work/vkd3d-proton/tar.gz/refs/tags/v2.14.1	30a39c2e487ea539afb996e260c063f68802a6338c52abc12dc95a52c45a65e1
+#
+# FluidSynth's own Android build, in lib/arm64-v8a (versions from its .azure/azure-pipelines-android.yml at v2.4.5)
+fluidsynth-2.4.5.tar.gz	FluidSynth 2.4.5	LGPL-2.1 or later	https://codeload.github.com/FluidSynth/fluidsynth/tar.gz/refs/tags/v2.4.5	2d2a5ca35bbb3f3fd241ef388a0cb3ae5755ebbb78121c7869f02b021d694810
+libinstpatch-1.1.6.tar.gz	libinstpatch 1.1.6	LGPL-2.1	https://codeload.github.com/swami/libinstpatch/tar.gz/refs/tags/v1.1.6	8e9861b04ede275d712242664dab6ffa9166c7940fea3b017638681d25e10299
+glib-2.72.4.tar.xz	GLib 2.72.4	LGPL-2.1 or later	https://download.gnome.org/sources/glib/2.72/glib-2.72.4.tar.xz	8848aba518ba2f4217d144307a1d6cb9afcc92b54e5c13ac1f8c4d4608e96f0e
+libiconv-1.17.tar.gz	GNU libiconv 1.17, built into that GLib	LGPL-2.1 or later	https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz	8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
+gettext-0.22.5.tar.gz	GNU gettext 0.22.5 (libintl), built into that GLib	LGPL-2.1 or later	https://ftp.gnu.org/pub/gnu/gettext/gettext-0.22.5.tar.gz	ec1705b1e969b83a9f073144ec806151db88127f5e40fe5a94cb6c8fa48996a0

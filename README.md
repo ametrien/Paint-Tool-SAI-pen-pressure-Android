@@ -1,0 +1,348 @@
+# SAI Pen for Android: PaintTool SAI with S Pen pressure
+
+[![release](https://img.shields.io/github/v/release/ametrien/Paint-Tool-SAI-pen-pressure-Android?include_prereleases&sort=semver)](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)
+[![downloads](https://img.shields.io/github/downloads/ametrien/Paint-Tool-SAI-pen-pressure-Android/total)](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases)
+[![license](https://img.shields.io/badge/license-GPL--3.0%20with%20attribution%20terms-blue)](LICENSE)
+
+Run **PaintTool SAI Ver.2** on a Samsung tablet or phone with the **S Pen**, with **real pen
+pressure**, and record a **timelapse of your canvas**. Free and open source.
+
+You install one app and put SAI on the device. The app finds SAI and starts it full screen: the
+cursor sits under the pen tip, touching draws, pressing harder draws a thicker line, and two
+fingers scroll and zoom the canvas.
+
+This is the Android sibling of
+[SAI Pen Pressure for macOS](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix):
+the same pressure DLL inside SAI, the same timelapse recorder.
+
+## What it looks like
+
+Photos and videos from the tested devices go here.
+
+## Tested on
+
+| Device | Android | SAI | Result |
+|---|---|---|---|
+| Samsung Galaxy Tab S6 Lite (2022), SM-P613 | 14 | Ver.2 Alpha.2026.10.19, 64-bit | pen, pressure, gestures, saving with a licence, timelapse: work |
+| Samsung Galaxy S26 Ultra | | Ver.2 Alpha.2026.10.19, 64-bit, no licence | SAI found by itself, starts, the pen draws with pressure |
+
+## Which devices and pens
+
+The app needs **Android 8 or newer** on a **64-bit ARM processor** (almost every tablet and phone
+of recent years). SAI is a Windows program and runs through Wine and Box64, so a faster device
+draws more smoothly: the Galaxy Tab S6 Lite (Snapdragon 720G, 4 GB of memory) works but feels a
+little slow.
+
+**Tested: the Samsung S Pen.** So these should work the same way:
+
+- Samsung tablets with an S Pen: the **Galaxy Tab S** series, **Tab S FE** and **Tab S Lite**.
+- Samsung phones with a built-in S Pen: the **Galaxy S Ultra** line (S22 Ultra and newer, such as
+  the S24, S25 and S26 Ultra) and the older **Galaxy Note** phones (Note 8 and newer).
+
+**Not tested, but should work in theory:** any pen that tells Android it is a pen and passes the
+pressure in the standard way. The app uses no Samsung-only parts, only Android's own pen events.
+For example:
+
+- active pens of other tablets: Xiaomi Smart Pen, Lenovo Tab Pen and Precision Pen, OnePlus Stylo,
+  Honor and Huawei pens;
+- USI 2.0 pens on tablets that support them;
+- a Wacom pen tablet plugged into the Android device by USB.
+
+With such a pen a few things may differ: without hover the cursor shows only while the pen
+touches, the side button may be taken by the maker for its own shortcut (then there is no right
+click), and an eraser end draws like the tip.
+
+**Will not work: passive styluses.** A stylus with a rubber, mesh or clear disc tip, or a cheap
+"active" stylus for any phone that is never paired with the device, has no pressure: Android sees
+it as a finger, so there is nothing to pass on to SAI.
+
+If you try a device or pen that is not in the table, please tell us in an issue how it went.
+
+### Check a pen in a minute, without SAI
+
+This works on any Android device, even one in a shop:
+
+1. Turn on **Developer options**: in Settings, open **About phone** (or About tablet; on Samsung
+   then **Software information**) and tap **Build number** seven times.
+2. In **Settings > Developer options**, turn on **Pointer location**.
+3. Draw on the screen with the pen and watch the **`Prs`** number in the bar at the top.
+
+If `Prs` changes with how hard you press, the pen has pressure and SAI Pen can pass it to SAI.
+If it stays at 1.0 or does not change, the pen has no pressure, and SAI Pen will not get any
+either. Turn Pointer location off again afterwards.
+
+## Download
+
+**[Download the latest release](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)**:
+the file `SAI-Pen-<version>.apk`.
+
+Every version is a GitHub release with its own tag (`v0.4.0`, `v0.4.1`, ...), the same way as the
+macOS project. The app is not in Google Play.
+
+## Using it
+
+1. **Install the APK.** Android asks once to allow installing apps from your browser or file
+   manager.
+2. **Put SAI on the device.** Download it from <https://www.systemax.jp/en/sai/devdept.html>, then
+   unpack the zip or leave it in Downloads and let the app unpack it. SAI needs its whole folder
+   (`sai2.exe`, `sai2.ini` and `init`), not only `sai2.exe`.
+3. **Open SAI Pen** and go through the first start (below). Then tap **Start SAI**.
+4. **Save your drawings** into the "SAI Drawings" folder of SAI's save dialog. On the device it is
+   **Documents/SAI Drawings**.
+
+### The first start, step by step
+
+SAI Pen asks before it looks at anything, and asks about SAI and about the licence separately:
+
+1. **Access to files.** Android asks once. SAI Pen needs it to read SAI's folder and to save
+   your drawings in Documents.
+2. **Wine is unpacked** inside the app (a couple of minutes, once).
+3. **Where is SAI?** Either **Search the device**: SAI Pen looks through the device storage, up
+   to four folders deep (and `Android/media`, where messaging apps such as WhatsApp or Telegram
+   keep received files), for a folder with `sai2.exe`, `sai2.ini` and `init` (or for a SAI zip
+   to unpack). Or **Choose the folder** yourself. Only SAI is looked for here.
+4. **SAI found.** The screen shows the folder and a **Start SAI** button. SAI does not start
+   by itself.
+5. **The licence, a question of its own.** **Look for it**: SAI Pen looks for a `sai*.slc` file
+   in Downloads and in SAI's folder, shows the one it found, and uses it only if you say so.
+   **Choose the file**: pick it yourself. **Without a licence**: try SAI first, add the licence
+   later with **Add a SAI licence**.
+
+Nothing leaves the device. SAI Pen never sends files or the licence anywhere.
+
+**Start SAI right away** (a switch under Start SAI, off at first): turn it on to skip the app's
+screen and start SAI straight from the icon. While it is off, the icon always opens the app's
+screen with the settings.
+
+### Gestures
+
+| Gesture | Does |
+|---|---|
+| S Pen on the glass | draws, with pressure; the side button gives a right click |
+| One finger | puts the cursor under itself and clicks |
+| Two fingers, moving | scroll the canvas in any direction |
+| Two fingers, pinch | zoom |
+| Three-finger tap | opens the keyboard |
+| Four-finger tap | the menu (keyboard, close SAI, settings) |
+
+### Timelapse
+
+Turn on **Record a timelapse** on the app's screen before starting SAI. Our DLL inside SAI saves a
+frame of the canvas when the pen rests. Later, on the app's screen, **Make a timelapse video**
+turns the frames into an MP4 per canvas in **Documents/SAI Drawings**.
+
+### Your SAI licence
+
+Without a licence certificate SAI Ver.2 does not save or open files. A certificate is made for
+one System ID, and SAI on the device has its own:
+
+1. In SAI on the device: **Other > System ID**.
+2. On <https://www.systemax.jp/en/license.html> enter your licence number, password and that
+   System ID, and download the certificate (`sai-....slc`).
+3. Put it in **Downloads** on the device, tap **Add a SAI licence** on the app's screen and then
+   **Look for it**, or **Choose the file** wherever it is. Once you have said yes to a found
+   licence, a newer `sai*.slc` that later lands in Downloads (a new System ID, say) is taken by
+   itself at the next start.
+
+Updating SAI Pen keeps the installed certificate. Uninstalling the app removes it together with
+Wine; the copy in Downloads stays, and **Look for it** finds it again.
+
+## What it is built on
+
+SAI Pen is a changed version of **[Winlator](https://github.com/brunodev85/winlator-app)** 11.2
+(commit `ecd5ab2`, see `UPSTREAM`), an Android app by brunodev85 that runs Windows programs with
+Wine and the Box64 emulator. Inside the APK:
+
+| Part | What it does here | Licence |
+|---|---|---|
+| [Winlator](https://github.com/brunodev85/winlator-app) 11.2 | the Android app around everything: X server, screen, touch input | LGPL-2.1 |
+| [Wine](https://www.winehq.org) 10.10 | runs SAI, a Windows program | LGPL-2.1 or later |
+| [Box64](https://github.com/ptitSeb/box64) 0.4.4 | runs x86-64 code on the device's ARM processor | MIT |
+| [Mesa](https://www.mesa3d.org), [DXVK](https://github.com/doitsujin/dxvk), [VKD3D-Proton](https://github.com/HansKristian-Work/vkd3d-proton) | graphics drivers Winlator ships | MIT, zlib, LGPL-2.1 |
+| Our `wintab32.dll`, from [SAI Pen Pressure for macOS](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix), the Mac version of this project | inside SAI: gives it the pen pressure and records the timelapse | GPL-3.0 with our terms |
+| Our `winhandler.exe` (`winhandler/`) | inside Wine: starts SAI and answers the app (windows, clipboard, processor cores) | GPL-3.0 with our terms |
+| SAI Pen's own code (`src/`, `patches/`) | the pen, gestures, the launcher screen, the timelapse video | GPL-3.0 with our terms |
+
+[THIRD_PARTY.md](THIRD_PARTY.md) lists every part inside the APK with its version, licence and
+source. [ARCHITECTURE.md](ARCHITECTURE.md) explains how the parts fit together.
+
+### How it works
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#ece9fb", "primaryBorderColor": "#8f86d0", "primaryTextColor": "#2b2a45", "lineColor": "#6f7fc2", "clusterBkg": "#f5f4fd", "clusterBorder": "#b9b3e3", "edgeLabelBackground": "#ffffff", "fontSize": "15px"}, "flowchart": {"nodeSpacing": 45, "rankSpacing": 70, "padding": 18, "diagramPadding": 16, "subGraphTitleMargin": {"top": 8, "bottom": 18}, "wrappingWidth": 320}}}%%
+flowchart TB
+    subgraph app["SAI Pen app (Android)"]
+        direction TB
+        pen(["S Pen and fingers on the screen"])
+        input["Pen and touch input"]
+        xserver["X server<br/>shows SAI's window"]
+    end
+
+    subgraph wine["Wine, run on the ARM processor by Box64"]
+        direction LR
+        winhandler["our winhandler.exe"]
+        sai["PaintTool SAI<br/>your own copy"]
+        wintab["our wintab32.dll"]
+    end
+
+    pen --> input
+    input -- "pressure" --> wintab
+    input -- "position and touch" --> xserver
+    wintab -- "pressure, as a tablet driver" --> sai
+    xserver <-- "window, mouse" --> sai
+    winhandler -- "starts SAI" --> sai
+```
+
+SAI is a Windows program for x86-64 processors. Wine gives it Windows, Box64 turns its x86-64 code
+into ARM code as it runs, and Winlator's X server shows its window. The pen goes two ways at once:
+the position and the touch as a mouse through the X server, and the pressure (UDP `127.0.0.1:47800`)
+straight to our `wintab32.dll` inside SAI, which hands it to SAI the way a Wacom tablet driver
+would. The same DLL saves the canvas for the timelapse, which the app turns into a video. Our
+`winhandler.exe` starts SAI and answers the app (UDP 7946/7947): windows to the front, clipboard,
+processor cores.
+
+We looked for another way to get S Pen pressure into SAI on Android and did not find one
+(November 2026): Winlator and its forks pass the S Pen as a mouse, without pressure.
+
+### What it changes in Winlator
+
+- **The S Pen is a pen.** In Winlator the S Pen moves the cursor like a laptop touchpad, and a
+  pen that is held down and moving never holds the mouse button. Here the cursor sits under the
+  tip, touching holds the left button, and the side button gives a right click.
+- **Pressure reaches SAI.** Every pen sample, including the ones Android batches together, goes
+  over UDP `127.0.0.1:47800` to our `wintab32.dll` inside SAI. That DLL tells SAI the pressure
+  through WinTab. Before each session the app copies the DLL into the Wine prefix and sets
+  `wintab32=native,builtin`.
+- **Fingers.** One finger puts the cursor under itself. Two fingers scroll the canvas in any
+  direction and pinch to zoom.
+- **One screen instead of Winlator's.** No containers to set up: the app finds SAI, prepares
+  Wine for it and starts it, and comes back to its own screen when SAI closes.
+- **Its own package** (`sai.penpress`), so it installs next to Winlator. Winlator's prebuilt files
+  have its own data folder compiled in. The build rewrites that path in place, so the new package
+  name must be exactly as long as `com.winlator`.
+
+## Licences
+
+In short: SAI Pen is free and open source, everything inside it may be passed on, and the source
+code of every part is published. Nothing of Microsoft's and no part of SAI is in the app.
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#ece9fb", "primaryBorderColor": "#8f86d0", "primaryTextColor": "#2b2a45", "lineColor": "#6f7fc2", "clusterBkg": "#f5f4fd", "clusterBorder": "#b9b3e3", "edgeLabelBackground": "#ffffff", "fontSize": "15px"}, "flowchart": {"nodeSpacing": 45, "rankSpacing": 70, "padding": 18, "diagramPadding": 16, "subGraphTitleMargin": {"top": 8, "bottom": 18}, "wrappingWidth": 320}}}%%
+flowchart TB
+    apk["SAI Pen APK<br/>as a whole: GNU GPL 3 with our NOTICE terms"]
+
+    subgraph ours["Ours: GPL 3 with NOTICE"]
+        o1["SAI Pen's Java code and patches"]
+        o2["wintab32.dll"]
+        o3["winhandler.exe"]
+        o4["build scripts and tests"]
+    end
+
+    subgraph copyleft["Others' parts: GPL or LGPL"]
+        c1["Winlator: LGPL 2.1<br/>(may be passed on under the GPL 3)"]
+        c2["Wine: LGPL 2.1+"]
+        c3["glibc, GLib, GStreamer, FFmpeg,<br/>PulseAudio, GnuTLS, FluidSynth ...: LGPL"]
+        c4["libmpeg2: GPL 2+, GCC runtime: GPL 3<br/>with the runtime exception"]
+        c5["VKD3D-Proton: LGPL 2.1+"]
+    end
+
+    subgraph permissive["Others' parts: permissive licences"]
+        p1["Box64, Mesa, X11, cnc-ddraw: MIT"]
+        p2["DXVK, zlib: zlib"]
+        p3["AndroidX, Oboe, Vulkan loader: Apache 2.0"]
+        p4["FreeType, libjpeg, libpng, FLAC, Opus ...:<br/>their own"]
+    end
+
+    icon["App icon: Flaticon free licence,<br/>credit to gravisio"]
+
+    subgraph out["Not in the app"]
+        x1["PaintTool SAI: proprietary,<br/>everyone brings their own copy and licence"]
+        x2["Microsoft's DLLs and fonts:<br/>may not be passed on"]
+        x3["FDK AAC codec: not GPL-compatible"]
+        x4["Winlator's extra programs and its winhandler.exe:<br/>no published source"]
+    end
+
+    apk --> ours
+    apk --> copyleft
+    apk --> permissive
+    apk --> icon
+    apk -. "left out" .-> out
+```
+
+The source of every part under the GPL or the LGPL is attached to each release; the copyright
+notices of the parts under permissive licences are in `LICENSES.txt`.
+
+**Our code.** SAI Pen for Android is licensed under the **GNU General Public License, version 3**
+([LICENSE](LICENSE)), with additional terms under its section 7 ([NOTICE](NOTICE)):
+
+- keep `NOTICE` and the credit "SAI Pen Pressure by ametrien" with a link to
+  <https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix>;
+- mark a changed version as changed, and do not present it as the original.
+
+The GPL lets anyone use, share and change the app, also for money, as long as whatever they pass
+on stays under the same licence with its full source code. Nobody can turn this code into a
+closed app.
+
+**What it is built on.** Winlator is LGPL-2.1, and LGPL-2.1 (section 3) allows conveying it under
+the GPL, so the whole app goes out under GPL-3.0. Every other part (Wine, Box64, the Linux
+libraries, the audio and graphics libraries) keeps its own licence and copyright notice:
+
+- [THIRD_PARTY.md](THIRD_PARTY.md) lists every part inside the APK, its version, its licence and
+  where its source is;
+- [LICENSES.txt](LICENSES.txt) holds the full text of every licence and every copyright notice.
+  The app shows the same file under **Licences**.
+
+**Source code of every part.** Each release carries, next to the APK, the source archive of every
+part under the GPL or the LGPL, with a `SHA256SUMS` file. `tools/fetch-sources.py` downloads the
+same archives and checks them against `third_party/sources.tsv`. Our own source is this
+repository at the release's tag, and `build.sh` builds the APK from it.
+
+**What is left out, and why.**
+
+- **Microsoft's files.** Winlator ships Microsoft's DirectX parts, Visual C++ runtimes, fonts and
+  MFC. Their licences do not let anyone pass them on, so the build removes them, and it fails if
+  any of them comes back. SAI does not need them.
+- **The Fraunhofer FDK AAC codec.** Its licence does not go with the GPL. SAI does not need it.
+- **Winlator's extra programs** (7-Zip, its file manager, test and download tools). SAI does not
+  use them, and some have no published source.
+- **Winlator's `winhandler.exe`**, the helper that starts SAI inside Wine, as its source is not
+  published. SAI Pen has its own, written for this project (`winhandler/`).
+
+**The icon** is "Pen" by gravisio from Flaticon
+([Drawing icons created by gravisio - Flaticon](https://www.flaticon.com/free-icons/drawing)),
+used under Flaticon's free licence with this credit. It is not under the GPL.
+
+**PaintTool SAI** is proprietary software by SYSTEMAX Software Development and is **not**
+included: everyone downloads it from SYSTEMAX and uses their own licence. Samsung and S Pen are
+trademarks of Samsung Electronics. This project is not affiliated with SYSTEMAX, Samsung or
+Winlator.
+
+## Build from source (macOS)
+
+Needs JDK 17, the Android SDK with NDK `24.0.8215888`, CMake `3.22.1` and platform 35, and `zstd`.
+
+```bash
+./build.sh            # tests, then dist/SAI-Pen-<version>.apk
+./build.sh test       # tests only
+```
+
+The Winlator checkout lives outside the repository, in `~/Documents/sai-android-build` (change it
+with `SAIPEN_WORK`). To change a Winlator file, edit it in `winlator-app/` there, then run
+`./build.sh save-patches`.
+
+| Path | What |
+|---|---|
+| `UPSTREAM` | Winlator repository and commit we build on |
+| `patches/winlator.patch` | our changes to Winlator's own files |
+| `src/` | our new Java classes (`com.winlator.saipen`), resources and their JVM tests |
+| `tools/rewrite_tar.py` | rewrites the data path inside Winlator's archives |
+| `tools/make-icon.swift` | draws the app icon: the pen by gravisio from Flaticon on a light tile |
+| `winhandler/` | our `winhandler.exe`, which starts SAI inside Wine and answers the app |
+| `tools/fetch-sources.py`, `third_party/sources.tsv` | the source archives attached to each release |
+| `tests/` | the DLL side of the pen wire check, winhandler's protocol, what the archive rewrite leaves out |
+| `third_party/wintab/` | `wintab32.dll` from the macOS project (see `SOURCE.txt`) |
+
+## Support
+
+The best support is simply using SAI Pen. If you'd really like to do more, you can
+[buy me a coffee](https://buymeacoffee.com/ametrien).

@@ -1,0 +1,14 @@
+# Pen sample lines as the Android app sends them to wintab32.dll (UDP 47800).
+# Each line: <datagram> | <Windows screen x> <screen y> <pressure>
+#
+# Two tests read this file, one per side of the wire:
+# - android-app/src/test/java/com/winlator/saipen/PenWireTest.java builds each
+#   datagram from a known pen event and checks it is exactly this text;
+# - tests/test_android_wire.c parses each datagram with the DLL's own
+#   wtc_parse_datagram() and wtc_sample_to_screen() and checks the point.
+# Change the format on one side only and one of them fails.
+0 2048 805 8238 15360 8640 1000 1500 0 1 | 100 50 2048
+1 0 0 8640 15360 8640 2000 2100 0 1 | 0 0 0
+2 4095 15359 1 15360 8640 3000 3001 0 1 | 1919 1079 4095
+3 4 9360 5760 18720 8640 0 77 0 0 | 1170 360 4
+4 1024 0 0 18720 8640 5 6 0 1 | 0 1080 1024

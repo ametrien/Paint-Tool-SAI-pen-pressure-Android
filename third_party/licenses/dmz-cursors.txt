@@ -1,0 +1,6 @@
+DMZ cursor theme (usr/share/icons/dmz/cursors in the rootfs)
+Copyright (c) 2007 Novell, Inc.
+
+Licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported
+License (CC BY-SA 3.0): https://creativecommons.org/licenses/by-sa/3.0/
+The cursors are passed on unchanged.
