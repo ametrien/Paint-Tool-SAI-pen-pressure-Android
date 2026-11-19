@@ -7,6 +7,8 @@
 Run **PaintTool SAI Ver.2** on a Samsung tablet or phone with the **S Pen**, with **real pen
 pressure**, and record a **timelapse of your canvas**. Free and open source.
 
+It has only been tested on PaintTool SAI Ver.2 (64bit) Alpha.2026.10.19 so far.
+
 You install one app and put SAI on the device. The app finds SAI and starts it full screen: the
 cursor sits under the pen tip, touching draws, pressing harder draws a thicker line, and two
 fingers scroll and zoom the canvas.
