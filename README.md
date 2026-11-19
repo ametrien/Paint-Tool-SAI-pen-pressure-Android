@@ -37,6 +37,11 @@ While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is rea
 |---|---|---|---|
 | Samsung Galaxy Tab S6 Lite (2022), SM-P613 | 14 | Ver.2 Alpha.2026.10.19, 64-bit | pen, pressure, gestures, saving with a licence, timelapse: work |
 | Samsung Galaxy S26 Ultra | | Ver.2 Alpha.2026.10.19, 64-bit, no licence | SAI found by itself, starts, the pen draws with pressure |
+| Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
+| Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
+
+Pressure has only worked with SAI Ver.2 Alpha.2026.10.19. Older SAI2 builds (2024.11.23 and
+2019.08.12, 64-bit) start but draw without pressure.
 
 ## Which devices and pens
 
@@ -45,7 +50,8 @@ of recent years). SAI is a Windows program and runs through Wine and Box64, so a
 draws more smoothly: the Galaxy Tab S6 Lite (Snapdragon 720G, 4 GB of memory) works but feels a
 little slow.
 
-**Tested: the Samsung S Pen.** So these should work the same way:
+**Tested: the Samsung S Pen, the Xiaomi Focus Pen (Pad 7 Pro) and the Xiaomi Smart Pen 2nd gen
+(Pad 6).** The two Xiaomi pens do not work with each other's tablets. Other Samsung devices should work the same way:
 
 - Samsung tablets with an S Pen: the **Galaxy Tab S** series, **Tab S FE** and **Tab S Lite**.
 - Samsung phones with a built-in S Pen: the **Galaxy S Ultra** line (S22 Ultra and newer, such as
@@ -55,7 +61,7 @@ little slow.
 pressure in the standard way. The app uses no Samsung-only parts, only Android's own pen events.
 For example:
 
-- active pens of other tablets: Xiaomi Smart Pen, Lenovo Tab Pen and Precision Pen, OnePlus Stylo,
+- active pens of other tablets: Lenovo Tab Pen and Precision Pen, OnePlus Stylo,
   Honor and Huawei pens;
 - USI 2.0 pens on tablets that support them;
 - a Wacom pen tablet plugged into the Android device by USB.
