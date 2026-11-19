@@ -16,6 +16,12 @@ package com.winlator.saipen;
  * - ZOOM (the spread changed by ZOOM_START_RATIO first): SAI's own zoom,
  *   through the DLL's "Z <steps>" line at the point where the pinch began.
  *   SAI zooms only its canvas, in fixed steps, and redraws after each.
+ * - ROTATE (the fingers turned around each other first, measured as the arc
+ *   a fingertip travelled): SAI's own free rotation, Alt+Space + left drag.
+ *   The cursor is dragged around the point where the gesture began, as far
+ *   as the fingers have turned, so SAI turns the view along with them.
+ *   THE TRAP of the first try: SAI2's Rotate View CW/CCW have NO default
+ *   keys, and Delete (taken for Rotate Left) is Erase Layer.
  *
  * How the zoom is paced, and why:
  * - one SAI step per 18 % of finger spread (SPREAD_PER_STEP), the first at
@@ -68,6 +74,10 @@ public final class TwoFingerGesture {
     /** No more steps than this in one pinch, either way. */
     public static final int MAX_ZOOM_STEPS = 16;
 
+    /** The rotate drag's radius around the gesture's start point, at least
+     *  (X screen pixels): a small circle makes SAI's angle jumpy. */
+    public static final float MIN_ROTATE_RADIUS = 150f;
+
     /** Fingers closer than this (X screen pixels) give no usable spread. */
     private static final float MIN_SPREAD = 8f;
 
@@ -78,9 +88,15 @@ public final class TwoFingerGesture {
         void wheel(int button);
         /** Zoom SAI by `steps` (+ in, - out) at the cursor. */
         void zoom(int steps);
+        /** Start SAI's rotate drag (Alt+Space, button down) at this point. */
+        void rotateBegin(int x, int y);
+        /** Move the rotate drag to this point. */
+        void rotateDrag(int x, int y);
+        /** End the rotate drag (button up, Space and Alt up). */
+        void rotateEnd();
     }
 
-    private enum Mode { NONE, SCROLL, ZOOM }
+    private enum Mode { NONE, SCROLL, ZOOM, ROTATE }
 
     private final Sink sink;
     private boolean active = false;
@@ -91,6 +107,9 @@ public final class TwoFingerGesture {
     private float accumX, accumY;
     private boolean cursorPlaced = false;
     private int zoomSent;
+    private boolean rotating;
+    private int lastRotX, lastRotY;
+    private double startAngle, lastAngle, turned;
 
     public TwoFingerGesture(Sink sink) {
         this.sink = sink;
@@ -115,6 +134,9 @@ public final class TwoFingerGesture {
             accumX = accumY = 0;
             cursorPlaced = false;
             zoomSent = 0;
+            rotating = false;
+            startAngle = lastAngle = Math.atan2(y2 - y1, x2 - x1);
+            turned = 0;
             return;
         }
 
@@ -123,16 +145,34 @@ public final class TwoFingerGesture {
         accumY += midY - lastMidY;
         lastMidX = midX;
         lastMidY = midY;
+        double angle = Math.atan2(y2 - y1, x2 - x1);
+        double dA = angle - lastAngle;
+        /* the line between the fingers has no direction: Android may hand the
+         * two fingers over in swapped order, which flips the angle by 180 deg
+         * (THE TRAP of the first try: +12/-12 steps per event, and every
+         * scroll and pinch was taken for a turn). Wrap into +-90 deg. */
+        while (dA > Math.PI / 2) dA -= Math.PI;
+        while (dA < -Math.PI / 2) dA += Math.PI;
+        turned += dA;
+        lastAngle = angle;
 
         if (mode == Mode.NONE) {
             float spreadChange = Math.abs((float) Math.hypot(x2 - x1, y2 - y1) - startSpread);
             float travel = (float) Math.hypot(midX - startMidX, midY - startMidY);
-            if (Math.max(spreadChange, travel) >= DECIDE_PX) mode = spreadChange > travel ? Mode.ZOOM : Mode.SCROLL;
+            /* how far a fingertip moved along the circle around the midpoint */
+            float arc = (float) Math.abs(turned) * Math.max(startSpread, MIN_SPREAD) / 2f;
+            float most = Math.max(arc, Math.max(spreadChange, travel));
+            if (most >= DECIDE_PX) {
+                mode = most == arc ? Mode.ROTATE : spreadChange > travel ? Mode.ZOOM : Mode.SCROLL;
+            }
         }
 
         if (mode == Mode.ZOOM) {
             double diff = stepsShown() - zoomSent;
             if (Math.abs(diff) >= ZOOM_HYSTERESIS) sendZoom((int) Math.round(diff));
+        }
+        else if (mode == Mode.ROTATE) {
+            rotateDrag();
         }
         else if (mode == Mode.SCROLL) {
             scroll(midX, midY);
@@ -146,6 +186,10 @@ public final class TwoFingerGesture {
             int diff = (int) Math.round(stepsShown() - zoomSent);
             if (diff != 0) sendZoom(diff);
         }
+        if (rotating) {
+            sink.rotateEnd();
+            rotating = false;
+        }
         active = false;
         mode = Mode.NONE;
     }
@@ -154,6 +198,26 @@ public final class TwoFingerGesture {
     private double stepsShown() {
         double steps = logScale / Math.log(SPREAD_PER_STEP);
         return Math.max(-MAX_ZOOM_STEPS, Math.min(MAX_ZOOM_STEPS, steps));
+    }
+
+    /** Where the rotate drag's cursor is for the turn so far: on a circle
+     *  around the start point, starting at the first finger's side. */
+    private void rotateDrag() {
+        double r = Math.max(MIN_ROTATE_RADIUS, startSpread / 2f);
+        double a = startAngle + Math.PI + turned;
+        int x = (int) Math.round(startMidX + r * Math.cos(a));
+        int y = (int) Math.round(startMidY + r * Math.sin(a));
+        if (!rotating) {
+            double a0 = startAngle + Math.PI;
+            sink.rotateBegin((int) Math.round(startMidX + r * Math.cos(a0)),
+                             (int) Math.round(startMidY + r * Math.sin(a0)));
+            rotating = true;
+        }
+        if (x != lastRotX || y != lastRotY) {
+            sink.rotateDrag(x, y);
+            lastRotX = x;
+            lastRotY = y;
+        }
     }
 
     private void sendZoom(int steps) {

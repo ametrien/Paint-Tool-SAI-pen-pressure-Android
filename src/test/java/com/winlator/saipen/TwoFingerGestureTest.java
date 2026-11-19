@@ -20,6 +20,9 @@ public class TwoFingerGestureTest {
             public void moveCursor(int x, int y) { log.add("cursor " + x + " " + y); }
             public void wheel(int button) { log.add("wheel " + button); }
             public void zoom(int steps) { log.add("zoom " + steps); }
+            public void rotateBegin(int x, int y) { log.add("rotbegin " + x + " " + y); }
+            public void rotateDrag(int x, int y) { log.add("rotdrag " + x + " " + y); }
+            public void rotateEnd() { log.add("rotend"); }
         });
     }
 
@@ -221,5 +224,81 @@ public class TwoFingerGestureTest {
         assertEquals(null, PenWire.zoomLine(0));          /* the DLL refuses 0 */
         assertEquals("Z 64", PenWire.zoomLine(500));      /* and more than 64 */
         assertEquals("Z -64", PenWire.zoomLine(-500));
+    }
+    /* ---- rotate ---- */
+
+    /** two fingers 200 px apart around (cx, cy), the line between them at `deg` */
+    private void turn(float cx, float cy, double deg) {
+        double a = Math.toRadians(deg);
+        float dx = (float) (100 * Math.cos(a)), dy = (float) (100 * Math.sin(a));
+        g.move(cx - dx, cy - dy, cx + dx, cy + dy);
+    }
+
+    /** the angle of the last drag point around (cx, cy), degrees */
+    private double dragAngle(float cx, float cy) {
+        List<String> d = only("rotdrag");
+        String[] p = d.get(d.size() - 1).split(" ");
+        return Math.toDegrees(Math.atan2(Integer.parseInt(p[2]) - cy, Integer.parseInt(p[1]) - cx));
+    }
+
+    @Test
+    public void turningClockwiseDragsTheCursorClockwise() {
+        for (int d = 0; d <= 45; d += 3) turn(500, 300, d);
+        /* starts on the first finger's side: left of the centre, 180 deg */
+        assertEquals("rotbegin 350 300", only("rotbegin").get(0));
+        assertEquals(-135, dragAngle(500, 300), 1.5);
+        end();
+        assertEquals(Arrays.asList("rotend"), only("rotend"));
+        assertTrue(only("zoom").isEmpty());
+        assertTrue(only("wheel").isEmpty());
+    }
+
+    @Test
+    public void turningCounterClockwiseDragsTheOtherWay() {
+        for (int d = 0; d >= -30; d -= 3) turn(500, 300, d);
+        end();
+        assertEquals(150, dragAngle(500, 300), 1.5);
+    }
+
+    @Test
+    public void turningAcrossTheHalfTurnDoesNotJump() {
+        for (int d = 170; d <= 200; d += 3) turn(500, 300, d);
+        end();
+        /* started at 170 (first finger at -10), turned 30 */
+        assertEquals(20, dragAngle(500, 300), 1.5);
+    }
+
+    @Test
+    public void aRotationIsEndedOnce() {
+        for (int d = 0; d <= 45; d += 3) turn(500, 300, d);
+        end();
+        end();
+        assertEquals(1, only("rotend").size());
+        assertEquals(1, only("rotbegin").size());
+    }
+
+    @Test
+    public void aPinchIsNotARotation() {
+        for (float sp = 200; sp <= 400; sp += 10) spread(500, 300, sp);
+        end();
+        assertTrue(only("rot").isEmpty());
+        assertTrue(zoomTotal() > 0);
+    }
+
+    @Test
+    public void aScrollIsNotARotation() {
+        for (float y = 300; y <= 600; y += 10) pair(500, y);
+        end();
+        assertTrue(only("rot").isEmpty());
+    }
+    @Test
+    public void fingersInSwappedOrderAreNotATurn() {
+        for (float y = 300; y <= 600; y += 10) {
+            if (((int) y / 10) % 2 == 0) g.move(400, y, 600, y);
+            else g.move(600, y, 400, y);
+        }
+        end();
+        assertTrue(only("rot").isEmpty());
+        assertTrue(!only("wheel").isEmpty());
     }
 }

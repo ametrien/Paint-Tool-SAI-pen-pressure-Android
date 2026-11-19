@@ -409,7 +409,7 @@ index b144c9f..0205e5b 100644
          xServerView.requestRender();
      }
 diff --git a/app/src/main/java/com/winlator/widget/TouchpadView.java b/app/src/main/java/com/winlator/widget/TouchpadView.java
-index 89dd3fe..387db3d 100644
+index 89dd3fe..47a5479 100644
 --- a/app/src/main/java/com/winlator/widget/TouchpadView.java
 +++ b/app/src/main/java/com/winlator/widget/TouchpadView.java
 @@ -4,6 +4,9 @@ import android.content.Context;
@@ -422,7 +422,7 @@ index 89dd3fe..387db3d 100644
  import android.view.InputDevice;
  import android.view.MotionEvent;
  import android.view.View;
-@@ -14,6 +17,14 @@ import com.winlator.core.AppUtils;
+@@ -14,9 +17,18 @@ import com.winlator.core.AppUtils;
  import com.winlator.math.Mathf;
  import com.winlator.math.XForm;
  import com.winlator.renderer.ViewTransformation;
@@ -437,7 +437,11 @@ index 89dd3fe..387db3d 100644
  import com.winlator.winhandler.MouseEventFlags;
  import com.winlator.winhandler.WinHandler;
  import com.winlator.xserver.Pointer;
-@@ -39,7 +50,31 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
++import com.winlator.xserver.XKeycode;
+ import com.winlator.xserver.XServer;
+ 
+ public class TouchpadView extends View implements View.OnCapturedPointerListener {
+@@ -39,7 +51,31 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      private boolean scrolling = false;
      private final XServer xServer;
      private Runnable fourFingersTapCallback;
@@ -469,7 +473,7 @@ index 89dd3fe..387db3d 100644
  
      public TouchpadView(Context context, XServer xServer, boolean capturePointerOnExternalMouse) {
          super(context);
-@@ -51,6 +86,77 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -51,6 +87,101 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          setFocusableInTouchMode(capturePointerOnExternalMouse);
          updateXform(AppUtils.getScreenWidth(), AppUtils.getScreenHeight(), xServer.screenInfo.width, xServer.screenInfo.height);
  
@@ -529,6 +533,30 @@ index 89dd3fe..387db3d 100644
 +                removeCallbacks(zoomTick);
 +                postDelayed(zoomTick, 20);
 +            }
++
++            /* SAI's free rotation: hold Alt+Space and drag (THE TRAP: SAI2's
++             * Rotate View CW/CCW have no default keys, Delete is Erase Layer) */
++            @Override
++            public void rotateBegin(int x, int y) {
++                xServer.injectKeyPress(XKeycode.KEY_ALT_L);
++                xServer.injectKeyPress(XKeycode.KEY_SPACE);
++                moveCursor(x, y);
++                xServer.injectPointerButtonPress(Pointer.Button.BUTTON_LEFT);
++                Log.i("SaiPen", "rotate drag from " + x + "," + y);
++            }
++
++            @Override
++            public void rotateDrag(int x, int y) {
++                moveCursor(x, y);
++            }
++
++            @Override
++            public void rotateEnd() {
++                xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
++                xServer.injectKeyRelease(XKeycode.KEY_SPACE);
++                xServer.injectKeyRelease(XKeycode.KEY_ALT_L);
++                Log.i("SaiPen", "rotate drag end");
++            }
 +        });
 +
 +        /* when SAI has drawn a zoom step, the next one may go (ZoomPacer) */
@@ -547,7 +575,7 @@ index 89dd3fe..387db3d 100644
          if (capturePointerOnExternalMouse) {
              setOnCapturedPointerListener(this);
              setOnClickListener(view -> {
-@@ -87,6 +193,14 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -87,6 +218,14 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          else XForm.makeScale(xform, invAspect, invAspect);
      }
  
@@ -562,7 +590,7 @@ index 89dd3fe..387db3d 100644
      private class Finger {
          private int x;
          private int y;
-@@ -97,7 +211,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -97,7 +236,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          private final long touchTime;
  
          public Finger(float x, float y) {
@@ -571,7 +599,7 @@ index 89dd3fe..387db3d 100644
              this.x = this.startX = this.lastX = (int)transformedPoint[0];
              this.y = this.startY = this.lastY = (int)transformedPoint[1];
              touchTime = System.currentTimeMillis();
-@@ -106,7 +220,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -106,7 +245,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          public void update(float x, float y) {
              lastX = this.x;
              lastY = this.y;
@@ -580,7 +608,7 @@ index 89dd3fe..387db3d 100644
              this.x = (int)transformedPoint[0];
              this.y = (int)transformedPoint[1];
          }
-@@ -136,25 +250,126 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -136,25 +275,130 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          }
      }
  
@@ -593,6 +621,7 @@ index 89dd3fe..387db3d 100644
 +    @Override
 +    protected void onDetachedFromWindow() {
 +        super.onDetachedFromWindow();
++        twoFingers.end();
 +        penSender.close();
 +    }
 +
@@ -649,6 +678,9 @@ index 89dd3fe..387db3d 100644
 +    }
 +
 +    private void onPenTouch(MotionEvent event, int penIndex) {
++        /* a two-finger gesture under way ends first: a rotate drag holds
++         * Alt+Space and the left button, and the pen would rotate, not draw */
++        if (twoFingers.isActive()) twoFingers.end();
 +        /* Fingers that were down when the pen arrived (a palm) are forgotten:
 +         * the pen owns the cursor now. A button a finger held is let go at
 +         * once, not 30 ms later, so it cannot release the pen's own press. */
@@ -708,7 +740,7 @@ index 89dd3fe..387db3d 100644
                      if (isEnabled()) xServer.injectPointerMove((int)transformedPoint[0], (int)transformedPoint[1]);
                  }
                  else {
-@@ -195,20 +410,34 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -195,20 +439,34 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      private void handleFingerUp(Finger finger1) {
          switch (numFingers) {
              case 1:
@@ -746,7 +778,7 @@ index 89dd3fe..387db3d 100644
                      fourFingersTapCallback.run();
                  }
                  break;
-@@ -224,29 +453,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -224,29 +482,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
  
          Finger finger2 = numFingers == 2 ? findSecondFinger(finger1) : null;
          if (finger2 != null) {
@@ -782,7 +814,7 @@ index 89dd3fe..387db3d 100644
          }
  
          if (!scrolling && numFingers <= 2 && !skipPointerMove) {
-@@ -343,6 +555,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -343,6 +584,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          this.pointerButtonRightEnabled = pointerButtonRightEnabled;
      }
  
@@ -793,7 +825,7 @@ index 89dd3fe..387db3d 100644
      public void setFourFingersTapCallback(Runnable fourFingersTapCallback) {
          this.fourFingersTapCallback = fourFingersTapCallback;
      }
-@@ -356,6 +572,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -356,6 +601,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      }
  
      public boolean onExternalMouseEvent(MotionEvent event) {
@@ -806,7 +838,7 @@ index 89dd3fe..387db3d 100644
          boolean handled = false;
          if (isEnabled() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
              int actionButton = event.getActionButton();
-@@ -379,7 +601,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -379,7 +630,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
                      handled = true;
                      break;
                  case MotionEvent.ACTION_HOVER_MOVE:
