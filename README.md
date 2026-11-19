@@ -17,7 +17,17 @@ the same pressure DLL inside SAI, the same timelapse recorder.
 
 ## What it looks like
 
-Photos and videos from the tested devices go here.
+SAI on a Galaxy Tab S6 Lite, drawn with the S Pen: the line gets thicker as the pen presses harder.
+
+![PaintTool SAI Ver.2 full screen on a Galaxy Tab S6 Lite, a pen line from thin to thick](docs/images/sai-drawing.jpg)
+
+The SAI Pen screen, where you choose the SAI folder, add a licence and start SAI:
+
+<img src="docs/images/sai-pen-screen.png" width="450" alt="SAI Pen's screen: SAI is ready, Start SAI button, choose the SAI folder, SAI licence">
+
+While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is ready:
+
+<img src="docs/images/sai-starting.png" width="450" alt="SAI Pen's start-up cover: the app icon, Starting SAI, a progress bar, SAI is starting, 3 s. The first start takes longer.">
 
 ## Tested on
 
@@ -226,48 +236,10 @@ We looked for another way to get S Pen pressure into SAI on Android and did not 
 In short: SAI Pen is free and open source, everything inside it may be passed on, and the source
 code of every part is published. Nothing of Microsoft's and no part of SAI is in the app.
 
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#ece9fb", "primaryBorderColor": "#8f86d0", "primaryTextColor": "#2b2a45", "lineColor": "#6f7fc2", "clusterBkg": "#f5f4fd", "clusterBorder": "#b9b3e3", "edgeLabelBackground": "#ffffff", "fontSize": "15px"}, "flowchart": {"nodeSpacing": 45, "rankSpacing": 70, "padding": 18, "diagramPadding": 16, "subGraphTitleMargin": {"top": 8, "bottom": 18}, "wrappingWidth": 320}}}%%
-flowchart TB
-    apk["SAI Pen APK<br/>as a whole: GNU GPL 3 with our NOTICE terms"]
-
-    subgraph ours["Ours: GPL 3 with NOTICE"]
-        o1["SAI Pen's Java code and patches"]
-        o2["wintab32.dll"]
-        o3["winhandler.exe"]
-        o4["build scripts and tests"]
-    end
-
-    subgraph copyleft["Others' parts: GPL or LGPL"]
-        c1["Winlator: LGPL 2.1<br/>(may be passed on under the GPL 3)"]
-        c2["Wine: LGPL 2.1+"]
-        c3["glibc, GLib, GStreamer, FFmpeg,<br/>PulseAudio, GnuTLS, FluidSynth ...: LGPL"]
-        c4["libmpeg2: GPL 2+, GCC runtime: GPL 3<br/>with the runtime exception"]
-        c5["VKD3D-Proton: LGPL 2.1+"]
-    end
-
-    subgraph permissive["Others' parts: permissive licences"]
-        p1["Box64, Mesa, X11, cnc-ddraw: MIT"]
-        p2["DXVK, zlib: zlib"]
-        p3["AndroidX, Oboe, Vulkan loader: Apache 2.0"]
-        p4["FreeType, libjpeg, libpng, FLAC, Opus ...:<br/>their own"]
-    end
-
-    icon["App icon: Flaticon free licence,<br/>credit to gravisio"]
-
-    subgraph out["Not in the app"]
-        x1["PaintTool SAI: proprietary,<br/>everyone brings their own copy and licence"]
-        x2["Microsoft's DLLs and fonts:<br/>may not be passed on"]
-        x3["FDK AAC codec: not GPL-compatible"]
-        x4["Winlator's extra programs and its winhandler.exe:<br/>no published source"]
-    end
-
-    apk --> ours
-    apk --> copyleft
-    apk --> permissive
-    apk --> icon
-    apk -. "left out" .-> out
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/licences-dark.svg">
+  <img src="docs/images/licences-light.svg" alt="What is inside the SAI Pen APK and under which licence: our code under GPL 3 with NOTICE; Winlator, Wine and other copyleft parts under the LGPL or GPL; Box64, Mesa, DXVK and other parts under MIT, zlib, Apache 2.0 or their own licences; the icon under Flaticon's free licence. Not in the app: PaintTool SAI, Microsoft's DLLs and fonts, the FDK AAC codec, Winlator's extra programs and winhandler.exe.">
+</picture>
 
 The source of every part under the GPL or the LGPL is attached to each release; the copyright
 notices of the parts under permissive licences are in `LICENSES.txt`.
