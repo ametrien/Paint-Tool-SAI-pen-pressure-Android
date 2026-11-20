@@ -14,7 +14,7 @@ On a Mac? The same, also by me:
 >
 > This is a hobby project maintained by just one person (me!) for both the macOS and Android versions. I've been working hard on bringing SAI onto macOS and Android for the past few months, and I'm now taking a break.
 >
-> Issues and pull requests may sit unanswered for a while. Thank you for your patience and understanding!
+> Issues may sit unanswered for a while. Thank you for your patience and understanding!
 
 ## First time? Quick start
 
