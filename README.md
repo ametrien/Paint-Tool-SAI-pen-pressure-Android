@@ -42,7 +42,7 @@ While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is rea
 | Samsung Galaxy S26 Ultra | | Ver.2 Alpha.2026.10.19, 64-bit, no licence | SAI found by itself, starts, the pen draws with pressure |
 | Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
 | Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
-| Ugee UT2 (tested by a user) | | | the pen draws with pressure; the pen has no hover, so the first touch of a stroke left a dot at the full brush size: fixed in 0.4.20 (reproduced and fixed with an S Pen made to ignore its hover, not yet confirmed on the Ugee) |
+| Ugee UT2 (tested by a user on 0.4.18) | | Ver.2 Alpha.2026.10.19 | the pen draws with pressure; the pen has no hover, and on 0.4.18 most strokes started with a dot at the full brush size. Probably fixed in 0.4.20 (see below), not yet confirmed on the Ugee |
 
 Pressure has only worked with SAI Ver.2 Alpha.2026.10.19. Older SAI2 builds (2024.11.23 and
 2019.08.12, 64-bit) start but draw without pressure.
@@ -78,6 +78,13 @@ For example:
   Honor and Huawei pens;
 - USI 2.0 pens on tablets that support them;
 - a Wacom pen tablet plugged into the Android device by USB.
+
+**Pens without hover.** Some pens, like the Ugee UT2's, tell Android nothing until they touch the
+glass (check with step 4 below). Up to 0.4.19 this made SAI take the first touch of a stroke for a
+mouse click and leave a dot at the full brush size. 0.4.20 fixes this: the dots were reproduced on
+an S Pen made to ignore its hover (13 of 14 lines) and were gone with the fix (0 of 15). The fix
+does not depend on the pen's maker, so it should help most pens without hover, but it has not yet
+been confirmed on one.
 
 With such a pen a few things may differ: without hover the cursor shows only while the pen
 touches, the side button may be taken by the maker for its own shortcut (then there is no right
