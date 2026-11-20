@@ -16,7 +16,7 @@ On a Mac? The same, also by me:
 > versions.
 >
 > In the first 24 hours after [sharing it on Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/),
-> people tested it on their tablets and phones (Galaxy, Xiaomi, Ugee) and sent reports. Thanks to
+> people tested it on their tablets and phones (Galaxy, Xiaomi, Huawei, Ugee) and sent reports. Thanks to
 > them, 0.4.19 to 0.4.24 brought:
 >
 > - palm rejection, so a resting hand doesn't draw random lines;
@@ -126,6 +126,7 @@ While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is rea
 | Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | the pen draws with pressure |
 | Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | the pen draws with pressure |
 | Ugee UT2 (tested by a user on 0.4.18) | | the pen draws with pressure; the pen has no hover, and on 0.4.18 most strokes started with a dot at the full brush size. Probably fixed in 0.4.20 (see below), not yet confirmed on the Ugee |
+| Huawei MatePad 11.5 PaperMatte (tested by a user) | | everything works |
 
 ### SAI versions
 
