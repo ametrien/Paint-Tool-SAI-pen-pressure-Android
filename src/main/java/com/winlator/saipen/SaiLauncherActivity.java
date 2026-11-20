@@ -132,7 +132,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private File zip;             /* a SAI zip to offer unpacking, or null */
     private boolean autoLaunch;
     private AlertDialog licenceDialog;
-    private TextView tvBrushes, tvBrushesWhere;
+    private TextView tvBrushes, tvBrushesWhere, tvStats;
     private Button btnAddBrushes, btnOpenBrushes;
 
     @Override
@@ -174,6 +174,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         btnLicence = findViewById(R.id.SaiPenAddLicence);
         btnLicence.setOnClickListener(v -> askAboutLicence());
         tvBrushes = findViewById(R.id.SaiPenBrushes);
+        tvStats = findViewById(R.id.SaiPenStats);
         tvBrushesWhere = findViewById(R.id.SaiPenBrushesWhere);
         btnAddBrushes = findViewById(R.id.SaiPenAddBrushes);
         btnAddBrushes.setOnClickListener(v -> pickBrushes());
@@ -216,6 +217,47 @@ public class SaiLauncherActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         showVideoButton();
+        showStats();
+    }
+
+    /* ---- how much you draw (DrawingStats) ---- */
+
+    /** The card shows once anything was drawn; read off the screen's thread. */
+    private void showStats() {
+        if (tvStats == null) return;
+        File file = new File(getFilesDir(), DrawingStats.FILE);
+        worker.execute(() -> {
+            java.util.Map<String, DrawingStats.Day> days = DrawingStats.load(file).days();
+            java.time.LocalDate today = java.time.LocalDate.now();
+            DrawingStats.Day all = DrawingStats.total(days);
+            if (all.strokes == 0) return;
+            DrawingStats.Day day = DrawingStats.lastDays(days, today, 1);
+            DrawingStats.Day week = DrawingStats.lastDays(days, today, 7);
+            int streak = DrawingStats.streak(days, today);
+            ui.post(() -> {
+                if (isFinishing()) return;
+                tvStats.setText(getString(R.string.saipen_stats, statsPart(day), statsPart(week),
+                    streak > 1 ? getResources().getQuantityString(R.plurals.saipen_stats_streak, streak, streak) : "",
+                    statsPart(all)).replace("  ", " "));
+                tvStats.setVisibility(View.VISIBLE);
+            });
+        });
+    }
+
+    /** "1 h 12 min, 340 strokes", or "nothing yet". */
+    private String statsPart(DrawingStats.Day d) {
+        if (d.strokes == 0) return getString(R.string.saipen_stats_nothing);
+        String n = java.text.NumberFormat.getIntegerInstance().format(d.strokes);
+        return getString(R.string.saipen_stats_part, duration(d.activeSeconds),
+                         getResources().getQuantityString(R.plurals.saipen_n_strokes, d.strokes, n));
+    }
+
+    private String duration(double seconds) {
+        int m = (int) (seconds / 60);
+        if (m < 1) return getString(R.string.saipen_stats_under_minute);
+        if (m < 60) return getString(R.string.saipen_stats_min, m);
+        return m % 60 == 0 ? getString(R.string.saipen_stats_h, m / 60)
+                           : getString(R.string.saipen_stats_h_min, m / 60, m % 60);
     }
 
     /* ---- timelapse: frames from SAI into a video ---- */

@@ -50,6 +50,12 @@ public final class SpeedSession {
     /** The pen touched since the last tick (SaiCores counts only drawing time). */
     private volatile boolean penSinceTick;
     private SaiCores cores;
+    /** How much you draw (DrawingStats), counted with the speed log on or off. */
+    private volatile DrawingStats stats;
+    private File statsFile;
+    /** Seconds since the stats were last saved (saved every SAVE_EVERY ticks). */
+    private int ticksSinceSave;
+    private static final int SAVE_EVERY = 15;
     private long lastSai = -1, lastAll = -1, lastTickAt = -1;
 
     private SpeedSession(SpeedLog log, BufferedWriter file, ScheduledExecutorService thread) {
@@ -107,6 +113,8 @@ public final class SpeedSession {
         s.header("to screen: the tablet feeling the pen to the app's frame with SAI's first drawing;");
         s.header("  input: tablet to app, SAI: app to SAI's drawing (ink), frame: SAI's drawing to the frame.");
         s.header("  Android shows a frame a refresh or two after it: not measured here.");
+        s.statsFile = new File(activity.getFilesDir(), DrawingStats.FILE);
+        s.stats = DrawingStats.load(s.statsFile);
         s.cores = new SaiCores(new File("/proc"), SaiProcessWatch.commOf(exeName),
                                FastCores.find(new File("/sys/devices/system/cpu")),
                                SaiCores.readMode(activity.getFilesDir()), SaiCores::taskset, s::header);
@@ -160,6 +168,14 @@ public final class SpeedSession {
             header("cores: " + e);
         }
         flush();
+        if (++ticksSinceSave >= SAVE_EVERY) {
+            ticksSinceSave = 0;
+            saveStats();
+        }
+    }
+
+    private void saveStats() {
+        if (stats != null && !stats.saveIfChanged(statsFile)) Log.w(TAG, "drawing stats not saved");
     }
 
     private static int percent(long ticks, long elapsedMs) {
@@ -227,6 +243,11 @@ public final class SpeedSession {
         if (nowTouching) s.penSinceTick = true;
         if (nowTouching) s.log.onPenDown(now, touchedAt);
         else s.log.onPenUp(now);
+        DrawingStats st = s.stats;
+        if (st != null) {
+            if (nowTouching) st.penDown(now / 1000.0);
+            else st.penUp(now / 1000.0, java.time.LocalDate.now());
+        }
     }
 
     /** The app drew a frame for Android (GLRenderer.onDrawFrame), uptimeMillis. */
@@ -254,6 +275,10 @@ public final class SpeedSession {
         current = null;
         s.thread.shutdownNow();
         s.log.finish(SystemClock.uptimeMillis());
+        if (s.stats != null) {
+            s.stats.cancel();
+            s.saveStats();
+        }
         if (s.file != null) {
             try {
                 s.file.close();

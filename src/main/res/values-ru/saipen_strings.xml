@@ -147,4 +147,24 @@
         <item quantity="many">%d инструментов</item>
         <item quantity="other">%d инструмента</item>
     </plurals>
+    <!-- сколько ты рисуешь (DrawingStats), считается по перу -->
+    <string name="saipen_stats">Твоё рисование. Сегодня: %1$s. За 7 дней: %2$s. %3$s Всего: %4$s.</string>
+    <string name="saipen_stats_part">%1$s, %2$s</string>
+    <string name="saipen_stats_min">%d мин</string>
+    <string name="saipen_stats_h">%d ч</string>
+    <string name="saipen_stats_h_min">%1$d ч %2$d мин</string>
+    <string name="saipen_stats_under_minute">меньше минуты</string>
+    <string name="saipen_stats_nothing">пока ничего</string>
+    <plurals name="saipen_stats_streak">
+        <item quantity="one">%d день подряд.</item>
+        <item quantity="few">%d дня подряд.</item>
+        <item quantity="many">%d дней подряд.</item>
+        <item quantity="other">%d дня подряд.</item>
+    </plurals>
+    <plurals name="saipen_n_strokes">
+        <item quantity="one">%s мазок</item>
+        <item quantity="few">%s мазка</item>
+        <item quantity="many">%s мазков</item>
+        <item quantity="other">%s мазка</item>
+    </plurals>
 </resources>

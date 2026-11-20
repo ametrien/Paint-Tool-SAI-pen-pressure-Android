@@ -137,4 +137,20 @@
         <item quantity="one">%d tool</item>
         <item quantity="other">%d tools</item>
     </plurals>
+    <!-- how much you draw (DrawingStats), counted from the pen -->
+    <string name="saipen_stats">Your drawing. Today: %1$s. Last 7 days: %2$s. %3$s In all: %4$s.</string>
+    <string name="saipen_stats_part">%1$s, %2$s</string>
+    <string name="saipen_stats_min">%d min</string>
+    <string name="saipen_stats_h">%d h</string>
+    <string name="saipen_stats_h_min">%1$d h %2$d min</string>
+    <string name="saipen_stats_under_minute">under a minute</string>
+    <string name="saipen_stats_nothing">nothing yet</string>
+    <plurals name="saipen_stats_streak">
+        <item quantity="one">%d day in a row.</item>
+        <item quantity="other">%d days in a row.</item>
+    </plurals>
+    <plurals name="saipen_n_strokes">
+        <item quantity="one">%s stroke</item>
+        <item quantity="other">%s strokes</item>
+    </plurals>
 </resources>
