@@ -52,6 +52,13 @@ On a Mac? The same, also by me:
 
    SAI Pen's screen also has **SAI's screen sharpness**: a lower one makes everything bigger and
    faster.
+
+   What looks good so far, to start from:
+
+   | Device | SAI's screen sharpness | Scaling of User Interface | How it looks |
+   |---|---|---|---|
+   | Galaxy Tab S9 FE+ (a user's choice) | 1600, the display's own | 150% | |
+   | Galaxy S26 Ultra (the author's choice) | 1080 | 200% | [SAI](docs/images/phone-200.jpg), [the menu](docs/images/phone-200-menu.jpg) |
 6. **Try the settings on SAI Pen's screen** and keep what works for you:
    [palm rejection](#palm-rejection) if your hand moves the cursor or clicks, and
    [timelapse](#timelapse) recording on or off.

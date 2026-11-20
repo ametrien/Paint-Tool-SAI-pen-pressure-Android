@@ -1,5 +1,5 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index 5a2f248..a62d069 100644
+index 5a2f248..072704a 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
 @@ -5,14 +5,45 @@ android {
@@ -15,8 +15,8 @@ index 5a2f248..a62d069 100644
          targetSdkVersion 28
 -        versionCode 33
 -        versionName "11.2"
-+        versionCode 39
-+        versionName "0.4.23"
++        versionCode 40
++        versionName "0.4.24"
 +    }
 +
 +    /* SAI Pen: the release key lives outside the repository (build.sh says
@@ -187,7 +187,7 @@ index 3bb2d01..f245d35 100644
          final CheckBox cbCapturePointerOnExternalMouse = view.findViewById(R.id.CBCapturePointerOnExternalMouse);
          cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
 diff --git a/app/src/main/java/com/winlator/XServerDisplayActivity.java b/app/src/main/java/com/winlator/XServerDisplayActivity.java
-index 18acd68..0787310 100644
+index 18acd68..5ac1183 100644
 --- a/app/src/main/java/com/winlator/XServerDisplayActivity.java
 +++ b/app/src/main/java/com/winlator/XServerDisplayActivity.java
 @@ -224,13 +224,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
@@ -293,6 +293,22 @@ index 18acd68..0787310 100644
      }
  
      private void showInputControlsDialog() {
+@@ -797,6 +839,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     @Override
+     public boolean dispatchKeyEvent(KeyEvent event) {
++        /* SAI Pen: a typing keyboard's keys go to SAI, also from a keyboard
++         * Android calls a gamepad as well; before, the gamepad code took its
++         * arrows and dropped the rest (KeyboardKeys, issue #5) */
++        android.view.InputDevice device = event.getDevice();
++        if (device != null && !device.isVirtual() && com.winlator.saipen.KeyboardKeys.firstKeyFrom(device.getId()))
++            com.winlator.saipen.SpeedSession.note(com.winlator.saipen.KeyboardKeys.describe(device.getName(),
++                device.getSources(), device.getKeyboardType(), ExternalController.isGameController(device)));
++        if (device != null && com.winlator.saipen.KeyboardKeys.toSai(device.getKeyboardType(), event.getKeyCode()))
++            return xServer.keyboard.onKeyEvent(event) || super.dispatchKeyEvent(event);
+         return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
+                (!ExternalController.isGameController(event.getDevice()) && super.dispatchKeyEvent(event));
+     }
 diff --git a/app/src/main/java/com/winlator/contentdialog/AboutDialog.java b/app/src/main/java/com/winlator/contentdialog/AboutDialog.java
 index 84f2567..7fa1760 100644
 --- a/app/src/main/java/com/winlator/contentdialog/AboutDialog.java
@@ -972,6 +988,22 @@ index 08fbf80..9d6fb43 100644
          });
      }
  
+diff --git a/app/src/main/java/com/winlator/xserver/Keyboard.java b/app/src/main/java/com/winlator/xserver/Keyboard.java
+index 3039610..9862066 100644
+--- a/app/src/main/java/com/winlator/xserver/Keyboard.java
++++ b/app/src/main/java/com/winlator/xserver/Keyboard.java
+@@ -96,7 +96,10 @@ public class Keyboard {
+     }
+ 
+     public boolean onKeyEvent(KeyEvent event) {
+-        if (ExternalController.isGameController(event.getDevice())) return false;
++        /* SAI Pen: a typing keyboard Android also calls a gamepad still types
++         * (KeyboardKeys, issue #5) */
++        if (ExternalController.isGameController(event.getDevice())
++            && !com.winlator.saipen.KeyboardKeys.toSai(event.getDevice().getKeyboardType(), event.getKeyCode())) return false;
+ 
+         int action = event.getAction();
+         if (action == KeyEvent.ACTION_DOWN || action == KeyEvent.ACTION_UP) {
 diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
 index bd67ab5..e293f83 100644
 --- a/app/src/main/res/layout/container_detail_fragment.xml

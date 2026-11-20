@@ -22,6 +22,13 @@ public class SpeedLogTest {
     }
 
     @Test
+    public void aNoteIsALineAtItsTime() {
+        SpeedLog s = log();
+        s.note(3500, "keyboard \"K\": typing keyboard, sources 0x4103");
+        assertEquals("   2.5s  keyboard \"K\": typing keyboard, sources 0x4103", lines.get(0));
+    }
+
+    @Test
     public void inkIsPenDownToSaisFirstDrawing() {
         SpeedLog s = log();
         s.onContentUpdate(1500);                /* before the pen: not the stroke */

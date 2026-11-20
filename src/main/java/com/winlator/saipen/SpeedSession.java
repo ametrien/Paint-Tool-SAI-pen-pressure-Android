@@ -240,6 +240,13 @@ public final class SpeedSession {
         if (s != null) s.log.onCoverLifted(SystemClock.uptimeMillis());
     }
 
+    /** A line of its own in the log (which also goes to logcat); logcat alone without a session. */
+    public static void note(String text) {
+        SpeedSession s = current;
+        if (s != null) s.log.note(SystemClock.uptimeMillis(), text);
+        else Log.i(TAG, text);
+    }
+
     /** SAI closed or the session ends: the summary, and the file is done. */
     public static synchronized void finish() {
         SpeedSession s = current;

@@ -98,6 +98,11 @@ public final class SpeedLog {
         out.line(at(now) + "  start-up cover lifted");
     }
 
+    /** A line of its own, at this time (a keyboard's first key: KeyboardKeys). */
+    public synchronized void note(long now, String text) {
+        out.line(at(now) + "  " + text);
+    }
+
     public synchronized void onContentUpdate(long now) {
         updatesThisSecond++;
         lastUpdate = now;
