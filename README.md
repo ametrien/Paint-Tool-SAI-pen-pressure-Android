@@ -7,6 +7,45 @@
 Run **PaintTool SAI Ver.2** on a Samsung tablet or phone with the **S Pen**, with **real pen
 pressure**, and record a **timelapse of your canvas**. Free and open source.
 
+## First time? Quick start
+
+1. **Download only the `.apk`** from the
+   [latest release](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)
+   (`SAI-Pen-<version>.apk`) and install it. Android asks once to allow installing apps from your
+   browser or file manager. You don't need the `sources.tar` or GitHub's "Source code (zip)" and
+   "Source code (tar.gz)": those are source code, not the app.
+2. **Download SAI Ver.2 from SYSTEMAX:** <https://www.systemax.jp/en/sai/devdept.html>. Use a
+   2026 build. **Alpha.2026.10.19** and **Preview.2026.07.02b** are tested and work. Builds from
+   before 2026 don't seem to work well (the 2024 and 2019 builds we tried draw without pressure),
+   so please don't use them. The full list is under [SAI versions](#sai-versions). Leave the zip
+   in Downloads: SAI Pen finds it and unpacks it.
+3. **Open SAI Pen.** Allow access to files, wait for the one-time setup (a couple of minutes),
+   then tap **Start SAI**.
+4. **Make a licence certificate for this device.** Your PC's `.slc` file does not work here,
+   because SAI on the device has its own System ID. In SAI open **Other > System ID**:
+
+   <img src="docs/images/sai-system-id.png" width="380" alt="SAI's Other menu open, with System ID highlighted">
+
+   On <https://www.systemax.jp/en/license.html> enter that System ID with the licence number and
+   password from the email SYSTEMAX sent you when you bought SAI, and download the new
+   `sai-....slc`. Put it in Downloads and tap **Add a SAI licence** on SAI Pen's screen. You don't
+   buy SAI again. Details: [Your SAI licence](#your-sai-licence).
+5. **Everything too small or too big?** In SAI open **Window > Scaling of User Interface** and
+   try another size:
+
+   <img src="docs/images/sai-ui-scaling.png" width="450" alt="SAI's Window menu, Scaling of User Interface, sizes from 100% to 400% and Auto">
+
+   SAI Pen's screen also has **SAI's screen sharpness**: a lower one makes everything bigger and
+   faster.
+6. **Try the settings on SAI Pen's screen** and keep what works for you:
+   [palm rejection](#palm-rejection) if your hand moves the cursor or clicks, and
+   [timelapse](#timelapse) recording on or off.
+
+It works best with the **Samsung S Pen**. Other pens may work too: see
+[Which devices and pens](#which-devices-and-pens).
+
+## About
+
 SAI Pen is made and tested for **Samsung's S Pen**. It will probably work on other Android tablets
 and pens too, but expect some problems there (see [Which devices and pens](#which-devices-and-pens)).
 
