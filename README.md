@@ -10,7 +10,8 @@ pressure**, and record a **timelapse of your canvas**. Free and open source.
 SAI Pen is made and tested for **Samsung's S Pen**. It will probably work on other Android tablets
 and pens too, but expect some problems there (see [Which devices and pens](#which-devices-and-pens)).
 
-It has only been tested on PaintTool SAI Ver.2 (64bit) Alpha.2026.10.19 so far.
+It has been tested on PaintTool SAI Ver.2 (64bit) Alpha.2026.10.19 and Preview.2026.07.02b so far
+(see [Tested on](#tested-on)).
 
 You install one app and put SAI on the device. The app finds SAI and starts it full screen: the
 cursor sits under the pen tip, touching draws, pressing harder draws a thicker line, and two
@@ -36,16 +37,27 @@ While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is rea
 
 ## Tested on
 
-| Device | Android | SAI | Result |
-|---|---|---|---|
-| Samsung Galaxy Tab S6 Lite (2022), SM-P613 | 14 | Ver.2 Alpha.2026.10.19, 64-bit | pen, pressure, gestures, saving with a licence, timelapse: work |
-| Samsung Galaxy S26 Ultra | | Ver.2 Alpha.2026.10.19, 64-bit, no licence | SAI found by itself, starts, the pen draws with pressure |
-| Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
-| Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
-| Ugee UT2 (tested by a user on 0.4.18) | | Ver.2 Alpha.2026.10.19 | the pen draws with pressure; the pen has no hover, and on 0.4.18 most strokes started with a dot at the full brush size. Probably fixed in 0.4.20 (see below), not yet confirmed on the Ugee |
+### Devices
 
-Pressure has only worked with SAI Ver.2 Alpha.2026.10.19. Older SAI2 builds (2024.11.23 and
-2019.08.12, 64-bit) start but draw without pressure.
+| Device | Android | Result |
+|---|---|---|
+| Samsung Galaxy Tab S6 Lite (2022), SM-P613 | 14 | pen, pressure, gestures, saving with a licence, timelapse: work |
+| Samsung Galaxy S26 Ultra | | without a licence: SAI found by itself, starts, the pen draws with pressure |
+| Samsung Galaxy Tab S9 FE+ (tested by a user) | | works |
+| Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | the pen draws with pressure |
+| Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | the pen draws with pressure |
+| Ugee UT2 (tested by a user on 0.4.18) | | the pen draws with pressure; the pen has no hover, and on 0.4.18 most strokes started with a dot at the full brush size. Probably fixed in 0.4.20 (see below), not yet confirmed on the Ugee |
+
+### SAI versions
+
+SAI's title bar shows which build you have, like *PaintTool SAI Ver.2 (64bit) Alpha.2026.10.19*.
+
+| SAI Ver.2 (64bit) build | Result | Tested on |
+|---|---|---|
+| Alpha.2026.10.19 | works, the pen draws with pressure | Galaxy Tab S6 Lite, Galaxy S26 Ultra, Xiaomi Pad 7 Pro, Xiaomi Pad 6, Ugee UT2 |
+| Preview.2026.07.02b | works | Galaxy Tab S9 FE+ (by a user) |
+| 2024.11.23 | starts, but draws without pressure | |
+| 2019.08.12 | starts, but draws without pressure | |
 
 ## Which devices and pens
 
@@ -56,7 +68,7 @@ little slow.
 
 **Made for the Samsung S Pen.** SAI Pen is built and tested on Samsung devices. Users have also
 tried it with the Xiaomi Focus Pen (Pad 7 Pro), the Xiaomi Smart Pen 2nd gen (Pad 6) and the
-Ugee UT2 (see the table). The two Xiaomi pens do not work with each other's tablets.
+Ugee UT2 (see [Tested on](#tested-on)). The two Xiaomi pens do not work with each other's tablets.
 
 **Other tablets: expect some problems.** Every maker's pen reports to Android a little
 differently, so on other tablets SAI Pen will probably work, but some things may go wrong, like
