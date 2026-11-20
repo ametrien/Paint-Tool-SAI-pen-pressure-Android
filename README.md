@@ -26,6 +26,9 @@ On a Mac? The same, also by me:
 > - fixes for a pen that left a dot at the start of strokes, drawings that couldn't be found after
 >   saving, and Bluetooth keyboards that didn't type into SAI.
 >
+> In 0.4.25 I also added basic drawing statistics on SAI Pen's screen: today, the last 7 days,
+> days in a row and in all.
+>
 > Thank you, everyone!
 >
 > After weeks of extensive work on the macOS and Android versions in my free time, I now need to
