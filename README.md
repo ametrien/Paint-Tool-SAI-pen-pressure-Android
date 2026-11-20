@@ -130,8 +130,12 @@ first touch or jump to 1.0, and does the crosshair follow the pen above the scre
 
 ## Download
 
-**[Download the latest release](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)**:
-the file `SAI-Pen-<version>.apk`.
+**[Download the latest release](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)**
+and install the file `SAI-Pen-<version>.apk`. That's all you need.
+
+The other file, `SAI-Pen-<version>-sources.tar` (about 400 MB), is the source code of the
+open-source parts inside the app (Wine, Box64 and the rest), there for their licences. You don't
+need it to use SAI Pen.
 
 Every version is a GitHub release with its own tag (`v0.4.0`, `v0.4.1`, ...), the same way as the
 macOS project. The app is not in Google Play.
@@ -144,7 +148,12 @@ macOS project. The app is not in Google Play.
    unpack the zip or leave it in Downloads and let the app unpack it. SAI needs its whole folder
    (`sai2.exe`, `sai2.ini` and `init`), not only `sai2.exe`.
 3. **Open SAI Pen** and go through the first start (below). Then tap **Start SAI**.
-4. **Save your drawings** into the "SAI Drawings" folder of SAI's save dialog. On the device it is
+4. **Make a licence certificate for this device.** Your PC's `.slc` file does not work here: a
+   certificate is made for one System ID, and SAI on the device has its own. In SAI open
+   **Other > System ID**, then make a new certificate on SYSTEMAX's site with the licence number
+   and password from the email you got when you bought SAI. You don't buy SAI again. Step by step
+   in [Your SAI licence](#your-sai-licence).
+5. **Save your drawings** into the "SAI Drawings" folder of SAI's save dialog. On the device it is
    **Documents/SAI Drawings**.
 
 ### The first start, step by step
@@ -289,12 +298,18 @@ uninstall SAI Pen.
 ### Your SAI licence
 
 Without a licence certificate SAI Ver.2 does not save or open files. A certificate is made for
-one System ID, and SAI on the device has its own:
+one System ID, and SAI on the device has its own, so the `.slc` from your PC does not work here.
+A new certificate for the device's System ID is all it takes, with the licence you already have:
 
-1. In SAI on the device: **Other > System ID**.
-2. On <https://www.systemax.jp/en/license.html> enter your licence number, password and that
-   System ID, and download the certificate (`sai-....slc`).
-3. Put it in **Downloads** on the device, tap **Add a SAI licence** on the app's screen and then
+1. Start SAI on the device and open **Other > System ID**. Note the System ID it shows.
+
+   <img src="docs/images/sai-system-id.png" width="400" alt="SAI's Other menu open, with System ID highlighted">
+
+2. Find the email SYSTEMAX sent when you bought SAI: it has your **licence number** and
+   **password**.
+3. On <https://www.systemax.jp/en/license.html> enter the licence number, the password and the
+   device's System ID, and download the certificate (`sai-....slc`).
+4. Put it in **Downloads** on the device, tap **Add a SAI licence** on the app's screen and then
    **Look for it**, or **Choose the file** wherever it is. Once you have said yes to a found
    licence, a newer `sai*.slc` that later lands in Downloads (a new System ID, say) is taken by
    itself at the next start.
