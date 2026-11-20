@@ -105,7 +105,7 @@
             android:text="@string/saipen_choose"
             android:textColor="?attr/colorPrimaryText" />
 
-        <TextView
+        <com.winlator.saipen.SpoilerTextView
             android:id="@+id/SaiPenLicenceStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -133,6 +133,46 @@
             android:layout_width="280dp"
             android:layout_height="wrap_content"
             android:text="@string/saipen_add_licence"
+            android:visibility="gone"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <TextView
+            android:id="@+id/SaiPenBrushes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/SaiPenBrushesWhere"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:text="@string/saipen_brushes_where"
+            android:textSize="12sp"
+            android:alpha="0.7"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenAddBrushes"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/saipen_add_brushes"
+            android:visibility="gone"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <Button
+            android:id="@+id/SaiPenOpenBrushes"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/saipen_open_brushes"
             android:visibility="gone"
             android:textColor="?attr/colorPrimaryText" />
 

@@ -90,18 +90,33 @@ public final class SaiPenSetup {
          * PC's folder there and it outlives an uninstall. Until 0.4.21 they
          * were inside the app; the first start moves them out
          * (PrefixLinks.moveIntoAndLink says how). */
-        File settings = new File(driveC, "users/xuser/Documents/" + SETTINGS_PATH);
-        try {
-            PrefixLinks.moveIntoAndLink(settings, settingsFolder(),
-                new File(settings.getParentFile(), "settings-inside-the-app"));
-        }
-        catch (Exception ignored) {
-            /* SAI starts with its settings inside the app, as before */
-        }
+        linkSettings(container.getRootDir());
 
         File userReg = new File(prefix, "user.reg");
         try (WineRegistryEditor reg = new WineRegistryEditor(userReg)) {
             reg.setStringValue("Software\\Wine\\DllOverrides", "wintab32", "native,builtin");
+        }
+    }
+
+    /**
+     * SAI's own settings (brushes, textures, presets, swatches) on the
+     * tablet, in the same place as on Windows, so people can copy their PC's
+     * folder there and it outlives an uninstall. Until 0.4.21 they were
+     * inside the app; the first call moves them out
+     * (PrefixLinks.moveIntoAndLink says how). Called before each session
+     * and by SAI Pen's screen before it counts or adds brushes: a pack
+     * added into an empty folder on the tablet would otherwise win over
+     * SAI's settings still inside the app. Returns true when the link is in
+     * place; on false SAI uses its folder inside the app, as before.
+     */
+    public static boolean linkSettings(File containerRoot) {
+        File settings = new File(containerRoot, ".wine/drive_c/users/xuser/Documents/" + SETTINGS_PATH);
+        try {
+            return PrefixLinks.moveIntoAndLink(settings, settingsFolder(),
+                new File(settings.getParentFile(), "settings-inside-the-app"));
+        }
+        catch (Exception e) {
+            return false;
         }
     }
 }

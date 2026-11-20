@@ -159,6 +159,33 @@ public final class SaiLocator {
     }
 
     /** A .slc that is SAI's for sure, to take without asking. */
+    /**
+     * The part of `line` to hide behind a spoiler: the licence number in the
+     * certificate's name `name` (sai-010062815390.slc: the digits), or the
+     * whole name when it has no run of 4 digits. {start, end} in `line`, or
+     * {-1, -1} when the name is not in it.
+     */
+    public static int[] licenceNumberRange(String line, String name) {
+        int at = name == null || name.isEmpty() ? -1 : line.indexOf(name);
+        if (at < 0) return new int[] {-1, -1};
+        int bestStart = -1, bestLen = 0;
+        for (int i = 0; i < name.length(); ) {
+            if (!Character.isDigit(name.charAt(i))) {
+                i++;
+                continue;
+            }
+            int j = i;
+            while (j < name.length() && Character.isDigit(name.charAt(j))) j++;
+            if (j - i > bestLen) {
+                bestStart = i;
+                bestLen = j - i;
+            }
+            i = j;
+        }
+        if (bestLen < 4) return new int[] {at, at + name.length()};
+        return new int[] {at + bestStart, at + bestStart + bestLen};
+    }
+
     public static boolean isAutoLicenceName(String name) {
         return isLicenceName(name) && name.toLowerCase(Locale.ROOT).contains("sai");
     }

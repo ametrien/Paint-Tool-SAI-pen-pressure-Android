@@ -66,6 +66,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private static final int REQUEST_STORAGE = 1;
     private static final int REQUEST_FOLDER = 2;
     private static final int REQUEST_LICENCE = 3;
+    private static final int REQUEST_BRUSHES = 4;
     private static final String PREF_SAI_DIR = "saipen_sai_dir";
     private static final String PREF_CONTAINER_ID = "saipen_container_id";
     /** Wine's screen height chosen on the screen (Sharpness); width follows
@@ -91,7 +92,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler ui = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
-    private TextView tvStatus, tvSaiPath, tvLicence, tvLicenceHint;
+    private TextView tvStatus, tvSaiPath, tvLicenceHint;
+    /** The licence line: its number behind a spoiler, so a screenshot of
+     *  the screen does not give it away (the owner, 2026-11-20). */
+    private SpoilerTextView tvLicence;
     private Button btnLicence;
     private ProgressBar progress;
     private Button btnVideo;
@@ -128,6 +132,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private File zip;             /* a SAI zip to offer unpacking, or null */
     private boolean autoLaunch;
     private AlertDialog licenceDialog;
+    private TextView tvBrushes, tvBrushesWhere;
+    private Button btnAddBrushes, btnOpenBrushes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,6 +173,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
         tvLicenceHint = findViewById(R.id.SaiPenLicenceHint);
         btnLicence = findViewById(R.id.SaiPenAddLicence);
         btnLicence.setOnClickListener(v -> askAboutLicence());
+        tvBrushes = findViewById(R.id.SaiPenBrushes);
+        tvBrushesWhere = findViewById(R.id.SaiPenBrushesWhere);
+        btnAddBrushes = findViewById(R.id.SaiPenAddBrushes);
+        btnAddBrushes.setOnClickListener(v -> pickBrushes());
+        btnOpenBrushes = findViewById(R.id.SaiPenOpenBrushes);
+        btnOpenBrushes.setOnClickListener(v -> openBrushesFolder());
         android.widget.CompoundButton autostart = findViewById(R.id.SaiPenAutostart);
         autostart.setChecked(prefs.getBoolean(PREF_AUTOSTART, false));
         autostart.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(PREF_AUTOSTART, on).apply());
@@ -675,6 +687,16 @@ public class SaiLauncherActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK && data != null && data.getData() != null) addLicence(data.getData());
             return;
         }
+        if (requestCode == REQUEST_BRUSHES) {
+            if (resultCode != RESULT_OK || data == null) return;
+            List<Uri> uris = new ArrayList<>();
+            if (data.getClipData() != null) {
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+            }
+            else if (data.getData() != null) uris.add(data.getData());
+            if (!uris.isEmpty()) readBrushes(uris);
+            return;
+        }
         if (requestCode != REQUEST_FOLDER || resultCode != RESULT_OK || data == null || data.getData() == null) return;
         String path = SaiLocator.treeDocIdToPath(DocumentsContract.getTreeDocumentId(data.getData()),
                                                  Environment.getExternalStorageDirectory().getPath());
@@ -778,12 +800,243 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private void refreshLicence() {
         if (container == null) return;
         List<File> installed = SaiLocator.installedLicences(saiV2Dir());
-        tvLicence.setText(installed.isEmpty() ? getString(R.string.saipen_licence_none)
-                                              : getString(R.string.saipen_licence_ok, installed.get(0).getName()));
+        if (installed.isEmpty()) {
+            tvLicence.setSpoiler(getString(R.string.saipen_licence_none), -1, -1);
+        }
+        else {
+            String name = installed.get(0).getName();
+            String line = getString(R.string.saipen_licence_ok, name);
+            int[] hidden = SaiLocator.licenceNumberRange(line, name);
+            tvLicence.setSpoiler(line, hidden[0], hidden[1]);
+        }
         tvLicence.setVisibility(View.VISIBLE);
         tvLicenceHint.setVisibility(installed.isEmpty() ? View.VISIBLE : View.GONE);
         btnLicence.setText(installed.isEmpty() ? R.string.saipen_add_licence : R.string.saipen_change_licence);
         btnLicence.setVisibility(View.VISIBLE);
+        refreshBrushes();
+    }
+
+    /* ---- brushes and textures: SAI's settings folder on the device ---- */
+
+    /** Counts what SAI has, after making sure its settings folder is the
+     *  one in Documents (SaiPenSetup.linkSettings says why first). */
+    private void refreshBrushes() {
+        if (container == null) return;
+        File root = container.getRootDir();
+        worker.execute(() -> {
+            File settings = SaiPenSetup.settingsFolder();
+            boolean ready = SaiPenSetup.linkSettings(root) && BrushImport.hasSaiSettings(settings);
+            int[] n = ready ? BrushImport.count(settings) : null;
+            ui.post(() -> {
+                tvBrushes.setText(n == null ? getString(R.string.saipen_brushes_unknown)
+                    : getString(R.string.saipen_brushes_count, kinds(n[BrushImport.BRUSH_TEXTURES],
+                        n[BrushImport.PAPER_TEXTURES], n[3] + n[4] + n[5], n[BrushImport.SCATTER],
+                        n[BrushImport.FOLDERS.length], true)));
+                tvBrushes.setVisibility(View.VISIBLE);
+                tvBrushesWhere.setVisibility(View.VISIBLE);
+                btnAddBrushes.setVisibility(View.VISIBLE);
+                btnOpenBrushes.setVisibility(
+                    folderIntent().resolveActivity(getPackageManager()) != null ? View.VISIBLE : View.GONE);
+            });
+        });
+    }
+
+    /** "342 brush textures, 474 paper textures, ...": the kinds there are
+     *  some of, or all of them when `all`. */
+    private String kinds(int brushTextures, int paperTextures, int brushShapes, int scatter, int tools, boolean all) {
+        StringBuilder b = new StringBuilder();
+        int[] counts = {brushTextures, paperTextures, brushShapes, scatter, tools};
+        int[] names = {R.plurals.saipen_n_brush_textures, R.plurals.saipen_n_paper_textures,
+                       R.plurals.saipen_n_brush_shapes, R.plurals.saipen_n_scatter, R.plurals.saipen_n_tools};
+        for (int i = 0; i < counts.length; i++) {
+            if (counts[i] < 0 || (!all && counts[i] == 0)) continue;
+            if (b.length() > 0) b.append(", ");
+            b.append(getResources().getQuantityString(names[i], counts[i], counts[i]));
+        }
+        return b.toString();
+    }
+
+    /** The folder in the device's file manager, where one can open it. */
+    private Intent folderIntent() {
+        Uri uri = DocumentsContract.buildDocumentUri("com.android.externalstorage.documents",
+            "primary:" + Environment.DIRECTORY_DOCUMENTS + "/" + SaiPenSetup.SETTINGS_PATH);
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        return intent;
+    }
+
+    private void openBrushesFolder() {
+        try {
+            startActivity(folderIntent());
+        }
+        catch (RuntimeException e) {
+            Toast.makeText(this, R.string.saipen_brushes_where_toast, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Pictures, or a zip of a pack or of a PC's settings folder. */
+    private void pickBrushes() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(intent, REQUEST_BRUSHES);
+    }
+
+    /** What was picked, read file by file: zips opened, a picture as it is. */
+    private BrushImport.Source pickedFiles(List<Uri> uris) {
+        List<String> names = new ArrayList<>();
+        for (Uri u : uris) names.add(displayName(u));
+        return visitor -> {
+            for (int i = 0; i < uris.size(); i++) {
+                Uri uri = uris.get(i);
+                if (names.get(i).toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
+                    BrushImport.zip(() -> open(uri)).visit(visitor);
+                }
+                else {
+                    try (InputStream in = open(uri)) {
+                        visitor.file(names.get(i), in);
+                    }
+                }
+            }
+        };
+    }
+
+    private InputStream open(Uri uri) throws IOException {
+        InputStream in = getContentResolver().openInputStream(uri);
+        if (in == null) throw new IOException("cannot open " + uri);
+        return in;
+    }
+
+    private void readBrushes(List<Uri> uris) {
+        if (container == null) return;
+        File root = container.getRootDir();
+        AlertDialog wait = waitDialog(getString(R.string.saipen_brushes_reading));
+        worker.execute(() -> {
+            File settings = SaiPenSetup.settingsFolder();
+            boolean linked = SaiPenSetup.linkSettings(root);
+            BrushImport.Source source = null;
+            BrushImport.Plan plan = null;
+            String error = null;
+            try {
+                source = pickedFiles(uris);
+                plan = BrushImport.scan(source);
+            }
+            catch (IOException | RuntimeException e) {
+                Log.e(TAG, "reading brushes", e);
+                error = String.valueOf(e.getMessage());
+            }
+            final BrushImport.Source src = source;
+            final BrushImport.Plan p = plan;
+            final String err = error;
+            ui.post(() -> {
+                wait.dismiss();
+                if (err != null) message(getString(R.string.saipen_brushes_failed, err));
+                else if (!linked) message(getString(R.string.saipen_brushes_no_folder));
+                else if (p.isEmpty()) message(getString(R.string.saipen_brushes_nothing));
+                else if (p.isWholeSettings()) askToReplace(src, p, settings);
+                else if (!BrushImport.hasSaiSettings(settings)) message(getString(R.string.saipen_brushes_start_first));
+                else if (p.sorted() > 0) askToAdd(src, p, settings);
+                else askWhatTheyAre(src, p, settings);
+            });
+        });
+    }
+
+    private void askToAdd(BrushImport.Source src, BrushImport.Plan p, File settings) {
+        String text = getString(R.string.saipen_brushes_add_q, kinds(p.pictures[BrushImport.BRUSH_TEXTURES],
+            p.pictures[BrushImport.PAPER_TEXTURES], p.brushShapes(), p.pictures[BrushImport.SCATTER], -1, false));
+        if (p.unsorted > 0) text += "\n\n" + getString(R.string.saipen_brushes_left_out, p.unsorted);
+        new AlertDialog.Builder(this, DIALOG_THEME).setMessage(text)
+            .setPositiveButton(R.string.saipen_brushes_add, (d, w) -> addBrushes(src, settings, -1, p.files))
+            .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    /** Pictures with no folder that says what they are: the person says. */
+    private void askWhatTheyAre(BrushImport.Source src, BrushImport.Plan p, File settings) {
+        final int[] folders = {BrushImport.BRUSH_TEXTURES, BrushImport.PAPER_TEXTURES,
+                               BrushImport.BLOTMAP, BrushImport.SCATTER};
+        String[] names = {getString(R.string.saipen_kind_brush_textures), getString(R.string.saipen_kind_paper_textures),
+                          getString(R.string.saipen_kind_brush_shapes), getString(R.string.saipen_kind_scatter)};
+        String title = p.unsorted == 1 ? getString(R.string.saipen_brushes_what_one)
+                                       : getString(R.string.saipen_brushes_what, p.unsorted);
+        new AlertDialog.Builder(this, DIALOG_THEME).setTitle(title)
+            .setItems(names, (d, which) -> addBrushes(src, settings, folders[which], p.unsortedFiles))
+            .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private void askToReplace(BrushImport.Source src, BrushImport.Plan p, File settings) {
+        String backup = "settings-before-"
+            + new java.text.SimpleDateFormat("yyyy-MM-dd-HHmm", java.util.Locale.ROOT).format(new java.util.Date());
+        new AlertDialog.Builder(this, DIALOG_THEME).setMessage(getString(R.string.saipen_brushes_replace_q, backup))
+            .setPositiveButton(R.string.saipen_brushes_replace, (d, w) -> {
+                AlertDialog wait = waitDialog(getString(R.string.saipen_brushes_adding, 0, p.files));
+                worker.execute(() -> {
+                    String text;
+                    try {
+                        BrushImport.Result r = BrushImport.replace(src, p.settingsRoot, settings, backup, p.files,
+                                                                   progressTo(wait));
+                        text = getString(R.string.saipen_brushes_replaced, r.files,
+                                         r.backup != null ? r.backup.getName() : "-");
+                    }
+                    catch (IOException | RuntimeException e) {
+                        Log.e(TAG, "replacing SAI's settings", e);
+                        text = getString(R.string.saipen_brushes_failed, String.valueOf(e.getMessage()));
+                    }
+                    finished(wait, text);
+                });
+            })
+            .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private void addBrushes(BrushImport.Source src, File settings, int forced, int total) {
+        AlertDialog wait = waitDialog(getString(R.string.saipen_brushes_adding, 0, total));
+        worker.execute(() -> {
+            String text;
+            try {
+                BrushImport.Result r = BrushImport.add(src, settings, forced, total, progressTo(wait));
+                text = r.addedPictures() == 0 ? getString(R.string.saipen_brushes_added_none)
+                    : getString(R.string.saipen_brushes_added, kinds(r.added[BrushImport.BRUSH_TEXTURES],
+                        r.added[BrushImport.PAPER_TEXTURES], r.addedBrushShapes(), r.added[BrushImport.SCATTER], -1, false));
+                if (r.kept > 0) text += "\n\n" + getString(R.string.saipen_brushes_kept, r.kept);
+            }
+            catch (IOException | RuntimeException e) {
+                Log.e(TAG, "adding brushes", e);
+                text = getString(R.string.saipen_brushes_failed, String.valueOf(e.getMessage()));
+            }
+            finished(wait, text);
+        });
+    }
+
+    /** "Adding to SAI: 512 of 2195", a few times a second at most. */
+    private BrushImport.Progress progressTo(AlertDialog wait) {
+        final long[] last = {0};
+        return (done, total) -> {
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - last[0] < 200 && done < total) return;
+            last[0] = now;
+            String text = getString(R.string.saipen_brushes_adding, done, Math.max(done, total));
+            ui.post(() -> wait.setMessage(text));
+        };
+    }
+
+    private void finished(AlertDialog wait, String text) {
+        ui.post(() -> {
+            wait.dismiss();
+            message(text);
+            refreshBrushes();
+        });
+    }
+
+    private AlertDialog waitDialog(String text) {
+        AlertDialog d = new AlertDialog.Builder(this, DIALOG_THEME).setMessage(text).setCancelable(false).create();
+        d.show();
+        return d;
+    }
+
+    private void message(String text) {
+        new AlertDialog.Builder(this, DIALOG_THEME).setMessage(text)
+            .setPositiveButton(android.R.string.ok, null).show();
     }
 
     /** For a certificate kept anywhere else: the system's file picker. */

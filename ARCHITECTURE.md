@@ -92,7 +92,10 @@ Before every session (`SaiPenSetup`, launcher):
   presets) becomes a link to the same path under the tablet's `Documents`, so a PC's settings
   folder can be copied in. A folder SAI filled inside the app before 0.4.21 is copied out first
   and kept as `SAIv2\settings-inside-the-app`; a folder already on the tablet wins
-  (`PrefixLinks.moveIntoAndLink`). The licence stays inside the app.
+  (`PrefixLinks.moveIntoAndLink`). The licence stays inside the app. SAI Pen's screen links it
+  too (`SaiPenSetup.linkSettings`) before it counts what SAI has or adds to it: `BrushImport`
+  sorts a pack's `.bmp`/`.ini` files into SAI's folders by their folder names, and swaps in a
+  whole settings folder (the one with `settings2.ssd`) with the old one kept beside it.
 
 ## Starting
 

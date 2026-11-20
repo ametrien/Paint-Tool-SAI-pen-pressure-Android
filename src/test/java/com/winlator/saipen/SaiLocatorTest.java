@@ -46,6 +46,23 @@ public class SaiLocatorTest {
     }
 
     @Test
+    public void theLicenceNumberIsWhatHidesBehindTheSpoiler() {
+        String line = "SAI licence: sai-010062815390.slc";
+        int[] r = SaiLocator.licenceNumberRange(line, "sai-010062815390.slc");
+        assertEquals("010062815390", line.substring(r[0], r[1]));
+        /* a name without a number: all of it */
+        String other = "SAI licence: mine.slc";
+        int[] all = SaiLocator.licenceNumberRange(other, "mine.slc");
+        assertEquals("mine.slc", other.substring(all[0], all[1]));
+        /* Russian line, same name */
+        String ru = "Лицензия SAI: sai-0123456789.slc";
+        int[] r2 = SaiLocator.licenceNumberRange(ru, "sai-0123456789.slc");
+        assertEquals("0123456789", ru.substring(r2[0], r2[1]));
+        assertEquals(-1, SaiLocator.licenceNumberRange(line, "elsewhere.slc")[0]);
+        assertEquals(-1, SaiLocator.licenceNumberRange(line, null)[0]);
+    }
+
+    @Test
     public void findsAWholeSaiFolderInsideTelegramDownloads() throws Exception {
         File root = tmp.getRoot();
         File dir = sai(root, "Download/Telegram/sai2-Alpha-20261019-64bit-en");

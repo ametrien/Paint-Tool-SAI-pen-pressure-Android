@@ -86,4 +86,53 @@
     <string name="saipen_cores_sessions">sessions: %1$d</string>
     <string name="saipen_cores_few">too few strokes yet</string>
     <string name="saipen_cores_none">This device has no slow cores: nothing to choose.</string>
+
+    <!-- brushes and textures: SAI's settings folder on the device -->
+    <string name="saipen_brushes_count">In SAI: %1$s.</string>
+    <string name="saipen_brushes_unknown">SAI\'s brushes and textures are counted here after SAI\'s first start.</string>
+    <string name="saipen_brushes_where">They are in Documents/SYSTEMAX Software Development/SAIv2/settings, as on Windows. Add more with the button, or copy a whole settings folder from a PC there.</string>
+    <string name="saipen_add_brushes">Add brushes or textures</string>
+    <string name="saipen_open_brushes">Open the folder</string>
+    <string name="saipen_brushes_reading">Reading what you picked…</string>
+    <string name="saipen_brushes_start_first">Start SAI once first: it makes its brushes and textures folder on the first start. Then add yours.</string>
+    <string name="saipen_brushes_no_folder">SAI\'s settings folder in Documents could not be made, so nothing can be added there. Is there space on the device?</string>
+    <string name="saipen_brushes_nothing">There is nothing for SAI in this: no brush or texture pictures (.bmp) and no SAI settings folder.</string>
+    <string name="saipen_brushes_add_q">Add to SAI: %1$s.\n\nPictures SAI already has under the same name stay as they are.</string>
+    <string name="saipen_brushes_left_out">%1$d more pictures are in folders whose names do not say what they are, and are left out.</string>
+    <string name="saipen_brushes_add">Add</string>
+    <string name="saipen_brushes_what">What are these %1$d pictures?</string>
+    <string name="saipen_brushes_what_one">What is this picture?</string>
+    <string name="saipen_kind_brush_textures">Brush textures</string>
+    <string name="saipen_kind_paper_textures">Paper textures</string>
+    <string name="saipen_kind_brush_shapes">Brush shapes</string>
+    <string name="saipen_kind_scatter">Scatter shapes</string>
+    <string name="saipen_brushes_replace_q">This is a whole SAI settings folder, from a PC or another device. Its tools, presets, brushes and textures replace the ones SAI has on this device.\n\nThe current ones are kept in Documents/SYSTEMAX Software Development/SAIv2, in a folder named %1$s.</string>
+    <string name="saipen_brushes_replace">Replace</string>
+    <string name="saipen_brushes_adding">Adding to SAI: %1$d of %2$d</string>
+    <string name="saipen_brushes_added">Added to SAI: %1$s. Start SAI to use them.</string>
+    <string name="saipen_brushes_added_none">Nothing new: SAI already has all of these.</string>
+    <string name="saipen_brushes_kept">%1$d were there already and stay as they were.</string>
+    <string name="saipen_brushes_replaced">SAI\'s settings replaced (%1$d files). The old ones are in Documents/SYSTEMAX Software Development/SAIv2/%2$s.\n\nThe first time, SAI\'s window may open at the size it had on the PC: maximize it once and SAI remembers.</string>
+    <string name="saipen_brushes_failed">Could not add them: %1$s</string>
+    <string name="saipen_brushes_where_toast">SAI\'s brushes and textures: Documents/SYSTEMAX Software Development/SAIv2/settings</string>
+    <plurals name="saipen_n_brush_textures">
+        <item quantity="one">%d brush texture</item>
+        <item quantity="other">%d brush textures</item>
+    </plurals>
+    <plurals name="saipen_n_paper_textures">
+        <item quantity="one">%d paper texture</item>
+        <item quantity="other">%d paper textures</item>
+    </plurals>
+    <plurals name="saipen_n_brush_shapes">
+        <item quantity="one">%d brush shape</item>
+        <item quantity="other">%d brush shapes</item>
+    </plurals>
+    <plurals name="saipen_n_scatter">
+        <item quantity="one">%d scatter shape</item>
+        <item quantity="other">%d scatter shapes</item>
+    </plurals>
+    <plurals name="saipen_n_tools">
+        <item quantity="one">%d tool</item>
+        <item quantity="other">%d tools</item>
+    </plurals>
 </resources>

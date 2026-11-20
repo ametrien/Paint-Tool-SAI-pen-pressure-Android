@@ -111,7 +111,7 @@ public final class PrefixLinks {
         return dir.isDirectory() && list != null && list.length == 0;
     }
 
-    private static File freeName(File wanted) {
+    static File freeName(File wanted) {
         File f = wanted;
         for (int i = 2; f.exists() || Files.isSymbolicLink(f.toPath()); i++) {
             f = new File(wanted.getParentFile(), wanted.getName() + "-" + i);
@@ -141,7 +141,7 @@ public final class PrefixLinks {
         return true;
     }
 
-    private static void deleteTree(Path root) throws IOException {
+    static void deleteTree(Path root) throws IOException {
         if (!Files.exists(root, LinkOption.NOFOLLOW_LINKS)) return;
         try (java.util.stream.Stream<Path> all = Files.walk(root)) {
             java.util.List<Path> paths = new java.util.ArrayList<>();

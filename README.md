@@ -209,43 +209,46 @@ turns the frames into an MP4 per canvas in **Documents/SAI Drawings**.
 
 ### Your brushes, textures and presets
 
-Since 0.4.21 SAI keeps its settings on the device, in the same place as on Windows:
-**Documents/SYSTEMAX Software Development/SAIv2/settings**. In it are your custom tools and
-brush presets (`custool`), textures (`brushtex`, `papertex`), scatter and brush shapes
-(`scatter`, `brushfom`) and swatches.
+SAI keeps them on the device in **Documents/SYSTEMAX Software Development/SAIv2/settings**, the
+same place as on Windows (since 0.4.21). SAI Pen's screen shows how many brush textures, paper
+textures, brush shapes, scatter shapes and tools SAI has, with two buttons (since 0.4.22):
 
-To bring yours over from a PC:
+- **Add brushes or textures.** Pick a brush pack's `.zip`, as artists share them online, or
+  loose `.bmp` pictures. SAI Pen puts each picture into SAI's folder for it, going by the pack's
+  folder names (`brushtex`, `papertex`, `scatter`, `blotmap`, `bristle`, `brshape`). For pictures
+  without such folders it asks what they are. Pictures SAI already has stay as they are, and only
+  `.bmp` and `.ini` files are taken from a pack, never a program or anything else.
+- **Open the folder** opens it in the Files app.
 
-1. **Start SAI once on the device** with SAI Pen 0.4.21 or newer, then close it. This makes the
-   folder on the device.
-2. **Find the folder on the PC.** In File Explorer open **Documents**, then **SYSTEMAX Software
-   Development**, then **SAIv2**. The `settings` folder in it is the one to copy.
-3. **Copy it to the device**, either way:
-   - **With a USB cable.** Connect the device and choose **File transfer** in Android's USB
-     notification. The device shows up in File Explorer. Open its **Internal storage > Documents >
-     SYSTEMAX Software Development > SAIv2**, delete the `settings` folder there and copy the
-     PC's `settings` folder in.
-   - **Without a cable.** On the PC, right-click `settings` > **Send to > Compressed (zipped)
-     folder**. Send `settings.zip` to the device (Google Drive, Quick Share, email, a messenger),
-     open it in the device's file manager (My Files on Samsung) and extract it. In
-     Documents/SYSTEMAX Software Development/SAIv2 on the device, delete the `settings` folder and
-     move the extracted one there. Check that `custool`, `brushtex` and the other folders are
-     straight inside `settings`, not in a second `settings` folder inside it.
-4. **Start SAI.**
+| In a pack | Where you pick it in SAI |
+|---|---|
+| Brush textures | brush settings, the **[ No Texture ]** list |
+| Brush shapes | brush settings, the **[ Simple Circle ]** list |
+| Paper textures | Layer Effect, **Paper** |
+| Scatter shapes | the **Scatter** tool |
 
-Replace the whole folder rather than copying files into it: SAI numbers its tools, so mixing two
-sets can mix up the tool panel. Texture collections are different: their `.bmp` and `.ini`
-files can simply be added to `brushtex`, `papertex`, `scatter` and the folders in `brushfom`.
+**Your tools and presets from a PC** are SAI's whole `settings` folder there:
 
-The PC's folder also brings the PC's window size and position, so the first time SAI may open
-smaller or off to one side. Maximize it once and SAI remembers.
+1. On the PC, in File Explorer open **Documents > SYSTEMAX Software Development > SAIv2**,
+   right-click `settings` and choose **Send to > Compressed (zipped) folder**.
+2. Send `settings.zip` to the device: USB cable, Google Drive, Quick Share, email or a messenger.
+3. On SAI Pen's screen tap **Add brushes or textures**, pick `settings.zip` and tap **Replace**.
+   SAI's settings on the device are kept beside it as `settings-before-` and the date.
+4. Start SAI. The PC's settings bring the PC's window size and position, so the first time SAI
+   may open smaller or off to one side. Maximize it once and SAI remembers.
+
+By hand works too, with any file manager or over a USB cable: a pack's `.bmp` and `.ini` files
+go into the folders of the same name in `settings` (`blotmap`, `bristle` and `brshape` are in
+`brushfom`), and a PC's `settings` folder goes in place of the one there. Replace that one as a
+whole rather than mixing two: SAI numbers its tools, so two sets can mix up the tool panel.
 
 Tested on a Galaxy Tab S6 Lite with a settings folder from another computer (its tools, brush
 values and window came along) and with the
 [Brush Collection](https://www.reddit.com/r/PaintToolSAI/comments/1qb1dix/brush_collection_updated/)
 from r/PaintToolSAI: all 2,195 textures and brush shapes (611 MB) show up in SAI, and SAI is
 ready in about 8 seconds, as without them. The collection's `SaiBristleCorrector.exe` is a
-Windows program and is not needed.
+Windows program and is not needed. The buttons were tried on the same tablet with a pack's zip,
+a loose picture and a zipped settings folder from another computer.
 
 ![SAI on a Galaxy Tab S6 Lite: a stroke with a texture and a stroke with a brush shape, both from the Brush Collection](docs/images/sai-brushes.jpg)
 
@@ -266,6 +269,9 @@ one System ID, and SAI on the device has its own:
    **Look for it**, or **Choose the file** wherever it is. Once you have said yes to a found
    licence, a newer `sai*.slc` that later lands in Downloads (a new System ID, say) is taken by
    itself at the next start.
+
+On SAI Pen's screen the licence number is hidden under a spoiler, so a screenshot of the screen
+does not show it. Tap it to see the number.
 
 Updating SAI Pen keeps the installed certificate. Uninstalling the app removes it together with
 Wine; the copy in Downloads stays, and **Look for it** finds it again.
