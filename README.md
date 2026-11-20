@@ -14,7 +14,9 @@ On a Mac? The same, also by me:
 >
 > This is a hobby project maintained by just one person (me!) for both the macOS and Android versions. I've been working hard on bringing SAI onto macOS and Android for the past few months, and I'm now taking a break.
 >
-> Issues may sit unanswered for a while. Thank you for your patience and understanding!
+> GitHub issues are closed for now. To report a problem or ask a question, please comment on the
+> [Reddit post](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/) instead.
+> Replies may take a while. Thank you for your patience and understanding!
 
 ## First time? Quick start
 
@@ -125,8 +127,8 @@ Ugee UT2 (see [Tested on](#tested-on)). The two Xiaomi pens do not work with eac
 **Other tablets: expect some problems.** Every maker's pen reports to Android a little
 differently, so on other tablets SAI Pen will probably work, but some things may go wrong, like
 the stray dot at the start of each stroke on the Ugee UT2 before 0.4.20. Unfortunately the author can't easily fix these: they can only be
-reproduced and tested on that device, and the author only has Samsung devices. A report in an
-issue still helps, and some problems can be fixed from a good description.
+reproduced and tested on that device, and the author only has Samsung devices. A report on
+[Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/) still helps, and some problems can be fixed from a good description.
 
 Other Samsung devices with an S Pen should work the same way as the tested ones:
 
@@ -158,7 +160,7 @@ click), and an eraser end draws like the tip.
 "active" stylus for any phone that is never paired with the device, has no pressure: Android sees
 it as a finger, so there is nothing to pass on to SAI.
 
-If you try a device or pen that is not in the table, please tell us in an issue how it went.
+If you try a device or pen that is not in the table, please tell us on [Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/) how it went.
 
 ### Check a pen in a minute, without SAI
 
@@ -177,7 +179,7 @@ either. If the crosshair follows the pen above the screen, the pen has **hover**
 its brush circle before you touch. Without hover SAI Pen still works, the circle just shows only
 while the pen touches. Turn Pointer location off again afterwards.
 
-When you report a pen in an issue, these two answers help a lot: does `Prs` start low on the
+When you report a pen, these two answers help a lot: does `Prs` start low on the
 first touch or jump to 1.0, and does the crosshair follow the pen above the screen?
 
 ## Download
@@ -592,5 +594,5 @@ with `SAIPEN_WORK`). To change a Winlator file, edit it in `winlator-app/` there
 
 The best support is simply using SAI Pen and telling me what goes wrong: on
 [Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/)
-or in an [issue here on GitHub](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/issues). If you'd really like to do
+(GitHub issues are closed for now). If you'd really like to do
 more, you can [buy me a coffee on Ko-fi](https://ko-fi.com/ametrien).
