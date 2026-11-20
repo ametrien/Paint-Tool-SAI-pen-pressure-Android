@@ -7,6 +7,9 @@
 Run **PaintTool SAI Ver.2** on a Samsung tablet or phone with the **S Pen**, with **real pen
 pressure**, and record a **timelapse of your canvas**. Free and open source.
 
+SAI Pen is made and tested for **Samsung's S Pen**. It will probably work on other Android tablets
+and pens too, but expect some problems there (see [Which devices and pens](#which-devices-and-pens)).
+
 It has only been tested on PaintTool SAI Ver.2 (64bit) Alpha.2026.10.19 so far.
 
 You install one app and put SAI on the device. The app finds SAI and starts it full screen: the
@@ -51,8 +54,17 @@ of recent years). SAI is a Windows program and runs through Wine and Box64, so a
 draws more smoothly: the Galaxy Tab S6 Lite (Snapdragon 720G, 4 GB of memory) works but feels a
 little slow.
 
-**Tested: the Samsung S Pen, the Xiaomi Focus Pen (Pad 7 Pro) and the Xiaomi Smart Pen 2nd gen
-(Pad 6).** The two Xiaomi pens do not work with each other's tablets. Other Samsung devices should work the same way:
+**Made for the Samsung S Pen.** SAI Pen is built and tested on Samsung devices. Users have also
+tried it with the Xiaomi Focus Pen (Pad 7 Pro), the Xiaomi Smart Pen 2nd gen (Pad 6) and the
+Ugee UT2 (see the table). The two Xiaomi pens do not work with each other's tablets.
+
+**Other tablets: expect some problems.** Every maker's pen reports to Android a little
+differently, so on other tablets SAI Pen will probably work, but some things may go wrong, such as
+the stray dot on the Ugee UT2. Unfortunately the author can't easily fix these: they can only be
+reproduced and tested on that device, and the author only has Samsung devices. A report in an
+issue still helps, and some problems can be fixed from a good description.
+
+Other Samsung devices with an S Pen should work the same way as the tested ones:
 
 - Samsung tablets with an S Pen: the **Galaxy Tab S** series, **Tab S FE** and **Tab S Lite**.
 - Samsung phones with a built-in S Pen: the **Galaxy S Ultra** line (S22 Ultra and newer, such as
