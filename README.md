@@ -189,6 +189,17 @@ The other file, `SAI-Pen-<version>-sources.tar` (about 400 MB), is the source co
 open-source parts inside the app (Wine, Box64 and the rest), there for their licences. You don't
 need it to use SAI Pen.
 
+> [!WARNING]
+> ⚠️ **Updating from 0.4.22 or older? Get your drawings out first.** Before 0.4.23, drawings saved
+> in SAI's own folders (`C:\users\xuser`, its Desktop, Documents or Pictures) stay inside the app,
+> and **uninstalling SAI Pen deletes them**. Installing the new APK over the old one keeps them,
+> and the first start of 0.4.23 or newer moves them to **Documents/SAI Drawings**. But if the
+> update fails and you uninstall the app to get it in, they are gone.
+>
+> So before you update (and always before you uninstall): open SAI, save each drawing into the
+> "SAI Drawings" folder, close SAI, and check in the device's Files app that they are in
+> **Documents/SAI Drawings**. Only then update or uninstall.
+
 Every version is a GitHub release with its own tag (`v0.4.0`, `v0.4.1`, ...), the same way as the
 macOS project. The app is not in Google Play.
 
