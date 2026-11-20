@@ -85,6 +85,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
      *  app theme the dialogs came out grey on white, the title unreadable
      *  (seen on the Galaxy S24 Ultra, 2026-11-18). */
     private static final String TAG = "SaiPen";
+    private static final String COFFEE_SITE = "https://ko-fi.com/ametrien";
     private static final int DIALOG_THEME = android.R.style.Theme_DeviceDefault_Light_Dialog_Alert;
     private static final String SAI_SITE = "https://www.systemax.jp/en/sai/devdept.html";
 
@@ -197,6 +198,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
         TextView credits = findViewById(R.id.SaiPenCredits);
         credits.setText(Html.fromHtml(getString(R.string.saipen_credits), Html.FROM_HTML_MODE_LEGACY));
         credits.setMovementMethod(LinkMovementMethod.getInstance());
+        TextView coffee = findViewById(R.id.SaiPenCoffee);
+        coffee.setText(Html.fromHtml(getString(R.string.saipen_coffee), Html.FROM_HTML_MODE_LEGACY));
+        coffee.setMovementMethod(LinkMovementMethod.getInstance());
         findViewById(R.id.SaiPenAbout).setOnClickListener(v -> showNotice());
         findViewById(R.id.SaiPenLicences).setOnClickListener(v -> showLicences());
         findViewById(R.id.SaiPenGestures).setOnClickListener(v -> new AlertDialog.Builder(this, DIALOG_THEME)
@@ -1125,6 +1129,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
         ScrollView scroll = new ScrollView(this);
         scroll.addView(tv);
         new AlertDialog.Builder(this, DIALOG_THEME).setTitle(R.string.saipen_about).setView(scroll)
+            .setNeutralButton(R.string.saipen_coffee_button,
+                (d, w) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(COFFEE_SITE))))
             .setPositiveButton(android.R.string.ok, null).show();
     }
 

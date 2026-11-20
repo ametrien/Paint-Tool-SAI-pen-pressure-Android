@@ -534,4 +534,5 @@ with `SAIPEN_WORK`). To change a Winlator file, edit it in `winlator-app/` there
 
 The best support is simply using SAI Pen and telling me what goes wrong: on
 [Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/)
-or in an [issue here on GitHub](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/issues).
+or in an [issue here on GitHub](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/issues). If you'd really like to do
+more, you can [buy me a coffee on Ko-fi](https://ko-fi.com/ametrien).

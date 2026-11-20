@@ -28,6 +28,8 @@
     <string name="saipen_licence_removed">Licence removed from SAI. The file it came from is still there.</string>
     <string name="saipen_licence_added">SAI licence added</string>
     <string name="saipen_licence_bad">This is not a SAI licence file (.slc)</string>
+    <string name="saipen_coffee"><![CDATA[The best support is simply using SAI Pen. If you\'d really like to do more, you can <a href="https://ko-fi.com/ametrien">buy me a coffee</a>.]]></string>
+    <string name="saipen_coffee_button">Buy me a coffee</string>
     <string name="saipen_licences">Licences</string>
     <string name="saipen_settings">Winlator settings</string>
     <string name="saipen_credits"><![CDATA[SAI Pen Pressure by ametrien<br/><a href="https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix">github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix</a><br/>GNU GPL 3. Built on Winlator (LGPL-2.1), Wine and Box64.]]></string>
