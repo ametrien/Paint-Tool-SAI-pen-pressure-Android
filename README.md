@@ -163,6 +163,25 @@ screen with the settings.
 | Three-finger tap | opens the keyboard |
 | Four-finger tap | the menu (keyboard, close SAI, settings) |
 
+### Palm rejection
+
+**Always on, nothing to set:** a hand resting on the glass never interrupts a stroke. While the pen
+draws, a palm or finger that lands is ignored, and fingers already on the glass when the pen
+arrives are let go, so the pen keeps the cursor.
+
+**Extra checks, since 0.4.19, all off by default.** Without them, a palm that touches while the pen
+is *not* drawing works like a finger: it can move the cursor and click. If that happens to you,
+turn on the checks you need on the app's screen, under **Palm rejection**, before starting SAI.
+Each works on its own:
+
+- **Ignore touches Android marks as a palm.** Uses the device's own palm detection, so how well it
+  works depends on the device.
+- **Ignore fingers while the pen is near, and 1.5 s after.** Fingers do nothing while the pen
+  hovers or draws. Gestures with two or more fingers still work once the pen is away.
+- **Ignore large touches, like the side of a hand.** A contact wider than a fingertip is ignored.
+
+<img src="docs/images/palm-rejection.png" width="450" alt="SAI Pen's screen: Palm rejection, each check works on its own, with three switches: ignore touches Android marks as a palm, ignore fingers while the pen is near and 1.5 s after, ignore large touches like the side of a hand. Here all three are turned on.">
+
 ### Timelapse
 
 Turn on **Record a timelapse** on the app's screen before starting SAI. Our DLL inside SAI saves a
