@@ -12,7 +12,17 @@ On a Mac? The same, also by me:
 
 > ### 🌱 Maintainer note
 >
-> This is a hobby project maintained by just one person (me!) for both the macOS and Android versions. I've been working hard on bringing SAI onto macOS and Android for the past few months, and I'm now taking a break.
+> This is a hobby project maintained by just one person (me!) for both the macOS and Android
+> versions.
+>
+> In the first 24 hours after [sharing it on Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/),
+> people sent test reports from their tablets and phones, and thanks to them I fixed a pen that
+> left a dot at the start of strokes, drawings that couldn't be found after saving, and Bluetooth
+> keyboards that didn't type into SAI (0.4.20 to 0.4.24). Thank you, everyone!
+>
+> After weeks of extensive work on the macOS and Android versions in my free time, I now need to
+> focus on my personal life, so I'm taking a break now that most things work for most people.
+> I'll be back! In the meantime I'll also be drawing in SAI myself, which is testing too.
 >
 > GitHub issues are closed for now. To report a problem or ask a question, please comment on the
 > [Reddit post](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/) instead.
