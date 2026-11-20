@@ -10,10 +10,11 @@ pressure**, and record a **timelapse of your canvas**. Free and open source.
 On a Mac? The same, also by me:
 **[SAI Pen Pressure for macOS](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix)**.
 
-> **Very new, and it can be laggy.** Bug reports help a lot: write on
-> [Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/)
-> or open an [issue here on GitHub](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/issues).
-> I'll try to look into each one, but I'm one person and this is a hobby, so it may take a while.
+> ### 🌱 Maintainer note
+>
+> This is a hobby project maintained by just one person (me!) for both the macOS and Android versions. I've been working hard on bringing SAI onto macOS and Android for the past few months, and I'm now taking a break.
+>
+> Issues and pull requests may sit unanswered for a while. Thank you for your patience and understanding!
 
 ## First time? Quick start
 
