@@ -55,7 +55,7 @@
     <string name="saipen_sharpness_native">%1$d, как у экрана</string>
     <string name="saipen_starting_wine">SAI запускается, %1$d с. Первый запуск дольше.</string>
     <string name="saipen_starting_drawing">SAI рисует окно, %1$d с</string>
-    <string name="saipen_drawings_where">Сохраняй рисунки в папку «SAI Drawings» в окне сохранения SAI: на планшете это «Документы/SAI Drawings».</string>
+    <string name="saipen_drawings_where">Сохраняй рисунки в папку «SAI Drawings» в окне сохранения SAI: на планшете это «Документы/SAI Drawings». Рисунки, сохранённые прямо в папку пользователя SAI, переносятся туда, когда SAI закрывается.</string>
     <string name="saipen_find_title">Где SAI?</string>
     <string name="saipen_find_text">SAI Pen нужна папка, где лежит SAI (sai2.exe). Он может найти её сам:\n\n• смотрит только на имена папок и файлов в общей памяти планшета («Загрузки», «Документы» и подобные), не глубже четырёх папок;\n• ищет только sai2.exe и архив SAI, больше ничего;\n• не открывает, не копирует и не меняет другие файлы и ничего никуда не отправляет;\n• найденная папка запоминается, второй раз он не ищет.\n\nИли выбери папку сама.</string>
     <string name="saipen_find_auto">Найти автоматически</string>

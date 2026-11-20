@@ -95,6 +95,10 @@ public final class SaiSession {
             thread.shutdown();
             Log.i(TAG, "SAI closed: back to SAI Pen's screen");
             SpeedSession.finish();
+            /* what SAI saved inside the app shows on the device at once,
+             * behind the closing cover; SAI's process is gone, its files closed */
+            File container = SaiPenSetup.containerRoot;
+            if (container != null) SaiPenSetup.moveDrawingsOut(container);
             activity.runOnUiThread(() -> {
                 boolean wasUp = cover[0] != null;
                 showCover.run();

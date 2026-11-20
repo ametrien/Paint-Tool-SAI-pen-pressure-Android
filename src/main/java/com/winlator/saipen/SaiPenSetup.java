@@ -84,6 +84,11 @@ public final class SaiPenSetup {
         catch (java.io.IOException ignored) {
             /* the Downloads link above still works */
         }
+        /* SAI's file browser still opens in users/xuser: what was saved
+         * there (or SAI was closed by Android before SAI Pen saw it close)
+         * goes to the device now (DeviceDrawings says how) */
+        containerRoot = container.getRootDir();
+        moveDrawingsOut(containerRoot);
 
         /* SAI's own settings (brushes, textures, presets, swatches) on the
          * tablet, in the same place as on Windows, so people can copy their
@@ -96,6 +101,32 @@ public final class SaiPenSetup {
         try (WineRegistryEditor reg = new WineRegistryEditor(userReg)) {
             reg.setStringValue("Software\\Wine\\DllOverrides", "wintab32", "native,builtin");
         }
+    }
+
+    /** The container of the session being set up or run: SaiSession moves
+     *  drawings out of it when SAI closes. */
+    public static volatile File containerRoot;
+
+    /**
+     * Drawings SAI saved inside the app (users/xuser and the folders in
+     * DeviceDrawings.FOLDERS) go to Documents/SAI Drawings, which SAI sees as
+     * users/xuser/SAI Drawings. Called before each session and after SAI closes,
+     * never while SAI runs. Returns the device files drawings went to.
+     */
+    public static java.util.List<File> moveDrawingsOut(File containerRoot) {
+        File xuser = new File(containerRoot, ".wine/drive_c/users/xuser");
+        java.util.List<File> folders = new java.util.ArrayList<>();
+        for (String f : DeviceDrawings.FOLDERS) folders.add(f.isEmpty() ? xuser : new File(xuser, f));
+        java.util.List<File> moved;
+        try {
+            moved = DeviceDrawings.moveOut(folders, drawingsFolder());
+        }
+        catch (RuntimeException e) {
+            android.util.Log.w("SaiPen", "drawings not moved out", e);
+            return java.util.Collections.emptyList();
+        }
+        for (File f : moved) android.util.Log.i("SaiPen", "drawing moved to the device: " + f);
+        return moved;
     }
 
     /**

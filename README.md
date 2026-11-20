@@ -205,7 +205,12 @@ macOS project. The app is not in Google Play.
    and password from the email you got when you bought SAI. You don't buy SAI again. Step by step
    in [Your SAI licence](#your-sai-licence).
 5. **Save your drawings** into the "SAI Drawings" folder of SAI's save dialog. On the device it is
-   **Documents/SAI Drawings**.
+   **Documents/SAI Drawings**. SAI's save dialog opens in `C:\users\xuser`, which is inside the
+   app. From 0.4.23 on, a drawing saved there (or in Desktop, Documents or Pictures) is moved to
+   **Documents/SAI Drawings** when SAI closes: open it again in SAI from the "SAI Drawings"
+   folder (SAI's Recent list still shows the old place). If a drawing by the same name is already
+   there, nothing is overwritten and the new one is saved as "name (2)". Drawings stuck inside
+   the app with 0.4.22 or older come out the first time SAI starts after the update.
 
 ### The first start, step by step
 

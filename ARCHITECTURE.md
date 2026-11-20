@@ -87,7 +87,16 @@ Before every session (`SaiPenSetup`, launcher):
   goes to `C:\users\xuser\Documents\SYSTEMAX Software Development\SAIv2`, where SAI Ver.2 reads it;
 - `C:\users\xuser\SAI Drawings` and `C:\users\xuser\Downloads` become links to the tablet's
   `Documents/SAI Drawings` and `Download` (`PrefixLinks`). SAI's save dialog opens in
-  `C:\users\xuser`, which is inside the app, out of reach of Android's file managers;
+  `C:\users\xuser`, which is inside the app, out of reach of Android's file managers. SAI2's own
+  file browser ("Always Use FileViewer") starts there and keeps its last folder in SAI's
+  encrypted settings, so it cannot be pointed at SAI Drawings; Wine's remembered folder
+  (`ComDlg32\LastVisitedMRU`) only reaches Windows' standard dialog;
+- drawings (SAI's file types) lying right in `C:\users\xuser`, `Desktop`, `Documents`,
+  `Pictures` (and `SAI Drawings` or `Downloads` if they are real folders, not links) move to
+  `Documents/SAI Drawings` (`DeviceDrawings`), nothing left in their place; also done when SAI's
+  process has gone (`SaiSession`). A taken name gives `name (2)`, nothing on the device is
+  overwritten. A link to the single file was tried: SAI opened through it but could not save
+  again ("Invalid parameter"), while saving into the linked folder works; such links are removed;
 - `C:\users\xuser\Documents\SYSTEMAX Software Development\SAIv2\settings` (brushes, textures,
   presets) becomes a link to the same path under the tablet's `Documents`, so a PC's settings
   folder can be copied in. A folder SAI filled inside the app before 0.4.21 is copied out first

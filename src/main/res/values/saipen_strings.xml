@@ -55,7 +55,7 @@
     <string name="saipen_sharpness_native">%1$d, the display\'s own</string>
     <string name="saipen_starting_wine">SAI is starting, %1$d s. The first start takes longer.</string>
     <string name="saipen_starting_drawing">SAI is drawing its window, %1$d s</string>
-    <string name="saipen_drawings_where">Save your drawings into the "SAI Drawings" folder of SAI\'s save dialog: on the tablet it is Documents/SAI Drawings.</string>
+    <string name="saipen_drawings_where">Save your drawings into the "SAI Drawings" folder of SAI\'s save dialog: on the tablet it is Documents/SAI Drawings. Drawings saved straight into SAI\'s user folder are moved there when SAI closes.</string>
     <string name="saipen_find_title">Where is SAI?</string>
     <string name="saipen_find_text">SAI Pen needs the folder that holds SAI (sai2.exe). It can find it for you:\n\n• it looks only at the names of folders and files in the tablet\'s shared storage (Downloads, Documents and the like), up to four folders deep;\n• it looks for sai2.exe and for SAI\'s zip, nothing else;\n• it does not open, copy or change your other files, and sends nothing anywhere;\n• the folder it finds is remembered, so it does not search again.\n\nOr choose the folder yourself.</string>
     <string name="saipen_find_auto">Find it for me</string>
