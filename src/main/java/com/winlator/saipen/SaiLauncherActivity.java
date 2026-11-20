@@ -413,6 +413,17 @@ public class SaiLauncherActivity extends AppCompatActivity {
         android.widget.CompoundButton logs = findViewById(R.id.SaiPenSpeedLog);
         logs.setChecked(prefs.getBoolean(SpeedSession.PREF_SPEED_LOG, true));
         logs.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(SpeedSession.PREF_SPEED_LOG, on).apply());
+
+        /* palm rejection: three checks, each on its own, all off by default */
+        palmSwitch(R.id.SaiPenPalmAndroid, PalmFilter.PREF_PALM_ANDROID);
+        palmSwitch(R.id.SaiPenPalmPenNear, PalmFilter.PREF_PALM_PEN_NEAR);
+        palmSwitch(R.id.SaiPenPalmBig, PalmFilter.PREF_PALM_BIG);
+    }
+
+    private void palmSwitch(int id, String pref) {
+        android.widget.CompoundButton b = findViewById(id);
+        b.setChecked(prefs.getBoolean(pref, false));
+        b.setOnCheckedChangeListener((v, on) -> prefs.edit().putBoolean(pref, on).apply());
     }
 
     /** Pen to screen so far, one row per choice; hidden with no numbers at all. */

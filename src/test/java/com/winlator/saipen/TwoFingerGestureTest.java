@@ -301,4 +301,47 @@ public class TwoFingerGestureTest {
         assertTrue(only("rot").isEmpty());
         assertTrue(!only("wheel").isEmpty());
     }
+    /* ---- cancel (a palm) ---- */
+
+    @Test
+    public void cancelSendsNoOwedZoom() {
+        spread(500, 300, 400);
+        spread(500, 300, 438);   /* a zoom (38 px), 0.55 of a step: owed only at the end */
+        assertTrue(only("zoom").isEmpty());
+        g.cancel();
+        assertTrue(only("zoom").isEmpty());
+        assertTrue(!g.isActive());
+    }
+
+    @Test
+    public void endWouldHaveSentTheOwedStep() {
+        spread(500, 300, 400);
+        spread(500, 300, 438);
+        end();
+        assertEquals(1, zoomTotal());
+    }
+
+    @Test
+    public void theSecondRotationStartsItsOwnDrag() {
+        for (int d = 0; d <= 45; d += 3) turn(500, 300, d);
+        end();
+        List<String> d1 = only("rotdrag");
+        String lastOfFirst = d1.get(d1.size() - 1);
+        log.clear();
+        /* from 27 deg the turn is decided at 45 deg (18 deg of a 100 px
+         * radius = 30 px of arc): the new drag's first point is exactly
+         * where the last drag ended, and must still go out */
+        for (int d = 27; d <= 60; d += 3) turn(500, 300, d);
+        end();
+        assertEquals(lastOfFirst, only("rotdrag").get(0));
+    }
+
+    @Test
+    public void cancelLetsGoOfARotateDrag() {
+        for (int d = 0; d <= 45; d += 3) turn(500, 300, d);
+        g.cancel();
+        assertEquals(1, only("rotend").size());
+        g.end();
+        assertEquals(1, only("rotend").size());
+    }
 }

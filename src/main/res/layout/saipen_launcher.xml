@@ -198,6 +198,39 @@
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:maxWidth="480dp"
+            android:text="@string/saipen_palm"
+            android:textSize="14sp" />
+
+        <Switch
+            android:id="@+id/SaiPenPalmAndroid"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/saipen_palm_android"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <Switch
+            android:id="@+id/SaiPenPalmPenNear"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/saipen_palm_pen_near"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <Switch
+            android:id="@+id/SaiPenPalmBig"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/saipen_palm_big"
+            android:textColor="?attr/colorPrimaryText" />
+
         <Switch
             android:id="@+id/SaiPenSpeedLog"
             android:layout_width="280dp"

@@ -135,6 +135,7 @@ public final class TwoFingerGesture {
             cursorPlaced = false;
             zoomSent = 0;
             rotating = false;
+            lastRotX = lastRotY = Integer.MIN_VALUE;   /* a new drag repeats no point */
             startAngle = lastAngle = Math.atan2(y2 - y1, x2 - x1);
             turned = 0;
             return;
@@ -186,6 +187,17 @@ public final class TwoFingerGesture {
             int diff = (int) Math.round(stepsShown() - zoomSent);
             if (diff != 0) sendZoom(diff);
         }
+        if (rotating) {
+            sink.rotateEnd();
+            rotating = false;
+        }
+        active = false;
+        mode = Mode.NONE;
+    }
+
+    /** The gesture is taken back (Android says a palm, PalmFilter): a
+     *  rotate drag lets go, but no zoom steps it still owed go out. */
+    public void cancel() {
         if (rotating) {
             sink.rotateEnd();
             rotating = false;

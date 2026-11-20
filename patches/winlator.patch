@@ -1,5 +1,5 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index 5a2f248..1ff38f7 100644
+index 5a2f248..f44fc7a 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
 @@ -5,14 +5,45 @@ android {
@@ -15,8 +15,8 @@ index 5a2f248..1ff38f7 100644
          targetSdkVersion 28
 -        versionCode 33
 -        versionName "11.2"
-+        versionCode 34
-+        versionName "0.4.18"
++        versionCode 35
++        versionName "0.4.19"
 +    }
 +
 +    /* SAI Pen: the release key lives outside the repository (build.sh says
@@ -187,7 +187,7 @@ index 3bb2d01..f245d35 100644
          final CheckBox cbCapturePointerOnExternalMouse = view.findViewById(R.id.CBCapturePointerOnExternalMouse);
          cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
 diff --git a/app/src/main/java/com/winlator/XServerDisplayActivity.java b/app/src/main/java/com/winlator/XServerDisplayActivity.java
-index 18acd68..fa981f3 100644
+index 18acd68..4a6bda5 100644
 --- a/app/src/main/java/com/winlator/XServerDisplayActivity.java
 +++ b/app/src/main/java/com/winlator/XServerDisplayActivity.java
 @@ -224,13 +224,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
@@ -256,17 +256,22 @@ index 18acd68..fa981f3 100644
              if (container.getHUDMode() == FrameRating.Mode.FULL.ordinal()) envVars.put("X11_WND_GPU_INFO", "1");
  
              String desktopName = shortcut != null || getIntent().hasExtra("exec_path") ? "nogui" : "shell";
-@@ -595,7 +616,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -595,7 +616,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
          capturePointerOnExternalMouse = preferences.getBoolean("capture_pointer_on_external_mouse", true);
          touchpadView = new TouchpadView(this, xServer, capturePointerOnExternalMouse);
          touchpadView.setSensitivity(globalCursorSpeed);
 -        touchpadView.setMoveCursorToTouchpoint(preferences.getBoolean("move_cursor_to_touchpoint", false));
 +        /* SAI Pen: a finger puts the cursor under itself, by default */
 +        touchpadView.setMoveCursorToTouchpoint(preferences.getBoolean("move_cursor_to_touchpoint", true));
++        /* SAI Pen: palm rejection, each check on its own switch, all off by default */
++        touchpadView.setPalmRejection(
++            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_ANDROID, false),
++            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_PEN_NEAR, false),
++            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_BIG, false));
          touchpadView.setFourFingersTapCallback(() -> {
              if (!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(GravityCompat.START);
          });
-@@ -629,6 +651,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -629,6 +656,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
          if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
          AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
@@ -409,7 +414,7 @@ index b144c9f..0205e5b 100644
          xServerView.requestRender();
      }
 diff --git a/app/src/main/java/com/winlator/widget/TouchpadView.java b/app/src/main/java/com/winlator/widget/TouchpadView.java
-index 89dd3fe..47a5479 100644
+index 89dd3fe..3290163 100644
 --- a/app/src/main/java/com/winlator/widget/TouchpadView.java
 +++ b/app/src/main/java/com/winlator/widget/TouchpadView.java
 @@ -4,6 +4,9 @@ import android.content.Context;
@@ -422,7 +427,7 @@ index 89dd3fe..47a5479 100644
  import android.view.InputDevice;
  import android.view.MotionEvent;
  import android.view.View;
-@@ -14,9 +17,18 @@ import com.winlator.core.AppUtils;
+@@ -14,9 +17,19 @@ import com.winlator.core.AppUtils;
  import com.winlator.math.Mathf;
  import com.winlator.math.XForm;
  import com.winlator.renderer.ViewTransformation;
@@ -430,6 +435,7 @@ index 89dd3fe..47a5479 100644
 +import com.winlator.saipen.KeyboardShift;
 +import com.winlator.saipen.PenSampleSender;
 +import com.winlator.saipen.PenWire;
++import com.winlator.saipen.PalmFilter;
 +import com.winlator.saipen.TwoFingerGesture;
 +import com.winlator.saipen.ZoomPacer;
 +import com.winlator.xserver.Window;
@@ -441,7 +447,7 @@ index 89dd3fe..47a5479 100644
  import com.winlator.xserver.XServer;
  
  public class TouchpadView extends View implements View.OnCapturedPointerListener {
-@@ -39,7 +51,31 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -39,7 +52,34 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      private boolean scrolling = false;
      private final XServer xServer;
      private Runnable fourFingersTapCallback;
@@ -449,6 +455,9 @@ index 89dd3fe..47a5479 100644
 +    /* SAI Pen: after a three- or four-finger tap the other fingers lift one
 +     * by one; they must not count as a two-finger right click or a tap */
 +    private boolean suppressTaps = false;
++    /* SAI Pen: palm rejection (PalmFilter), each check on its own switch */
++    private boolean palmAndroid = false, palmPenNear = false, palmBig = false;
++    private long lastPenMs = com.winlator.saipen.PalmFilter.NEVER;
      private final float[] xform = XForm.getInstance();
 +    /* SAI Pen: the S Pen as a pen (absolute cursor, held button, pressure
 +     * to our wintab32.dll). Logic in com.winlator.saipen.PenInput. */
@@ -473,7 +482,7 @@ index 89dd3fe..47a5479 100644
  
      public TouchpadView(Context context, XServer xServer, boolean capturePointerOnExternalMouse) {
          super(context);
-@@ -51,6 +87,101 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -51,6 +91,101 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          setFocusableInTouchMode(capturePointerOnExternalMouse);
          updateXform(AppUtils.getScreenWidth(), AppUtils.getScreenHeight(), xServer.screenInfo.width, xServer.screenInfo.height);
  
@@ -575,7 +584,7 @@ index 89dd3fe..47a5479 100644
          if (capturePointerOnExternalMouse) {
              setOnCapturedPointerListener(this);
              setOnClickListener(view -> {
-@@ -87,6 +218,14 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -87,6 +222,14 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          else XForm.makeScale(xform, invAspect, invAspect);
      }
  
@@ -590,7 +599,7 @@ index 89dd3fe..47a5479 100644
      private class Finger {
          private int x;
          private int y;
-@@ -97,7 +236,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -97,7 +240,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          private final long touchTime;
  
          public Finger(float x, float y) {
@@ -599,7 +608,7 @@ index 89dd3fe..47a5479 100644
              this.x = this.startX = this.lastX = (int)transformedPoint[0];
              this.y = this.startY = this.lastY = (int)transformedPoint[1];
              touchTime = System.currentTimeMillis();
-@@ -106,7 +245,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -106,7 +249,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          public void update(float x, float y) {
              lastX = this.x;
              lastY = this.y;
@@ -608,7 +617,7 @@ index 89dd3fe..47a5479 100644
              this.x = (int)transformedPoint[0];
              this.y = (int)transformedPoint[1];
          }
-@@ -136,25 +275,130 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -136,25 +279,132 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          }
      }
  
@@ -678,6 +687,7 @@ index 89dd3fe..47a5479 100644
 +    }
 +
 +    private void onPenTouch(MotionEvent event, int penIndex) {
++        lastPenMs = SystemClock.uptimeMillis();
 +        /* a two-finger gesture under way ends first: a rotate drag holds
 +         * Alt+Space and the left button, and the pen would rotate, not draw */
 +        if (twoFingers.isActive()) twoFingers.end();
@@ -713,6 +723,7 @@ index 89dd3fe..47a5479 100644
          int actionIndex = event.getActionIndex();
          int pointerId = event.getPointerId(actionIndex);
          int actionMasked = event.getActionMasked();
++        if ((palmAndroid || palmPenNear || palmBig) && rejectPalm(event, actionMasked, actionIndex, pointerId)) return true;
 +        /* a finger went down or up: a two-finger gesture ends (a pinch
 +         * tells SAI now) and the next one starts afresh */
 +        if (actionMasked != MotionEvent.ACTION_MOVE) twoFingers.end();
@@ -740,7 +751,83 @@ index 89dd3fe..47a5479 100644
                      if (isEnabled()) xServer.injectPointerMove((int)transformedPoint[0], (int)transformedPoint[1]);
                  }
                  else {
-@@ -195,20 +439,34 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -192,23 +442,110 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         return true;
+     }
+ 
++    /** SAI Pen: palm rejection (PalmFilter). True: the event was a palm's
++     *  and is used up here; false: handle it as a finger as before. */
++    private boolean rejectPalm(MotionEvent event, int actionMasked, int actionIndex, int pointerId) {
++        boolean down = actionMasked == MotionEvent.ACTION_DOWN || actionMasked == MotionEvent.ACTION_POINTER_DOWN;
++        if (down) {
++            String why = null;
++            if (palmAndroid && PalmFilter.isPalmTool(event.getToolType(actionIndex))) why = "Android: palm";
++            else if (palmPenNear && PalmFilter.penNear(SystemClock.uptimeMillis(), lastPenMs, penInput.isTouching())) why = "pen near";
++            else if (palmBig && PalmFilter.isBigContact(event.getTouchMajor(actionIndex), contactDpi())) why = "big contact";
++            if (palmBig) Log.i("SaiPen", "finger down, contact " + Math.round(PalmFilter.contactMm(event.getTouchMajor(actionIndex), contactDpi())) + " mm");
++            if (why == null) return false;
++            /* it never becomes a finger: no cursor move, no tap, no gesture */
++            suppressTaps = true;
++            Log.i("SaiPen", "palm ignored (" + why + ")");
++            return true;
++        }
++        if (palmAndroid && PalmFilter.isCanceledLift(actionMasked, event.getFlags())) {
++            twoFingers.cancel();
++            if (pointerId < MAX_FINGERS && fingers[pointerId] != null) dropFinger(pointerId);
++            suppressTaps = true;
++            Log.i("SaiPen", "palm ignored (Android: canceled lift)");
++            return true;
++        }
++        if (palmAndroid && PalmFilter.isCancel(actionMasked)) {
++            twoFingers.cancel();
++            for (byte i = 0; i < MAX_FINGERS; i++) if (fingers[i] != null) dropFinger(i);
++            numFingers = 0;
++            suppressTaps = true;
++            Log.i("SaiPen", "palm ignored (Android: cancel)");
++            return true;
++        }
++        if (palmBig && actionMasked == MotionEvent.ACTION_MOVE) {
++            /* a fingertip that grows into a palm (the hand rolls onto the glass) */
++            for (int idx = 0; idx < event.getPointerCount(); idx++) {
++                int id = event.getPointerId(idx);
++                if (id < MAX_FINGERS && fingers[id] != null && PalmFilter.isBigContact(event.getTouchMajor(idx), contactDpi())) {
++                    twoFingers.cancel();
++                    dropFinger(id);
++                    suppressTaps = true;
++                    Log.i("SaiPen", "palm ignored (grew to a big contact)");
++                }
++            }
++        }
++        return false;
++    }
++
++    /** A finger that turned out to be a palm: forgotten, its button let go
++     *  at once, never a tap. */
++    private void dropFinger(int id) {
++        Finger finger = fingers[id];
++        if (finger == fingerPointerButtonLeft && fingerPointerButtonLeft != null) {
++            xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
++            fingerPointerButtonLeft = null;
++        }
++        if (finger == fingerPointerButtonRight && fingerPointerButtonRight != null) {
++            xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_RIGHT);
++            fingerPointerButtonRight = null;
++        }
++        fingers[id] = null;
++        if (numFingers > 0) numFingers--;
++    }
++
++    private float contactDpi() {
++        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
++        return dm.xdpi > 0 ? dm.xdpi : dm.densityDpi;
++    }
++
++    public void setPalmRejection(boolean android, boolean penNear, boolean big) {
++        palmAndroid = android;
++        palmPenNear = penNear;
++        palmBig = big;
++    }
++
      private void handleFingerUp(Finger finger1) {
          switch (numFingers) {
              case 1:
@@ -778,7 +865,7 @@ index 89dd3fe..47a5479 100644
                      fourFingersTapCallback.run();
                  }
                  break;
-@@ -224,29 +482,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -224,29 +561,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
  
          Finger finger2 = numFingers == 2 ? findSecondFinger(finger1) : null;
          if (finger2 != null) {
@@ -814,7 +901,7 @@ index 89dd3fe..47a5479 100644
          }
  
          if (!scrolling && numFingers <= 2 && !skipPointerMove) {
-@@ -343,6 +584,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -343,6 +663,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          this.pointerButtonRightEnabled = pointerButtonRightEnabled;
      }
  
@@ -825,12 +912,13 @@ index 89dd3fe..47a5479 100644
      public void setFourFingersTapCallback(Runnable fourFingersTapCallback) {
          this.fourFingersTapCallback = fourFingersTapCallback;
      }
-@@ -356,6 +601,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -356,6 +680,13 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      }
  
      public boolean onExternalMouseEvent(MotionEvent event) {
 +        /* the S Pen hovering near the glass arrives here, not in onTouchEvent */
 +        if (event.getPointerCount() > 0 && PenInput.isPenTool(event.getToolType(0))) {
++            lastPenMs = SystemClock.uptimeMillis();
 +            if (isEnabled()) penInput.onHover(event.getActionMasked(), new PenEvent(event, 0));
 +            return true;
 +        }
@@ -838,7 +926,7 @@ index 89dd3fe..47a5479 100644
          boolean handled = false;
          if (isEnabled() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
              int actionButton = event.getActionButton();
-@@ -379,7 +630,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -379,7 +710,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
                      handled = true;
                      break;
                  case MotionEvent.ACTION_HOVER_MOVE:

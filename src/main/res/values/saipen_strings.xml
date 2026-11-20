@@ -39,7 +39,7 @@
     <string name="saipen_menu_confirm">SAI will close and unsaved work will be lost. Open the SAI Pen screen?</string>
     <string name="saipen_menu_hint">Menu: tap with four fingers, or the back gesture. Keyboard: tap with three fingers.</string>
     <string name="saipen_gestures">Gestures</string>
-    <string name="saipen_gestures_text">Pen: draws, with pressure. The pen\'s side button held while touching: right click.\n\nOne finger: puts the cursor under it; a short tap clicks.\n\nTwo fingers: move them to scroll the canvas, spread or pinch them to zoom.\n\nThree fingers, a short tap: the keyboard, to type a file name.\n\nFour fingers, a short tap, or the back gesture from the screen edge: the menu, with the keyboard, "SAI Pen: licence and settings" and Exit.\n\nClosing SAI with its cross brings you back to this screen.</string>
+    <string name="saipen_gestures_text">Pen: draws, with pressure. The pen\'s side button held while touching: right click.\n\nOne finger: puts the cursor under it; a short tap clicks.\n\nTwo fingers: move them to scroll the canvas, spread or pinch them to zoom, turn them to rotate the canvas.\n\nThree fingers, a short tap: the keyboard, to type a file name.\n\nFour fingers, a short tap, or the back gesture from the screen edge: the menu, with the keyboard, "SAI Pen: licence and settings" and Exit.\n\nClosing SAI with its cross brings you back to this screen.</string>
     <string name="saipen_closing">SAI closed. Back to SAI Pen</string>
     <string name="saipen_licence_q_title">SAI licence</string>
     <string name="saipen_licence_q_text">Without a licence SAI works as a trial: it does not save or open files.\n\nSAI Pen can look for the licence file (named sai….slc) in Downloads and in SAI\'s folder. It reads only that file and copies it into SAI\'s own folder inside this app; nothing is sent anywhere. Or choose the file yourself.</string>
@@ -69,6 +69,10 @@
     <string name="saipen_frame_every_stroke">after every stroke</string>
     <string name="saipen_frame_short_pause">after a short pause</string>
     <string name="saipen_frame_long_pause">after a long pause</string>
+    <string name="saipen_palm">Palm rejection: each check works on its own</string>
+    <string name="saipen_palm_android">Ignore touches Android marks as a palm</string>
+    <string name="saipen_palm_pen_near">Ignore fingers while the pen is near, and 1.5 s after</string>
+    <string name="saipen_palm_big">Ignore large touches, like the side of a hand</string>
     <string name="saipen_speed_log">Keep speed logs, to compare the choices</string>
     <string name="saipen_cores">Fast processor cores</string>
     <string name="saipen_cores_drawing">Drawing</string>
