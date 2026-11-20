@@ -39,6 +39,7 @@ While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is rea
 | Samsung Galaxy S26 Ultra | | Ver.2 Alpha.2026.10.19, 64-bit, no licence | SAI found by itself, starts, the pen draws with pressure |
 | Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
 | Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
+| Ugee UT2 (tested by a user) | | | the pen draws with pressure; known issue: the very first touch leaves a dot at the full brush size |
 
 Pressure has only worked with SAI Ver.2 Alpha.2026.10.19. Older SAI2 builds (2024.11.23 and
 2019.08.12, 64-bit) start but draw without pressure.
