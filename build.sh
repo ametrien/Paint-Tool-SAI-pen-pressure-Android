@@ -98,6 +98,9 @@ if [ "$MODE" = check-apk ]; then
 fi
 
 # ---- tests that need no Winlator -------------------------------------------
+# SAIPEN_NO_TESTS=1 skips every test step: a quick try-out build only.
+NO_TESTS=${SAIPEN_NO_TESTS:-0}
+if [ "$NO_TESTS" != 1 ]; then
 echo "== DLL side of the pen wire (tests/test_android_wire.c) =="
 CBIN=$(mktemp -d)/test_android_wire
 cc -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=all \
@@ -113,6 +116,7 @@ cc -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=all 
 echo "== what the archive rewrite leaves out (tests/test_rewrite_tar.py) =="
 out=$(python3 -I "$HERE/tests/test_rewrite_tar.py" 2>&1) || { echo "$out"; exit 1; }
 echo "  ok   $(echo "$out" | /usr/bin/grep -o 'Ran [0-9]* tests*')"
+fi
 
 # ---- the build tree --------------------------------------------------------
 if [ ! -d "$PRISTINE/.git" ]; then
@@ -245,9 +249,13 @@ echo "  ok   component archives gone; left out $total_fonts Microsoft font(s), $
 no_forbidden "$APP/main/assets"
 
 cd "$TREE"
+if [ "$NO_TESTS" != 1 ]; then
 echo "== JVM unit tests =="
 ./gradlew --no-daemon -q testDebugUnitTest
 echo "  ok   JVM unit tests (report: $TREE/app/build/reports/tests/testDebugUnitTest/index.html)"
+else
+  echo "== tests SKIPPED (SAIPEN_NO_TESTS=1) =="
+fi
 [ "$MODE" = test ] && exit 0
 
 if [ "$MODE" = release ]; then

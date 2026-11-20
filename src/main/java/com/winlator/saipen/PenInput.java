@@ -47,6 +47,14 @@ public final class PenInput {
     public static final int BUTTON_LEFT = 1;
     public static final int BUTTON_RIGHT = 3;
 
+    /**
+     * Test only, no switch in the app: ignore the pen's hover, so an S Pen
+     * behaves like a pen that has none (issue #1, Ugee UT2). From the Mac,
+     * before starting SAI:
+     *     adb shell setprop debug.saipen.test_no_hover 1   (0 to turn off)
+     */
+    public static final String PROP_TEST_NO_HOVER = "debug.saipen.test_no_hover";
+
     /** One pen pointer of one MotionEvent. pos 0..historySize()-1 are the
      *  batched samples, oldest first; pos == historySize() is the current one. */
     public interface Event {
@@ -80,6 +88,8 @@ public final class PenInput {
     private final float[] pt = new float[2];
     private int heldButton = 0;          /* 0 = pen not touching */
     private float lastX, lastY;
+    private boolean hoveredSinceLift = false;
+    private boolean ignoreHover = false;
 
     public PenInput(Sink sink, Transform transform, int pmax, int screenW, int screenH) {
         this.sink = sink;
@@ -89,8 +99,26 @@ public final class PenInput {
         this.screenH = screenH;
     }
 
+    /** An Android system property, "" when unset or unreadable. Reflection,
+     *  so this class still needs no Android to compile in the JVM tests. */
+    public static String systemProperty(String name) {
+        try {
+            Object v = Class.forName("android.os.SystemProperties")
+                .getMethod("get", String.class).invoke(null, name);
+            return v == null ? "" : v.toString();
+        }
+        catch (ReflectiveOperationException | RuntimeException e) {
+            return "";
+        }
+    }
+
     public static boolean isPenTool(int toolType) {
         return toolType == TOOL_TYPE_STYLUS || toolType == TOOL_TYPE_ERASER;
+    }
+
+    /** Testing only (PROP_TEST_NO_HOVER): drop every hover event. */
+    public void setIgnoreHover(boolean ignoreHover) {
+        this.ignoreHover = ignoreHover;
     }
 
     public boolean isTouching() {
@@ -151,10 +179,12 @@ public final class PenInput {
 
     /** A hover event of the pen (it is near the glass, not touching). */
     public void onHover(int action, Event e) {
+        if (ignoreHover) return;
         if (heldButton != 0) return;
         switch (action) {
             case ACTION_HOVER_ENTER:
             case ACTION_HOVER_MOVE:
+                hoveredSinceLift = true;
                 for (int pos = 0; pos <= e.historySize(); pos++) {
                     if (pos == e.historySize()) place(e, pos);
                     else locate(e, pos);
@@ -163,6 +193,7 @@ public final class PenInput {
                 sink.setInRange(true);
                 break;
             case ACTION_HOVER_EXIT:
+                hoveredSinceLift = false;
                 sink.setInRange(false);
                 break;
             default:
@@ -173,6 +204,17 @@ public final class PenInput {
     private void down(Event e) {
         int pos = e.historySize();
         place(e, pos);
+        /*
+         * A pen with no hover (Ugee UT2, issue #1) touches with nothing sent
+         * before. SAI starts the stroke on Wine's click and, with no recent
+         * packet saying a pen is here, takes that click as a mouse: a dot at
+         * full brush size. Our pen-down packets cannot say it in time: the
+         * DLL holds them until SAI has taken the click (the HOLD in
+         * wintab_core.h). A hover packet is not held, so one goes out first,
+         * exactly what an S Pen sends just before it touches. A pen that did
+         * hover sends nothing extra.
+         */
+        if (!hoveredSinceLift) sink.sample(0, lastX, lastY, e.timeUs(pos));
         heldButton = e.sideButton() ? BUTTON_RIGHT : BUTTON_LEFT;
         /* the sample goes out BEFORE the button: on the Mac, too, our
          * pen-down datagram reaches the DLL before Wine's click does */
@@ -191,6 +233,8 @@ public final class PenInput {
         sink.sample(0, lastX, lastY, evUs);
         sink.releaseButton(heldButton);
         heldButton = 0;
+        /* a pen with hover reports it again before the next touch */
+        hoveredSinceLift = false;
     }
 
     /** With the side button held the touch is a right click, not a stroke:

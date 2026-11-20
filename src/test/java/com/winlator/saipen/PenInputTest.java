@@ -66,8 +66,15 @@ public class PenInputTest {
         assertFalse(PenInput.isPenTool(PenInput.TOOL_TYPE_MOUSE));
     }
 
+    /** An S Pen: it hovers at the point before it touches there. */
+    private void hoverAt(float x, float y, long t) {
+        pen.onHover(PenInput.ACTION_HOVER_MOVE, ev(false, pt(x, y, 0f, t)));
+    }
+
     @Test
     public void penDownPutsTheCursorUnderTheTipThenSamplesThenPresses() {
+        hoverAt(200, 100, 9);
+        rec.log.clear();
         pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 10)));
         assertEquals(Arrays.asList("move 100 50", "sample 2048 100 50 t10", "press 1"), rec.log);
         assertTrue(pen.isTouching());
@@ -134,6 +141,8 @@ public class PenInputTest {
 
     @Test
     public void aFeatherTouchIsStillATouch() {
+        hoverAt(0, 0, 0);
+        rec.log.clear();
         pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(0, 0, 0f, 1)));
         assertEquals("sample 1 0 0 t1", rec.only("sample").get(0));
     }
@@ -168,6 +177,8 @@ public class PenInputTest {
 
     @Test
     public void cancelNeverLeavesTheButtonHeld() {
+        hoverAt(0, 0, 0);
+        rec.log.clear();
         pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(0, 0, 0.5f, 1)));
         pen.onTouch(PenInput.ACTION_CANCEL, ev(false, pt(0, 0, 0.5f, 2)));
         assertEquals(Arrays.asList("release 1"), rec.only("release"));
@@ -185,6 +196,55 @@ public class PenInputTest {
     public void anUpWithoutADownDoesNothing() {
         pen.onTouch(PenInput.ACTION_UP, ev(false, pt(20, 20, 0.5f, 1)));
         assertEquals(0, rec.log.size());
+    }
+
+    /* Issue #1, Ugee UT2: a pen without hover. Without a packet before the
+     * touch SAI took the touch as a mouse click: a full-size dot. */
+    @Test
+    public void aTouchWithoutHoverTellsSaiThePenIsHereFirst() {
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 10)));
+        assertEquals(Arrays.asList("move 100 50", "sample 0 100 50 t10", "sample 2048 100 50 t10", "press 1"),
+                     rec.log);
+    }
+
+    @Test
+    public void aPenThatHoveredSendsNothingExtra() {
+        hoverAt(200, 100, 9);
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 10)));
+        assertEquals(Arrays.asList("sample 0 100 50 t9", "sample 2048 100 50 t10"), rec.only("sample"));
+    }
+
+    @Test
+    public void everyTouchWithoutHoverIsAnnouncedNotOnlyTheFirst() {
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(0, 0, 0.5f, 1)));
+        pen.onTouch(PenInput.ACTION_UP, ev(false, pt(10, 0, 0.5f, 2)));
+        rec.log.clear();
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 10)));
+        assertEquals("sample 0 100 50 t10", rec.only("sample").get(0));
+    }
+
+    @Test
+    public void aPenLeavingRangeIsAnnouncedOnItsNextTouch() {
+        hoverAt(0, 0, 1);
+        pen.onHover(PenInput.ACTION_HOVER_EXIT, ev(false, pt(0, 0, 0f, 2)));
+        rec.log.clear();
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 10)));
+        assertEquals("sample 0 100 50 t10", rec.only("sample").get(0));
+    }
+
+    @Test
+    public void theNoHoverTestDropsHoverAndStillAnnouncesTheTouch() {
+        pen.setIgnoreHover(true);
+        hoverAt(200, 100, 9);
+        assertEquals(0, rec.log.size());
+        assertEquals(null, rec.inRange);
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 10)));
+        assertEquals(Arrays.asList("sample 0 100 50 t10", "sample 2048 100 50 t10"), rec.only("sample"));
+    }
+
+    @Test
+    public void noSystemPropertiesOffAndroidMeansEmpty() {
+        assertEquals("", PenInput.systemProperty(PenInput.PROP_TEST_NO_HOVER));
     }
 
     @Test

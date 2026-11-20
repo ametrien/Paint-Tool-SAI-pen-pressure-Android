@@ -42,7 +42,7 @@ While SAI starts, SAI Pen shows a cover that counts the seconds until SAI is rea
 | Samsung Galaxy S26 Ultra | | Ver.2 Alpha.2026.10.19, 64-bit, no licence | SAI found by itself, starts, the pen draws with pressure |
 | Xiaomi Pad 7 Pro, Xiaomi Focus Pen (tested by a user) | | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
 | Xiaomi Pad 6 (6 GB), Xiaomi Smart Pen 2nd gen (tested by a user) | 14 | Ver.2 Alpha.2026.10.19, 64-bit | the pen draws with pressure |
-| Ugee UT2 (tested by a user) | | | the pen draws with pressure; known issue: the very first touch leaves a dot at the full brush size |
+| Ugee UT2 (tested by a user) | | | the pen draws with pressure; the pen has no hover, so the first touch of a stroke left a dot at the full brush size: fixed in 0.4.20 (reproduced and fixed with an S Pen made to ignore its hover, not yet confirmed on the Ugee) |
 
 Pressure has only worked with SAI Ver.2 Alpha.2026.10.19. Older SAI2 builds (2024.11.23 and
 2019.08.12, 64-bit) start but draw without pressure.
@@ -59,8 +59,8 @@ tried it with the Xiaomi Focus Pen (Pad 7 Pro), the Xiaomi Smart Pen 2nd gen (Pa
 Ugee UT2 (see the table). The two Xiaomi pens do not work with each other's tablets.
 
 **Other tablets: expect some problems.** Every maker's pen reports to Android a little
-differently, so on other tablets SAI Pen will probably work, but some things may go wrong, such as
-the stray dot on the Ugee UT2. Unfortunately the author can't easily fix these: they can only be
+differently, so on other tablets SAI Pen will probably work, but some things may go wrong, like
+the stray dot at the start of each stroke on the Ugee UT2 before 0.4.20. Unfortunately the author can't easily fix these: they can only be
 reproduced and tested on that device, and the author only has Samsung devices. A report in an
 issue still helps, and some problems can be fixed from a good description.
 
@@ -98,9 +98,16 @@ This works on any Android device, even one in a shop:
 2. In **Settings > Developer options**, turn on **Pointer location**.
 3. Draw on the screen with the pen and watch the **`Prs`** number in the bar at the top.
 
+4. Hold the pen just above the screen without touching it and see whether a crosshair follows it.
+
 If `Prs` changes with how hard you press, the pen has pressure and SAI Pen can pass it to SAI.
 If it stays at 1.0 or does not change, the pen has no pressure, and SAI Pen will not get any
-either. Turn Pointer location off again afterwards.
+either. If the crosshair follows the pen above the screen, the pen has **hover**: SAI then shows
+its brush circle before you touch. Without hover SAI Pen still works, the circle just shows only
+while the pen touches. Turn Pointer location off again afterwards.
+
+When you report a pen in an issue, these two answers help a lot: does `Prs` start low on the
+first touch or jump to 1.0, and does the crosshair follow the pen above the screen?
 
 ## Download
 
