@@ -16,9 +16,17 @@ On a Mac? The same, also by me:
 > versions.
 >
 > In the first 24 hours after [sharing it on Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/),
-> people sent test reports from their tablets and phones, and thanks to them I fixed a pen that
-> left a dot at the start of strokes, drawings that couldn't be found after saving, and Bluetooth
-> keyboards that didn't type into SAI (0.4.20 to 0.4.24). Thank you, everyone!
+> people tested it on their tablets and phones (Galaxy, Xiaomi, Ugee) and sent reports. Thanks to
+> them, 0.4.19 to 0.4.24 brought:
+>
+> - palm rejection, so a resting hand doesn't draw random lines;
+> - turning the canvas with two fingers;
+> - your brushes and textures in the device's Documents, and adding brush packs right from
+>   SAI Pen's screen;
+> - fixes for a pen that left a dot at the start of strokes, drawings that couldn't be found after
+>   saving, and Bluetooth keyboards that didn't type into SAI.
+>
+> Thank you, everyone!
 >
 > After weeks of extensive work on the macOS and Android versions in my free time, I now need to
 > focus on my personal life, so I'm taking a break now that most things work for most people.
