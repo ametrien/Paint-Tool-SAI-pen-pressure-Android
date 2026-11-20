@@ -34,6 +34,10 @@ On a Mac? The same, also by me:
 
    <img src="docs/images/sai-system-id.png" width="380" alt="SAI's Other menu open, with System ID highlighted">
 
+   SAI shows the device's System ID:
+
+   <img src="docs/images/sai-system-id-dialog.png" width="380" alt="SAI's System ID window: the ID to enter in the System ID box of the licence certificate download form, different on each computer. The ID itself is hidden here.">
+
    On <https://www.systemax.jp/en/license.html> enter that System ID with the licence number and
    password from the email SYSTEMAX sent you when you bought SAI, and download the new
    `sai-....slc`. Put it in Downloads and tap **Add a SAI licence** on SAI Pen's screen. You don't
@@ -352,6 +356,8 @@ A new certificate for the device's System ID is all it takes, with the licence y
 
    <img src="docs/images/sai-system-id.png" width="400" alt="SAI's Other menu open, with System ID highlighted">
 
+   <img src="docs/images/sai-system-id-dialog.png" width="400" alt="SAI's System ID window: the ID to enter in the System ID box of the licence certificate download form, different on each computer. The ID itself is hidden here.">
+
 2. Find the email SYSTEMAX sent when you bought SAI: it has your **licence number** and
    **password**.
 3. On <https://www.systemax.jp/en/license.html> enter the licence number, the password and the
@@ -526,5 +532,6 @@ with `SAIPEN_WORK`). To change a Winlator file, edit it in `winlator-app/` there
 
 ## Support
 
-The best support is simply using SAI Pen. If you'd really like to do more, you can
-[buy me a coffee](https://buymeacoffee.com/ametrien).
+The best support is simply using SAI Pen and telling me what goes wrong: on
+[Reddit](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/i_made_sai_2_work_on_android_with_pen_pressure/)
+or in an [issue here on GitHub](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/issues).
