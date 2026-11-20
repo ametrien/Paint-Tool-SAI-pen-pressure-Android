@@ -37,6 +37,15 @@ public final class SaiPenSetup {
     /** The drawings folder's name, in Windows and on the tablet. */
     public static final String DRAWINGS = "SAI Drawings";
 
+    /** SAI Ver.2's settings folder under Documents, in Windows and on the tablet. */
+    public static final String SETTINGS_PATH = "SYSTEMAX Software Development/SAIv2/settings";
+
+    /** Documents/SYSTEMAX Software Development/SAIv2/settings on the tablet. */
+    public static File settingsFolder() {
+        return new File(android.os.Environment.getExternalStoragePublicDirectory(
+            android.os.Environment.DIRECTORY_DOCUMENTS), SETTINGS_PATH);
+    }
+
     /** Documents/SAI Drawings on the tablet. */
     public static File drawingsFolder() {
         return new File(android.os.Environment.getExternalStoragePublicDirectory(
@@ -74,6 +83,20 @@ public final class SaiPenSetup {
         }
         catch (java.io.IOException ignored) {
             /* the Downloads link above still works */
+        }
+
+        /* SAI's own settings (brushes, textures, presets, swatches) on the
+         * tablet, in the same place as on Windows, so people can copy their
+         * PC's folder there and it outlives an uninstall. Until 0.4.21 they
+         * were inside the app; the first start moves them out
+         * (PrefixLinks.moveIntoAndLink says how). */
+        File settings = new File(driveC, "users/xuser/Documents/" + SETTINGS_PATH);
+        try {
+            PrefixLinks.moveIntoAndLink(settings, settingsFolder(),
+                new File(settings.getParentFile(), "settings-inside-the-app"));
+        }
+        catch (Exception ignored) {
+            /* SAI starts with its settings inside the app, as before */
         }
 
         File userReg = new File(prefix, "user.reg");

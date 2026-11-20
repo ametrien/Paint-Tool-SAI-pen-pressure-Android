@@ -87,7 +87,12 @@ Before every session (`SaiPenSetup`, launcher):
   goes to `C:\users\xuser\Documents\SYSTEMAX Software Development\SAIv2`, where SAI Ver.2 reads it;
 - `C:\users\xuser\SAI Drawings` and `C:\users\xuser\Downloads` become links to the tablet's
   `Documents/SAI Drawings` and `Download` (`PrefixLinks`). SAI's save dialog opens in
-  `C:\users\xuser`, which is inside the app, out of reach of Android's file managers.
+  `C:\users\xuser`, which is inside the app, out of reach of Android's file managers;
+- `C:\users\xuser\Documents\SYSTEMAX Software Development\SAIv2\settings` (brushes, textures,
+  presets) becomes a link to the same path under the tablet's `Documents`, so a PC's settings
+  folder can be copied in. A folder SAI filled inside the app before 0.4.21 is copied out first
+  and kept as `SAIv2\settings-inside-the-app`; a folder already on the tablet wins
+  (`PrefixLinks.moveIntoAndLink`). The licence stays inside the app.
 
 ## Starting
 
