@@ -179,6 +179,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         btnAddBrushes.setOnClickListener(v -> pickBrushes());
         btnOpenBrushes = findViewById(R.id.SaiPenOpenBrushes);
         btnOpenBrushes.setOnClickListener(v -> openBrushesFolder());
+        findViewById(R.id.SaiPenOpenDrawings).setOnClickListener(v -> openDrawingsFolder());
         android.widget.CompoundButton autostart = findViewById(R.id.SaiPenAutostart);
         autostart.setChecked(prefs.getBoolean(PREF_AUTOSTART, false));
         autostart.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(PREF_AUTOSTART, on).apply());
@@ -856,10 +857,15 @@ public class SaiLauncherActivity extends AppCompatActivity {
         return b.toString();
     }
 
-    /** The folder in the device's file manager, where one can open it. */
+    /** SAI's settings folder in the device's file manager. */
     private Intent folderIntent() {
+        return folderIntent(SaiPenSetup.SETTINGS_PATH);
+    }
+
+    /** Documents/`path` in the device's file manager, where one can open it. */
+    private Intent folderIntent(String path) {
         Uri uri = DocumentsContract.buildDocumentUri("com.android.externalstorage.documents",
-            "primary:" + Environment.DIRECTORY_DOCUMENTS + "/" + SaiPenSetup.SETTINGS_PATH);
+            "primary:" + Environment.DIRECTORY_DOCUMENTS + "/" + path);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -872,6 +878,18 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
         catch (RuntimeException e) {
             Toast.makeText(this, R.string.saipen_brushes_where_toast, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Documents/SAI Drawings in the device's file manager: share, copy or
+     *  open the drawings from there. */
+    private void openDrawingsFolder() {
+        SaiPenSetup.drawingsFolder().mkdirs();
+        try {
+            startActivity(folderIntent(SaiPenSetup.DRAWINGS));
+        }
+        catch (RuntimeException e) {
+            Toast.makeText(this, R.string.saipen_drawings_where_toast, Toast.LENGTH_LONG).show();
         }
     }
 

@@ -325,6 +325,14 @@
             android:textSize="13sp"
             android:alpha="0.8" />
 
+        <Button
+            android:id="@+id/SaiPenOpenDrawings"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/saipen_open_drawings"
+            android:textColor="?attr/colorPrimaryText" />
+
         <Space
             android:layout_width="1dp"
             android:layout_height="0dp"

@@ -92,6 +92,8 @@
     <string name="saipen_brushes_unknown">SAI\'s brushes and textures are counted here after SAI\'s first start.</string>
     <string name="saipen_brushes_where">They are in Documents/SYSTEMAX Software Development/SAIv2/settings, as on Windows. Add more with the button, or copy a whole settings folder from a PC there.</string>
     <string name="saipen_add_brushes">Add brushes or textures</string>
+    <string name="saipen_open_drawings">Open Documents/SAI Drawings</string>
+    <string name="saipen_drawings_where_toast">Your drawings: Documents/SAI Drawings</string>
     <string name="saipen_open_brushes">Open the folder</string>
     <string name="saipen_brushes_reading">Reading what you picked…</string>
     <string name="saipen_brushes_start_first">Start SAI once first: it makes its brushes and textures folder on the first start. Then add yours.</string>

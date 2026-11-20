@@ -92,6 +92,8 @@
     <string name="saipen_brushes_unknown">Кисти и текстуры SAI посчитаются здесь после первого запуска SAI.</string>
     <string name="saipen_brushes_where">Они лежат в Documents/SYSTEMAX Software Development/SAIv2/settings, как на Windows. Добавьте новые кнопкой или скопируйте туда всю папку settings с компьютера.</string>
     <string name="saipen_add_brushes">Добавить кисти или текстуры</string>
+    <string name="saipen_open_drawings">Открыть Документы/SAI Drawings</string>
+    <string name="saipen_drawings_where_toast">Твои рисунки: Документы/SAI Drawings</string>
     <string name="saipen_open_brushes">Открыть папку</string>
     <string name="saipen_brushes_reading">Читаю выбранное…</string>
     <string name="saipen_brushes_start_first">Сначала запустите SAI один раз: папку для кистей и текстур она создаёт при первом запуске. Потом добавляйте свои.</string>
