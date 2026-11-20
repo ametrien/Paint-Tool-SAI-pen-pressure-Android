@@ -209,25 +209,49 @@ turns the frames into an MP4 per canvas in **Documents/SAI Drawings**.
 
 ### Your brushes, textures and presets
 
-SAI keeps them on the device in **Documents/SYSTEMAX Software Development/SAIv2/settings**, the
-same place as on Windows (since 0.4.21). SAI Pen's screen shows how many brush textures, paper
-textures, brush shapes, scatter shapes and tools SAI has, with two buttons (since 0.4.22):
+Artists share **brush packs** online, on r/PaintToolSAI or DeviantArt for example: a `.zip` of
+small pictures (`.bmp`) that give SAI's brushes a texture or a shape, like canvas grain, pencil,
+bristles, splatters or leaves. SAI keeps them, with your tools and presets, in
+**Documents/SYSTEMAX Software Development/SAIv2/settings** on the device, the same place as on
+Windows. SAI Pen's screen shows what SAI has and has two buttons for it (since 0.4.22):
 
-- **Add brushes or textures.** Pick a brush pack's `.zip`, as artists share them online, or
-  loose `.bmp` pictures. SAI Pen puts each picture into SAI's folder for it, going by the pack's
-  folder names (`brushtex`, `papertex`, `scatter`, `blotmap`, `bristle`, `brshape`). For pictures
-  without such folders it asks what they are. Pictures SAI already has stay as they are, and only
-  `.bmp` and `.ini` files are taken from a pack, never a program or anything else.
-- **Open the folder** opens it in the Files app.
+<img src="docs/images/sai-pen-brushes.jpg" width="450" alt="SAI Pen's screen: the licence number hidden under specks; In SAI: 344 brush textures, 475 paper textures, 539 brush shapes, 410 scatter shapes, 69 tools; where the folder is; Add brushes or textures; Open the folder">
 
-| In a pack | Where you pick it in SAI |
-|---|---|
-| Brush textures | brush settings, the **[ No Texture ]** list |
-| Brush shapes | brush settings, the **[ Simple Circle ]** list |
-| Paper textures | Layer Effect, **Paper** |
-| Scatter shapes | the **Scatter** tool |
+#### Add a brush pack, step by step
 
-**Your tools and presets from a PC** are SAI's whole `settings` folder there:
+1. **Get the pack onto the device.** Download its `.zip` on the device, or send it there from a
+   computer (USB cable, Google Drive, Quick Share, email, a messenger). A pack kept as a folder on
+   Google Drive comes down as a `.zip` when you download the whole folder on a computer.
+2. **Open SAI Pen** (close SAI first if it is open) and scroll down to the line that starts with
+   **In SAI:**.
+3. **Tap Add brushes or textures.** Android's file picker opens. Open **Downloads**, or wherever
+   the pack is, and tap the `.zip`. Loose pictures work too: touch and hold one, tap the others,
+   then tap **Select**.
+4. **Check what SAI Pen found and tap Add.** It sorts the pictures into SAI's folders by the
+   pack's folder names (`brushtex`, `papertex`, `scatter`, `blotmap`, `bristle`, `brshape`).
+   Pictures SAI already has stay as they are, and nothing but `.bmp` and `.ini` files is taken
+   from a pack, never a program.
+
+   <img src="docs/images/brushes-add-dialog.png" width="300" alt="Add to SAI: 1 brush texture, 1 paper texture. Pictures SAI already has under the same name stay as they are. Cancel, Add">
+
+   Pictures that are not in such folders get a question first: are they brush textures, paper
+   textures, brush shapes or scatter shapes? The pack's description usually says.
+5. **Tap OK and start SAI.** The count on SAI Pen's screen has gone up.
+
+   <img src="docs/images/brushes-added.png" width="300" alt="Added to SAI: 1 brush texture, 1 paper texture. Start SAI to use them. OK">
+
+6. **Pick them in SAI:**
+
+   | What you added | Where you pick it in SAI |
+   |---|---|
+   | Brush textures | choose a brush, then the **[ No Texture ]** list in its settings |
+   | Brush shapes | choose a brush, then the **[ Simple Circle ]** list in its settings |
+   | Paper textures | Layer Effect, **Paper** |
+   | Scatter shapes | the **Scatter** tool |
+
+#### Bring your tools and presets from a PC
+
+Your own tools, presets, brushes and textures are SAI's whole `settings` folder on the PC:
 
 1. On the PC, in File Explorer open **Documents > SYSTEMAX Software Development > SAIv2**,
    right-click `settings` and choose **Send to > Compressed (zipped) folder**.
@@ -237,10 +261,15 @@ textures, brush shapes, scatter shapes and tools SAI has, with two buttons (sinc
 4. Start SAI. The PC's settings bring the PC's window size and position, so the first time SAI
    may open smaller or off to one side. Maximize it once and SAI remembers.
 
-By hand works too, with any file manager or over a USB cable: a pack's `.bmp` and `.ini` files
-go into the folders of the same name in `settings` (`blotmap`, `bristle` and `brshape` are in
-`brushfom`), and a PC's `settings` folder goes in place of the one there. Replace that one as a
-whole rather than mixing two: SAI numbers its tools, so two sets can mix up the tool panel.
+#### By hand
+
+**Open the folder** on SAI Pen's screen opens it in the Files app. A pack's `.bmp` and `.ini`
+files go into the folders of the same name in `settings` (`blotmap`, `bristle` and `brshape` are
+in `brushfom`), and a PC's `settings` folder goes in place of the one there. Replace that one as
+a whole rather than mixing two: SAI numbers its tools, so two sets can mix up the tool panel.
+New files show up in SAI after it starts again.
+
+#### Tested
 
 Tested on a Galaxy Tab S6 Lite with a settings folder from another computer (its tools, brush
 values and window came along) and with the
