@@ -306,6 +306,14 @@ SAI runs inside the app using Wine (a Windows compatibility layer). Wine assigns
 | **`S:\`** | SAI program folder (`sai2.exe`) | The folder where PaintTool SAI itself is installed. |
 | **`C:\`** (other than the linked folders above) | Internal Wine container | Private app storage. Invisible to Android file managers and deleted if the app is uninstalled. |
 
+In SAI's Save As window, choose **`F:\`** from the drive list:
+
+<img src="docs/images/drive-f-inside-sai.jpg" width="600" alt="PaintTool SAI Save As window with drive F selected in the drive list">
+
+That is the same folder you see in Android's file manager at **Documents/SAI Drawings**:
+
+<img src="docs/images/drive-f-outside-sai.jpg" width="600" alt="Android file manager showing the SAI Drawings folder at Internal storage/Documents/SAI Drawings">
+
 > [!NOTE]
 > **What about brushes, paper textures, and presets?**
 > SAI Ver.2 stores custom brushes, paper textures, blotmaps, and swatches in
