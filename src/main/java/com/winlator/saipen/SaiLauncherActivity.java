@@ -210,12 +210,22 @@ public class SaiLauncherActivity extends AppCompatActivity {
             .setPositiveButton(android.R.string.ok, null).show());
         findViewById(R.id.SaiPenSettings).setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
 
+        TextView tvVersion = findViewById(R.id.SaiPenVersion);
+        if (tvVersion != null) {
+            try {
+                String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                tvVersion.setText(getString(R.string.saipen_version, versionName));
+            }
+            catch (Exception ignored) {}
+        }
+
         startup();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        SaiPenSetup.scanDrawings(this);
         showVideoButton();
         showStats();
     }
@@ -276,7 +286,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         makingVideo = true;
         btnVideo.setEnabled(false);
         File frames = TimelapseVideo.framesDir(container.getRootDir());
-        File out = SaiPenSetup.drawingsFolder();
+        File out = SaiPenSetup.timelapseFolder();
         worker.execute(() -> {
             String message;
             try {
@@ -790,7 +800,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
             return;
         }
         installLicence();
-        container.setDrives(SaiLocator.drives(saiDir.getPath(), AppUtils.DIRECTORY_DOWNLOADS, AppUtils.INTERNAL_STORAGE));
+        container.setDrives(SaiLocator.drives(saiDir.getPath(), AppUtils.DIRECTORY_DOWNLOADS, AppUtils.INTERNAL_STORAGE,
+            SaiPenSetup.drawingsFolder().getPath()));
         container.setScreenSize(wineScreenSize());
         /* No Microsoft components: SAI draws with GDI and needs none of the
          * DirectX parts, Visual C++ runtimes or Windows Media decoder, and
@@ -927,6 +938,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
      *  open the drawings from there. */
     private void openDrawingsFolder() {
         SaiPenSetup.drawingsFolder().mkdirs();
+        SaiPenSetup.scanDrawings(this);
         try {
             startActivity(folderIntent(SaiPenSetup.DRAWINGS));
         }

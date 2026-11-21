@@ -52,6 +52,13 @@ public final class SaiPenSetup {
             android.os.Environment.DIRECTORY_DOCUMENTS), DRAWINGS);
     }
 
+    public static final String TIMELAPSES = "Timelapses";
+
+    /** Documents/SAI Drawings/Timelapses on the tablet. */
+    public static File timelapseFolder() {
+        return new File(drawingsFolder(), TIMELAPSES);
+    }
+
     public static void installInto(Context context, Container container) {
         File prefix = new File(container.getRootDir(), ".wine");
         File driveC = new File(prefix, "drive_c");
@@ -86,9 +93,12 @@ public final class SaiPenSetup {
         }
         /* SAI's file browser still opens in users/xuser: what was saved
          * there (or SAI was closed by Android before SAI Pen saw it close)
-         * goes to the device now (DeviceDrawings says how) */
+         * goes to the device now (DeviceDrawings says how).
+         * keepOriginals = true: a copy stays inside the app so SAI's Recent
+         * list can still open it. The copy is cleaned up when SAI closes
+         * (moveDrawingsOut with keepOriginals = false, in SaiSession). */
         containerRoot = container.getRootDir();
-        moveDrawingsOut(containerRoot);
+        moveDrawingsOut(containerRoot, true);
 
         /* SAI's own settings (brushes, textures, presets, swatches) on the
          * tablet, in the same place as on Windows, so people can copy their
@@ -114,12 +124,22 @@ public final class SaiPenSetup {
      * never while SAI runs. Returns the device files drawings went to.
      */
     public static java.util.List<File> moveDrawingsOut(File containerRoot) {
+        return moveDrawingsOut(containerRoot, false);
+    }
+
+    /**
+     * When `keepOriginals` is true, the in-app file is left in place after
+     * copying it to the device: SAI's Recent list (which remembers the
+     * in-app path) can still open it next session. Called with true before
+     * SAI starts; with false (move, delete the original) after SAI closes.
+     */
+    public static java.util.List<File> moveDrawingsOut(File containerRoot, boolean keepOriginals) {
         File xuser = new File(containerRoot, ".wine/drive_c/users/xuser");
         java.util.List<File> folders = new java.util.ArrayList<>();
         for (String f : DeviceDrawings.FOLDERS) folders.add(f.isEmpty() ? xuser : new File(xuser, f));
         java.util.List<File> moved;
         try {
-            moved = DeviceDrawings.moveOut(folders, drawingsFolder());
+            moved = DeviceDrawings.moveOut(folders, drawingsFolder(), keepOriginals);
         }
         catch (RuntimeException e) {
             android.util.Log.w("SaiPen", "drawings not moved out", e);
@@ -127,6 +147,27 @@ public final class SaiPenSetup {
         }
         for (File f : moved) android.util.Log.i("SaiPen", "drawing moved to the device: " + f);
         return moved;
+    }
+
+    /**
+     * Notifies Android's MediaStore about all drawings and videos in Documents/SAI Drawings,
+     * so that Android file managers (Samsung My Files) and Recent views show them immediately.
+     */
+    public static void scanDrawings(Context context) {
+        if (context == null) return;
+        DeviceDrawings.migrateTimelapses(drawingsFolder(), timelapseFolder());
+        java.util.List<File> files = DeviceDrawings.listScannable(drawingsFolder());
+        if (files.isEmpty()) return;
+        String[] paths = new String[files.size()];
+        for (int i = 0; i < files.size(); i++) paths[i] = files.get(i).getAbsolutePath();
+        android.media.MediaScannerConnection.scanFile(context.getApplicationContext(), paths, null, null);
+    }
+
+    /** Scans a single drawing or video file into Android's MediaStore. */
+    public static void scanFile(Context context, File file) {
+        if (context == null || file == null) return;
+        android.media.MediaScannerConnection.scanFile(
+            context.getApplicationContext(), new String[]{file.getAbsolutePath()}, null, null);
     }
 
     /**

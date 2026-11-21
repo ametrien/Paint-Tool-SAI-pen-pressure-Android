@@ -21,7 +21,7 @@ import java.util.Locale;
 /**
  * Turns the frames from C:\sai-timelapse\frames into MP4 videos (H.264, the
  * phone's own encoder), one per canvas and size (TimelapseFrames), into
- * Documents/SAI Drawings. Frames that made it into a video are deleted, as
+ * Documents/SAI Drawings/Timelapses. Frames that made it into a video are deleted, as
  * the Mac encoder does.
  */
 public final class TimelapseVideo {

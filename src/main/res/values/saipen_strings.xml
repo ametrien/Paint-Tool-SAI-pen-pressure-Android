@@ -63,7 +63,7 @@
     <string name="saipen_timelapse">Record a timelapse</string>
     <string name="saipen_make_video">Make a timelapse video (%1$d frames)</string>
     <string name="saipen_making_video">Making the video: frame %1$d of %2$d</string>
-    <string name="saipen_video_done">Saved in Documents/SAI Drawings:\n%1$s</string>
+    <string name="saipen_video_done">Saved in Documents/SAI Drawings/Timelapses:\n%1$s</string>
     <string name="saipen_video_failed">The video did not work out: %1$s</string>
     <string name="saipen_frame_when">A new frame:</string>
     <string name="saipen_frame_every_stroke">after every stroke</string>
@@ -153,4 +153,5 @@
         <item quantity="one">%s stroke</item>
         <item quantity="other">%s strokes</item>
     </plurals>
+    <string name="saipen_version">SAI Pen %1$s</string>
 </resources>

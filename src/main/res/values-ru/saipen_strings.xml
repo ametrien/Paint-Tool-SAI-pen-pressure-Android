@@ -63,7 +63,7 @@
     <string name="saipen_timelapse">Записывать таймлапс</string>
     <string name="saipen_make_video">Сделать видео таймлапса (кадров: %1$d)</string>
     <string name="saipen_making_video">Делаю видео: кадр %1$d из %2$d</string>
-    <string name="saipen_video_done">Сохранено в «Документы/SAI Drawings»:\n%1$s</string>
+    <string name="saipen_video_done">Сохранено в «Документы/SAI Drawings/Timelapses»:\n%1$s</string>
     <string name="saipen_video_failed">Видео не получилось: %1$s</string>
     <string name="saipen_frame_when">Новый кадр:</string>
     <string name="saipen_frame_every_stroke">после каждого штриха</string>
@@ -167,4 +167,5 @@
         <item quantity="many">%s мазков</item>
         <item quantity="other">%s мазка</item>
     </plurals>
+    <string name="saipen_version">SAI Pen %1$s</string>
 </resources>

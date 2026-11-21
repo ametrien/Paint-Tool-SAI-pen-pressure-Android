@@ -14,18 +14,22 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Drawings saved inside the app, moved to the device.
+ * Drawings saved inside the app, copied to the device.
  *
  * SAI2's own file browser opens in the Windows user folder (users/xuser),
  * inside the app, and keeps the last folder in SAI's encrypted settings, so
  * SAI Pen cannot make it open in SAI Drawings (GitHub issue #2). A drawing
  * saved there, or in Desktop, Documents or Pictures, is out of reach of
  * Android's file managers and goes with an uninstall. So before SAI starts
- * and after it closes, each one is moved to Documents/SAI Drawings, which SAI
+ * and after it closes, each one is copied to Documents/SAI Drawings, which SAI
  * sees as users/xuser/SAI Drawings (a link to the folder, PrefixLinks): it is
  * opened and saved again from there.
  *
- * Nothing is left in its place. A link to the single file was tried in 0.4.23:
+ * The in-app copy stays (keepOriginals = true): SAI's Recent list remembers
+ * the in-app path and can open the drawing next session. It takes space
+ * inside the app, but each pass recognises the same content
+ * (sameContent()) and does not copy it again, so the duplicate is harmless.
+ * A link to the single file was tried in 0.4.23:
  * SAI opened the drawing through it but could not save it again ("Cannot
  * save the canvas. Invalid parameter."), while saving into the linked folder
  * works. Such links left by 0.4.23 are taken away (only links into the
@@ -33,9 +37,9 @@ import java.util.Set;
  *
  * THE TRAP: never lose a drawing. Nothing on the device is overwritten: a
  * name already taken by another drawing gives "name (2).sai2"; the same
- * drawing already there only lets the in-app copy go. A file inside the app
- * is deleted only once its copy on the device is complete; any failure leaves
- * it where it was.
+ * drawing already there only lets the in-app copy go (when keepOriginals is
+ * false). A file inside the app is deleted only once its copy on the device
+ * is complete; any failure leaves it where it was.
  *
  * No Android types: the JVM tests make real files and links on the Mac.
  */
@@ -60,11 +64,74 @@ public final class DeviceDrawings {
     }
 
     /**
+     * Files in `target` and its subdirectories that should be visible to Android's
+     * media scanner: drawings (.sai2, .psd, etc.), videos (.mp4), and exported pictures.
+     * Skips hidden files (.name) and partial files (.name.saipen-part).
+     */
+    public static List<File> listScannable(File target) {
+        List<File> list = new ArrayList<>();
+        collectScannable(target, list);
+        return list;
+    }
+
+    private static void collectScannable(File dir, List<File> list) {
+        if (dir == null || !dir.isDirectory()) return;
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            String name = f.getName();
+            if (name.startsWith(".")) continue;
+            if (f.isFile() && (isDrawing(name) || name.toLowerCase(Locale.ROOT).endsWith(".mp4"))) {
+                list.add(f);
+            }
+            else if (f.isDirectory()) {
+                collectScannable(f, list);
+            }
+        }
+    }
+
+    /**
+     * Moves any .mp4 files directly in `fromDir` into `toDir` (e.g. migrating
+     * existing timelapses into Documents/SAI Drawings/Timelapses).
+     * Returns list of moved files.
+     */
+    public static List<File> migrateTimelapses(File fromDir, File toDir) {
+        List<File> moved = new ArrayList<>();
+        if (fromDir == null || !fromDir.isDirectory()) return moved;
+        if (!toDir.isDirectory() && !toDir.mkdirs()) return moved;
+        File[] files = fromDir.listFiles((d, name) -> name.toLowerCase(Locale.ROOT).endsWith(".mp4"));
+        if (files == null) return moved;
+        for (File f : files) {
+            if (!f.isFile()) continue;
+            File dest = new File(toDir, f.getName());
+            if (dest.exists()) {
+                dest = freeName(toDir, f.getName());
+            }
+            try {
+                Files.move(f.toPath(), dest.toPath());
+                moved.add(dest);
+            }
+            catch (IOException ignored) {}
+        }
+        return moved;
+    }
+
+    /**
      * Moves each drawing lying right in one of `folders` to `target`. Returns
      * the device files drawings were moved to this time (empty when there was
      * nothing to move or `target` cannot be made).
      */
     public static List<File> moveOut(List<File> folders, File target) {
+        return moveOut(folders, target, false);
+    }
+
+    /**
+     * Copies each drawing lying right in one of `folders` to `target`;
+     * when `keepOriginals` is false the in-app file is deleted once the
+     * device copy is complete (move); when true it is left in place so
+     * SAI's Recent list can still open it next session.
+     */
+    public static List<File> moveOut(List<File> folders, File target, boolean keepOriginals) {
         List<File> moved = new ArrayList<>();
         if (!target.isDirectory() && !target.mkdirs()) return moved;   /* no access to the device's storage */
         Path targetDir = target.toPath().toAbsolutePath().normalize();
@@ -86,7 +153,7 @@ public final class DeviceDrawings {
                         continue;
                     }
                     if (!Files.isRegularFile(at, LinkOption.NOFOLLOW_LINKS)) continue;
-                    moved.add(moveOne(at, target));
+                    moved.add(moveOne(at, target, keepOriginals));
                 }
                 catch (IOException | RuntimeException e) {
                     /* the drawing stays where it is; the next pass tries again */
@@ -97,12 +164,12 @@ public final class DeviceDrawings {
     }
 
     /** Copies the drawing at `at` to the device, then deletes it inside the
-     *  app. Returns the device file. */
-    private static File moveOne(Path at, File target) throws IOException {
+     *  app (unless `keepOriginal`). Returns the device file. */
+    private static File moveOne(Path at, File target, boolean keepOriginal) throws IOException {
         String name = at.getFileName().toString();
         File dest = new File(target, name);
         if (dest.exists() && sameContent(at, dest.toPath())) {
-            Files.delete(at);                           /* already on the device */
+            if (!keepOriginal) Files.delete(at);    /* already on the device */
             return dest;
         }
         if (dest.exists() || Files.isSymbolicLink(dest.toPath())) dest = freeName(target, name);
@@ -125,7 +192,7 @@ public final class DeviceDrawings {
             Files.deleteIfExists(part);
             throw e;
         }
-        Files.delete(at);
+        if (!keepOriginal) Files.delete(at);
         return dest;
     }
 

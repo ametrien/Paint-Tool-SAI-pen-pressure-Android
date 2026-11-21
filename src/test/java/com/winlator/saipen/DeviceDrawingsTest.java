@@ -206,4 +206,103 @@ public class DeviceDrawingsTest {
             assertFalse(n, DeviceDrawings.isDrawing(n));
         }
     }
+
+    /* ---- keepOriginals: SAI's Recent list keeps working ---- */
+
+    private List<File> passKeep() {
+        return DeviceDrawings.moveOut(folders, device, true);
+    }
+
+    @Test
+    public void keepOriginalsLeavesTheDrawingInsideTheApp() throws Exception {
+        File saved = write(xuser, "recent.sai2", "my drawing");
+        List<File> moved = passKeep();
+
+        File onDevice = new File(device, "recent.sai2");
+        assertEquals(Arrays.asList(onDevice), moved);
+        assertEquals("my drawing", read(onDevice));
+        assertTrue("original stays for SAI's Recent", saved.isFile());
+    }
+
+    @Test
+    public void keepOriginalsStillCopiesToTheDevice() throws Exception {
+        write(new File(xuser, "Desktop"), "sketch.PNG", "png");
+        write(new File(xuser, "Documents"), "comic.psd", "psd");
+        assertEquals(2, passKeep().size());
+        /* both originals still inside the app */
+        assertTrue(new File(xuser, "Desktop/sketch.PNG").isFile());
+        assertTrue(new File(xuser, "Documents/comic.psd").isFile());
+        assertArrayEquals(new String[] {"comic.psd", "sketch.PNG"}, deviceNames());
+    }
+
+    @Test
+    public void keepOriginalsDoesNotDuplicateOnRepeatedPasses() throws Exception {
+        write(xuser, "a.sai2", "a");
+        passKeep();
+        passKeep();     /* the original is there, same content on the device: no "(2)" */
+        assertArrayEquals(new String[] {"a.sai2"}, deviceNames());
+        assertTrue("original still stays", new File(xuser, "a.sai2").isFile());
+    }
+
+    @Test
+    public void aRegularPassAfterKeepCleansUp() throws Exception {
+        File saved = write(xuser, "a.sai2", "a");
+        passKeep();     /* copy to device, keep original */
+        assertTrue(saved.isFile());
+        pass();         /* copy + delete original: SAI is closing */
+        assertTrue(gone(saved));
+        assertEquals("a", read(new File(device, "a.sai2")));
+    }
+
+    @Test
+    public void listScannableReturnsDrawingsAndVideos() throws Exception {
+        device.mkdirs();
+        write(device, "sketch.sai2", "sai2");
+        write(device, "render.png", "png");
+        write(device, "timelapse.mp4", "mp4");
+        write(device, ".sketch.sai2.saipen-part", "part");
+        write(device, ".hidden", "hidden");
+        write(device, "notes.txt", "txt");
+        new File(device, "subfolder").mkdirs();
+
+        List<File> scannable = DeviceDrawings.listScannable(device);
+        List<String> names = new ArrayList<>();
+        for (File f : scannable) names.add(f.getName());
+        java.util.Collections.sort(names);
+
+        assertEquals(Arrays.asList("render.png", "sketch.sai2", "timelapse.mp4"), names);
+    }
+
+    @Test
+    public void listScannableFindsFilesInSubdirectories() throws Exception {
+        device.mkdirs();
+        File sub = new File(device, "Timelapses");
+        write(device, "sketch.sai2", "sai2");
+        write(sub, "video.mp4", "mp4");
+        write(sub, ".hidden.mp4", "hidden");
+
+        List<File> scannable = DeviceDrawings.listScannable(device);
+        List<String> names = new ArrayList<>();
+        for (File f : scannable) names.add(f.getName());
+        java.util.Collections.sort(names);
+
+        assertEquals(Arrays.asList("sketch.sai2", "video.mp4"), names);
+    }
+
+    @Test
+    public void migrateTimelapsesMovesMp4Files() throws Exception {
+        device.mkdirs();
+        File timelapses = new File(device, "Timelapses");
+        File v1 = write(device, "draw1 timelapse.mp4", "v1");
+        File v2 = write(device, "draw2 timelapse.mp4", "v2");
+        File s = write(device, "canvas.sai2", "sai2");
+
+        List<File> moved = DeviceDrawings.migrateTimelapses(device, timelapses);
+        assertEquals(2, moved.size());
+        assertFalse(v1.exists());
+        assertFalse(v2.exists());
+        assertTrue(s.exists());
+        assertTrue(new File(timelapses, "draw1 timelapse.mp4").exists());
+        assertTrue(new File(timelapses, "draw2 timelapse.mp4").exists());
+    }
 }

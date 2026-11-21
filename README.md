@@ -26,8 +26,8 @@ On a Mac? The same, also by me:
 > - fixes for a pen that left a dot at the start of strokes, drawings that couldn't be found after
 >   saving, and Bluetooth keyboards that didn't type into SAI.
 >
-> In 0.4.25 I also added basic drawing statistics on SAI Pen's screen: today, the last 7 days,
-> days in a row and in all.
+> 0.4.25 added basic drawing statistics on SAI Pen's screen, and 0.4.26 brings the dedicated
+> `F:\` drive for your drawings and fixes opening drawings from SAI's Recent list.
 >
 > Thank you, everyone!
 >
@@ -276,50 +276,49 @@ Nothing leaves the device. SAI Pen never sends files or the licence anywhere.
 screen and start SAI straight from the icon. While it is off, the icon always opens the app's
 screen with the settings.
 
-### Where your drawings are
+### Where your drawings are & how drives work
 
-SAI runs inside the app, in its own Windows folders that Android's file managers cannot see.
-Only two folders in SAI's save dialog are on the device itself:
+SAI runs inside the app using Wine (a Windows compatibility layer). Wine assigns virtual drive letters (`C:`, `D:`, `E:`, `S:`, `F:`) that map to different folders on your Android device:
 
-| In SAI's save dialog | On the device |
-|---|---|
-| `C:\users\xuser\SAI Drawings` | **Documents/SAI Drawings** |
-| `C:\users\xuser\Downloads` | **Download** |
+| Drive in SAI | Where it is on Android | What it is for |
+|---|---|---|
+| **`F:\`** | **`Documents/SAI Drawings`** | **Your drawings!** The primary, safe place for all your artwork. |
+| **`C:\users\xuser\SAI Drawings`** | **`Documents/SAI Drawings`** | Direct shortcut inside the Windows user folder pointing to your drawings. |
+| **`D:\`** | **`Download`** (Internal Storage) | Your device's **Downloads** folder. (This is why you see Telegram downloads, downloaded zips, or other files here). |
+| **`E:\`** | **`Internal Storage`** (Device Root) | The root of your Android internal storage. |
+| **`S:\`** | SAI program folder (`sai2.exe`) | The folder where PaintTool SAI itself is installed. |
+| **`C:\`** (other than SAI Drawings) | Internal Wine container | Private app storage. Invisible to Android file managers and deleted if the app is uninstalled. |
 
-A drawing saved into one of them is on the device at once, even while SAI is open, and every
-later save goes straight there. Find it in My Files (Files on other devices), share it, copy it
-to a PC.
-The **Open Documents/SAI Drawings** button at the bottom of SAI Pen's screen opens that folder
-in the device's Files app.
+---
 
-**Saved somewhere else?** SAI's save dialog opens in `C:\users\xuser`, so it is easy to save
-there. From 0.4.23 on, SAI Pen moves such drawings for you:
+### How to save and open your artwork
 
-1. While SAI is open, a drawing saved right in `C:\users\xuser` (or in its Desktop, Documents or
-   Pictures folder) is inside the app. The device does not see it yet.
-2. When you close SAI, SAI Pen moves it to **Documents/SAI Drawings**. If Android closed SAI
-   itself (for example while you were in another app), this happens the next time SAI starts.
-3. From then on the drawing lives only there: open it in SAI from the "SAI Drawings" folder, and
-   every save goes to the device. It is never moved back, and there is no second copy.
+#### 🎨 Saving a drawing
+1. In SAI, click **File > Save** (or **Save As...**).
+2. Look at the drive list on the left side of the file dialog:
+   - **Recommended:** Click on drive **`F:\`** (or go to `C:\users\xuser\SAI Drawings`).
+   - Give your file a name and click **Save**.
+3. Your drawing is instantly saved directly to **Documents/SAI Drawings** on your tablet/phone. You can find it in the Samsung "My Files" (or Android "Files") app right away.
 
-What is moved: only SAI's file types (`.sai2`, `.sai`, `.psd`, `.psb`, `.png`, `.jpg`, `.jpeg`,
-`.bmp`, `.tga`), and only files right in those folders, not in folders inside them.
+> [!TIP]
+> **Why not save to `D:\` (Downloads)?**
+> The `D:\` drive is your Android Downloads folder. Cleaning out your downloads folder could accidentally delete your drawings if you keep them there. Always prefer **`F:\`**!
 
-Nothing is lost or overwritten:
+#### 📂 Opening a drawing
+- **Using File > Open:** Choose drive **`F:\`** in the file browser. All your `.sai2`, `.psd`, and exported image files are right there.
+- **Using Recent Files:** You can open your work directly from SAI's **Recent** list! Even if a drawing was originally saved into `C:\users\xuser`, SAI Pen keeps the in-app file intact so SAI can find and open it from history.
+- **From Android:** In your tablet's file manager, go to **Documents > SAI Drawings** (or tap **Open Documents/SAI Drawings** on the SAI Pen launcher screen).
 
-- if a different drawing by the same name is already in SAI Drawings, the moved one is called
-  "name (2)";
-- if the very same drawing is already there, only the copy inside the app is removed;
-- the copy inside the app is removed only once the one on the device is complete; if moving
-  fails (no access to the device's storage, say), the drawing stays where it was and SAI Pen
-  tries again next time.
+---
 
-SAI's **Recent** list still shows a moved drawing at its old place, `C:\users\xuser\...`, and
-cannot open it from there. Open it from the "SAI Drawings" folder once; after that Recent shows
-the new place.
+### What happens if you accidentally saved to `C:\` or Desktop?
 
-Drawings left inside the app by SAI Pen 0.4.22 or older come out the first time SAI starts after
-updating. Uninstalling SAI Pen deletes everything inside the app, but not Documents/SAI Drawings.
+Because SAI defaults to opening `C:\users\xuser`, it is easy to accidentally hit save right there. **SAI Pen protects you from losing drawings:**
+
+1. While SAI is running, drawings saved in `C:\users\xuser` (or its Desktop, Documents, Pictures folders) remain inside Wine.
+2. When you close SAI (or before SAI starts next time), SAI Pen automatically **copies** all your artwork (`.sai2`, `.sai`, `.psd`, `.png`, `.jpg`, etc.) into **Documents/SAI Drawings** on your device.
+3. **The original remains on `C:\`**: Previous versions of SAI Pen removed the in-app file, which broke SAI's **Recent** list. Now, the in-app copy stays so that Recent files continue to open properly.
+4. **Nothing is lost or overwritten**: If a file with the same name already exists in `Documents/SAI Drawings`, the new copy is saved as `name (2).sai2`. If moving fails, the drawing is never deleted.
 
 ### Gestures
 

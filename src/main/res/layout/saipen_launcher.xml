@@ -409,5 +409,15 @@
                 android:textSize="12sp"
                 android:alpha="0.7" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/SaiPenVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:textSize="11sp"
+            android:alpha="0.5" />
     </LinearLayout>
 </ScrollView>

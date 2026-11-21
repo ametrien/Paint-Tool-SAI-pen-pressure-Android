@@ -250,6 +250,16 @@ public class SaiLocatorTest {
     }
 
     @Test
+    public void drivesWithDrawingsAddsF() {
+        assertEquals("S:/sai"
+                     + "D:/download"
+                     + "E:/internal"
+                     + "F:/documents/SAI Drawings",
+                     SaiLocator.drives("/sai", "/download", "/internal",
+                                       "/documents/SAI Drawings"));
+    }
+
+    @Test
     public void startsSaiByItselfOnlyWhenOpenedFromTheIcon() {
         assertTrue(SaiLocator.shouldAutoLaunch(true, false, false, true));
         /* THE TRAP: Winlator restarts the app when SAI exits; starting SAI

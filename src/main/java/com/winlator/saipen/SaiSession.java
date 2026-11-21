@@ -79,6 +79,56 @@ public final class SaiSession {
             }
         });
 
+        final File drawingsDir = SaiPenSetup.drawingsFolder();
+        drawingsDir.mkdirs();
+        android.os.FileObserver observerTemp = null;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                observerTemp = new android.os.FileObserver(drawingsDir,
+                    android.os.FileObserver.CLOSE_WRITE | android.os.FileObserver.MOVED_TO) {
+                    @Override
+                    public void onEvent(int event, String path) {
+                        if (path == null || path.startsWith(".")) return;
+                        if (DeviceDrawings.isDrawing(path) || path.toLowerCase(java.util.Locale.ROOT).endsWith(".mp4")) {
+                            File f = new File(drawingsDir, path);
+                            if (f.isFile()) SaiPenSetup.scanFile(activity, f);
+                        }
+                    }
+                };
+            } else {
+                observerTemp = new android.os.FileObserver(drawingsDir.getAbsolutePath(),
+                    android.os.FileObserver.CLOSE_WRITE | android.os.FileObserver.MOVED_TO) {
+                    @Override
+                    public void onEvent(int event, String path) {
+                        if (path == null || path.startsWith(".")) return;
+                        if (DeviceDrawings.isDrawing(path) || path.toLowerCase(java.util.Locale.ROOT).endsWith(".mp4")) {
+                            File f = new File(drawingsDir, path);
+                            if (f.isFile()) SaiPenSetup.scanFile(activity, f);
+                        }
+                    }
+                };
+            }
+            observerTemp.startWatching();
+        }
+        catch (Throwable t) {
+            Log.w(TAG, "drawings FileObserver not started", t);
+        }
+        final android.os.FileObserver observer = observerTemp;
+
+        final android.app.Application.ActivityLifecycleCallbacks lifecycle =
+            new android.app.Application.ActivityLifecycleCallbacks() {
+                @Override public void onActivityPaused(Activity a) {
+                    if (a == activity) SaiPenSetup.scanDrawings(activity);
+                }
+                @Override public void onActivityResumed(Activity a) {}
+                @Override public void onActivityCreated(Activity a, android.os.Bundle b) {}
+                @Override public void onActivityStarted(Activity a) {}
+                @Override public void onActivityStopped(Activity a) {}
+                @Override public void onActivitySaveInstanceState(Activity a, android.os.Bundle b) {}
+                @Override public void onActivityDestroyed(Activity a) {}
+            };
+        activity.getApplication().registerActivityLifecycleCallbacks(lifecycle);
+
         final ScheduledExecutorService thread = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "sai-process-watch");
             t.setDaemon(true);
@@ -93,12 +143,21 @@ public final class SaiSession {
             }
             if (!watch.onPoll(running, now)) return;
             thread.shutdown();
+            if (observer != null) {
+                try { observer.stopWatching(); } catch (Throwable ignored) {}
+            }
+            activity.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);
             Log.i(TAG, "SAI closed: back to SAI Pen's screen");
             SpeedSession.finish();
             /* what SAI saved inside the app shows on the device at once,
-             * behind the closing cover; SAI's process is gone, its files closed */
+             * behind the closing cover; SAI's process is gone, its files closed.
+             * keepOriginals = true: a copy stays inside the app so SAI's
+             * Recent list can still open it next session. The copy is harmless:
+             * on the next moveDrawingsOut, sameContent() recognises it and
+             * does not copy it again (it only takes space inside the app). */
             File container = SaiPenSetup.containerRoot;
-            if (container != null) SaiPenSetup.moveDrawingsOut(container);
+            if (container != null) SaiPenSetup.moveDrawingsOut(container, true);
+            SaiPenSetup.scanDrawings(activity);
             activity.runOnUiThread(() -> {
                 boolean wasUp = cover[0] != null;
                 showCover.run();

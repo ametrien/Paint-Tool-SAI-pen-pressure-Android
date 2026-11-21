@@ -347,9 +347,15 @@ public final class SaiLocator {
     /**
      * Winlator's drives setting with SAI's folder as S: (first, so a SAI
      * inside Download still maps to S:), D: = Download, E: = the app's
-     * own storage. The format is Winlator's: letter, colon, path, no
-     * separators (Container.drivesIterator).
+     * own storage, F: = Documents/SAI Drawings (the person's drawings,
+     * right there in SAI's file browser). The format is Winlator's:
+     * letter, colon, path, no separators (Container.drivesIterator).
      */
+    public static String drives(String saiDir, String downloads, String internal, String drawings) {
+        return "S:" + saiDir + "D:" + downloads + "E:" + internal + "F:" + drawings;
+    }
+
+    /** Without SAI Drawings: for callers that do not have the path yet. */
     public static String drives(String saiDir, String downloads, String internal) {
         return "S:" + saiDir + "D:" + downloads + "E:" + internal;
     }
