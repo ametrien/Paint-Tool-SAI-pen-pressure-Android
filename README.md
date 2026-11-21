@@ -95,6 +95,10 @@ On a Mac? The same, also by me:
      Android, clearing your downloads folder could accidentally delete your artwork.
    For the full breakdown of drive letters (`C:`, `D:`, `E:`, `S:`, `F:`), see
    [Where your drawings are & how drives work](#where-your-drawings-are--how-drives-work).
+8. **Want custom brushes and textures?** SAI's custom brushes, paper textures, and tool presets live in
+   **Documents/SYSTEMAX Software Development/SAIv2/settings** on your tablet (the same folder as on Windows).
+   You can install brush pack `.zip` files easily using the **Add brushes or textures** button on the
+   SAI Pen launcher screen. See [Your brushes, textures and presets](#your-brushes-textures-and-presets).
 
 It works best with the **Samsung S Pen**. Other pens may work too: see
 [Which devices and pens](#which-devices-and-pens).
@@ -296,10 +300,18 @@ SAI runs inside the app using Wine (a Windows compatibility layer). Wine assigns
 |---|---|---|
 | **`F:\`** | **`Documents/SAI Drawings`** | **Your drawings!** The primary, safe place for all your artwork. |
 | **`C:\users\xuser\SAI Drawings`** | **`Documents/SAI Drawings`** | Direct shortcut inside the Windows user folder pointing to your drawings. |
-| **`D:\`** | **`Download`** (Internal Storage) | Your device's **Downloads** folder. (This is why you see Telegram downloads, downloaded zips, or other files here). |
+| **`C:\users\xuser\Documents\SYSTEMAX Software Development\SAIv2\settings`** | **`Documents/SYSTEMAX Software Development/SAIv2/settings`** | **Your brushes, textures & presets!** Linked directly to Android Documents. |
+| **`D:\`** | **`Download`** (Internal Storage) | Your device's **Downloads** folder (where you download zips, brushes, etc.). |
 | **`E:\`** | **`Internal Storage`** (Device Root) | The root of your Android internal storage. |
 | **`S:\`** | SAI program folder (`sai2.exe`) | The folder where PaintTool SAI itself is installed. |
-| **`C:\`** (other than SAI Drawings) | Internal Wine container | Private app storage. Invisible to Android file managers and deleted if the app is uninstalled. |
+| **`C:\`** (other than the linked folders above) | Internal Wine container | Private app storage. Invisible to Android file managers and deleted if the app is uninstalled. |
+
+> [!NOTE]
+> **What about brushes, paper textures, and presets?**
+> SAI Ver.2 stores custom brushes, paper textures, blotmaps, and swatches in
+> **`Documents/SYSTEMAX Software Development/SAIv2/settings`**. SAI Pen links this folder directly to Android's
+> Documents, so your brush collection also survives app updates and uninstalls. You can install brush pack `.zip` files
+> easily using the **Add brushes or textures** button on SAI Pen's launcher screen (see [Your brushes, textures and presets](#your-brushes-textures-and-presets)).
 
 ---
 
