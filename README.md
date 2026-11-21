@@ -83,6 +83,13 @@ On a Mac? The same, also by me:
 6. **Try the settings on SAI Pen's screen** and keep what works for you:
    [palm rejection](#palm-rejection) if your hand moves the cursor or clicks, and
    [timelapse](#timelapse) recording on or off.
+7. **Saving your artwork: use drive `F:\`!** When you save your canvas in SAI (**File > Save**
+   or **Save As...**), select drive **`F:\`** in the drive list on the left.
+   Drive `F:\` maps directly to your Android device's **Documents/SAI Drawings** folder.
+   Drawings saved to `F:\` appear immediately in your tablet's file manager (Samsung *My Files*
+   or Android *Files*), stay safe even if the app is uninstalled, and can be opened right away
+   from SAI's **Recent** list. For a full breakdown of drive letters, see
+   [Where your drawings are & how drives work](#where-your-drawings-are--how-drives-work).
 
 It works best with the **Samsung S Pen**. Other pens may work too: see
 [Which devices and pens](#which-devices-and-pens).
