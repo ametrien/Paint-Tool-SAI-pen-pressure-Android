@@ -34,6 +34,12 @@ package com.winlator.saipen;
  * needs both fingers brief, not only the one lifting (isTapPartner): a palm
  * resting on the glass and the side of the hand brushing it made one.
  *
+ * And no touch under MIN_TAP_MS is a tap at all (longEnoughForTap): on a
+ * Galaxy Tab S6 Lite a palm resting on the glass came as a string of
+ * touches of 3 to 17 ms, one every ~115 ms at the same spot. Each was a
+ * click (a dot), two together a right click (a picked colour). Quick taps
+ * of a finger were 41 ms and up.
+ *
  * 3. BIG CONTACT (PREF_PALM_BIG): a contact wider than BIG_CONTACT_MM (the
  *    touch's major axis, as Android reports it) is a palm, not a fingertip.
  *
@@ -100,6 +106,14 @@ public final class PalmFilter {
         return fingersDown == 1;
     }
 
+    /** A touch shorter than this is no tap, no click (see the class note). */
+    public static final long MIN_TAP_MS = 30;
+
+    /** Down long enough to be a finger's tap, not a palm's flicker. */
+    public static boolean longEnoughForTap(long downForMs) {
+        return downForMs >= MIN_TAP_MS;
+    }
+
     /** A two-finger tap's other finger may have landed this much before
      *  the lifting one (beyond a tap's own time) and still be in the tap. */
     public static final long TAP_PARTNER_SLACK_MS = 150;
@@ -109,7 +123,7 @@ public final class PalmFilter {
      *  as still. A palm resting on the glass is not one: with the side of
      *  the hand brushing the glass next to it, the two were a right click. */
     public static boolean isTapPartner(long downForMs, float travelPx, long tapMs, float tapTravelPx) {
-        return downForMs >= 0 && downForMs < tapMs + TAP_PARTNER_SLACK_MS && travelPx < tapTravelPx;
+        return longEnoughForTap(downForMs) && downForMs < tapMs + TAP_PARTNER_SLACK_MS && travelPx < tapTravelPx;
     }
 
     /** The contact's width in mm: Android's touch major (px) at this dpi. */

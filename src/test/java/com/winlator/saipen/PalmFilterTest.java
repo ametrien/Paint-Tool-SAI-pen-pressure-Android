@@ -110,4 +110,17 @@ public class PalmFilterTest {
         /* a finger that slid is no tap */
         assertFalse(PalmFilter.isTapPartner(120, 12, 200, 10));
     }
+
+    @Test
+    public void aPalmsFlickerIsNoTap() {
+        /* Galaxy Tab S6 Lite: a resting palm came as touches of 3 to 17 ms;
+         * a finger's quickest taps were 41 ms */
+        assertFalse(PalmFilter.longEnoughForTap(3));
+        assertFalse(PalmFilter.longEnoughForTap(17));
+        assertFalse(PalmFilter.longEnoughForTap(PalmFilter.MIN_TAP_MS - 1));
+        assertTrue(PalmFilter.longEnoughForTap(PalmFilter.MIN_TAP_MS));
+        assertTrue(PalmFilter.longEnoughForTap(41));
+        /* nor is a flicker a two-finger tap's other finger */
+        assertFalse(PalmFilter.isTapPartner(7, 0, 200, 10));
+    }
 }
