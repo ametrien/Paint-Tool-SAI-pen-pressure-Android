@@ -678,7 +678,7 @@ index 0940581..a217866 100644
                  return;
              }
 diff --git a/app/src/main/java/com/winlator/widget/TouchpadView.java b/app/src/main/java/com/winlator/widget/TouchpadView.java
-index 89dd3fe..1580e26 100644
+index 89dd3fe..7b271fa 100644
 --- a/app/src/main/java/com/winlator/widget/TouchpadView.java
 +++ b/app/src/main/java/com/winlator/widget/TouchpadView.java
 @@ -2,8 +2,12 @@ package com.winlator.widget;
@@ -1079,7 +1079,7 @@ index 89dd3fe..1580e26 100644
                      if (isEnabled()) xServer.injectPointerMove((int)transformedPoint[0], (int)transformedPoint[1]);
                  }
                  else {
-@@ -192,23 +495,267 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -192,23 +495,274 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          return true;
      }
  
@@ -1283,7 +1283,11 @@ index 89dd3fe..1580e26 100644
 +        if (other != 0) fireGesture(other == 2 ? Gestures.Input.TWO_TAP : Gestures.Input.THREE_TAP, multiTap.x(), multiTap.y());
 +        int r = multiTap.tap(n, gestures.isSet(twice), finger.x, finger.y, SystemClock.uptimeMillis());
 +        if (r == MultiTap.SINGLE && n == 2 && gestures.action(single).type == Gestures.Type.RIGHT_CLICK) {
-+            /* the right click as it always was: let go with the finger */
++            /* the right click as it always was: let go with the finger. The
++             * other finger lifting is no tap of its own either: it was a
++             * left click, a dot where it lifted, right after the colour
++             * the right click picked. */
++            suppressTaps = true;
 +            pressPointerButtonRight(finger);
 +            return;
 +        }
@@ -1323,7 +1327,10 @@ index 89dd3fe..1580e26 100644
 +                        Log.i("SaiPen", "no two-finger tap: the other finger was down " + finger2.downForMs() + " ms (a resting palm)");
 +                    }
 +                    else if (gestures != null) tapped(2, finger1);
-+                    else pressPointerButtonRight(finger1);
++                    else {
++                        suppressTaps = true;   /* SAI Pen: the other finger's lift is no click (tapped()) */
++                        pressPointerButtonRight(finger1);
++                    }
 +                }
 +                break;
 +            case 3:
@@ -1350,7 +1357,7 @@ index 89dd3fe..1580e26 100644
                      fourFingersTapCallback.run();
                  }
                  break;
-@@ -224,29 +771,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -224,29 +778,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
  
          Finger finger2 = numFingers == 2 ? findSecondFinger(finger1) : null;
          if (finger2 != null) {
@@ -1386,7 +1393,7 @@ index 89dd3fe..1580e26 100644
          }
  
          if (!scrolling && numFingers <= 2 && !skipPointerMove) {
-@@ -295,19 +825,32 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -295,19 +832,32 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          if (isEnabled() && pointerButtonLeftEnabled && !xServer.pointer.isButtonPressed(Pointer.Button.BUTTON_LEFT)) {
              xServer.injectPointerButtonPress(Pointer.Button.BUTTON_LEFT);
              fingerPointerButtonLeft = finger;
@@ -1419,7 +1426,7 @@ index 89dd3fe..1580e26 100644
                  xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
                  fingerPointerButtonLeft = null;
              }, 30);
-@@ -317,6 +860,9 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -317,6 +867,9 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      private void releasePointerButtonRight(final Finger finger) {
          if (isEnabled() && pointerButtonRightEnabled && finger == fingerPointerButtonRight && xServer.pointer.isButtonPressed(Pointer.Button.BUTTON_RIGHT)) {
              postDelayed(() -> {
@@ -1429,7 +1436,7 @@ index 89dd3fe..1580e26 100644
                  xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_RIGHT);
                  fingerPointerButtonRight = null;
              }, 30);
-@@ -343,6 +889,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -343,6 +896,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
          this.pointerButtonRightEnabled = pointerButtonRightEnabled;
      }
  
@@ -1440,7 +1447,7 @@ index 89dd3fe..1580e26 100644
      public void setFourFingersTapCallback(Runnable fourFingersTapCallback) {
          this.fourFingersTapCallback = fourFingersTapCallback;
      }
-@@ -356,6 +906,25 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -356,6 +913,25 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
      }
  
      public boolean onExternalMouseEvent(MotionEvent event) {
@@ -1466,7 +1473,7 @@ index 89dd3fe..1580e26 100644
          boolean handled = false;
          if (isEnabled() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
              int actionButton = event.getActionButton();
-@@ -379,7 +948,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+@@ -379,7 +955,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
                      handled = true;
                      break;
                  case MotionEvent.ACTION_HOVER_MOVE:
