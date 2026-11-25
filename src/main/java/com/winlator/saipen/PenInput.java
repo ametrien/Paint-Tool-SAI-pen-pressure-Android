@@ -216,6 +216,12 @@ public final class PenInput {
     public void onTouch(int action, Event e) {
         switch (action) {
             case ACTION_DOWN:
+                /* a down with the button still held: the last stroke's lift
+                 * never came (Android handed the touch to a palm, or it came
+                 * while the view was disabled). That stroke ends where it
+                 * was first: pressed on, SAI joined the two strokes with a
+                 * straight line. */
+                if (heldButton != 0) lift(e.timeUs(e.historySize()));
                 down(e);
                 break;
             case ACTION_MOVE:

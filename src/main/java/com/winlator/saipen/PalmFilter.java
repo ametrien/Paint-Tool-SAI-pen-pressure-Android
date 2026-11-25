@@ -25,6 +25,11 @@ package com.winlator.saipen;
  *    lost hover-exit cannot block the fingers for good, and pens that report
  *    no hover still count from their last touch.
  *
+ *    A lone finger already down when the pen starts hovering is forgotten
+ *    too (dropOnPenHover): a palm lands before the pen comes in range, and
+ *    it moved the cursor under the palm while the hovering pen moved it to
+ *    the pen. Two fingers are a pinch, scroll or turn under way and stay.
+ *
  * 3. BIG CONTACT (PREF_PALM_BIG): a contact wider than BIG_CONTACT_MM (the
  *    touch's major axis, as Android reports it) is a palm, not a fingertip.
  *
@@ -85,10 +90,23 @@ public final class PalmFilter {
         return since >= 0 && since < PEN_QUIET_MS;
     }
 
+    /** The pen hovers: the fingers down are forgotten if they are one alone
+     *  (a palm moving the cursor), kept if two or more (a gesture). */
+    public static boolean dropOnPenHover(int fingersDown) {
+        return fingersDown == 1;
+    }
+
     /** The contact's width in mm: Android's touch major (px) at this dpi. */
     public static float contactMm(float touchMajorPx, float dpi) {
         if (dpi <= 0) return 0;
         return touchMajorPx / dpi * 25.4f;
+    }
+
+    /** How far apart two view points are in mm (for the log: how far a
+     *  touch landed from the pen). */
+    public static float distanceMm(float dxPx, float dyPx, float dpi) {
+        if (dpi <= 0) return 0;
+        return (float) Math.hypot(dxPx, dyPx) / dpi * 25.4f;
     }
 
     /** Wider than a fingertip can be. */

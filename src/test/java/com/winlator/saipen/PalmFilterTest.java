@@ -1,5 +1,6 @@
 package com.winlator.saipen;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -80,5 +81,20 @@ public class PalmFilterTest {
     @Test
     public void noDpiMeansNotBig() {
         assertFalse(PalmFilter.isBigContact(500, 0));
+    }
+
+    @Test
+    public void theHoveringPenDropsALoneFingerButNotAGesture() {
+        assertTrue(PalmFilter.dropOnPenHover(1));
+        assertFalse(PalmFilter.dropOnPenHover(0));
+        assertFalse(PalmFilter.dropOnPenHover(2));
+    }
+
+    @Test
+    public void distanceInMm() {
+        /* 300-400-500 px at 254 dpi: 500 px is 50 mm */
+        assertEquals(50f, PalmFilter.distanceMm(300, 400, 254), 0.01f);
+        assertEquals(50f, PalmFilter.distanceMm(-300, -400, 254), 0.01f);
+        assertEquals(0f, PalmFilter.distanceMm(300, 400, 0), 0f);
     }
 }

@@ -164,6 +164,19 @@ public class PenInputTest {
     }
 
     @Test
+    public void aDownWhoseLastLiftWasLostEndsThatStrokeFirst() {
+        /* the lift can be lost (Android handed the touch to a palm); pressing
+         * on would join the old stroke and the new one with a straight line */
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(0, 0, 0.5f, 1)));
+        pen.onTouch(PenInput.ACTION_MOVE, ev(false, pt(20, 20, 0.5f, 2)));
+        rec.log.clear();
+        pen.onTouch(PenInput.ACTION_DOWN, ev(false, pt(200, 100, 0.5f, 3)));
+        assertEquals(Arrays.asList("sample 0 10 10 t3", "release 1", "move 100 50"), rec.log.subList(0, 3));
+        assertEquals(Arrays.asList("press 1"), rec.only("press"));
+        assertTrue(pen.isTouching());
+    }
+
+    @Test
     public void aFeatherTouchIsStillATouch() {
         hoverAt(0, 0, 0);
         rec.log.clear();
