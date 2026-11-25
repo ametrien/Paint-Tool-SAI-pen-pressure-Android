@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Жесты (GesturesSettings, issue #10) -->
+    <string name="saipen_gestures_title">Жесты</string>
+    <string name="saipen_gestures_value_standard">Стандартные</string>
+    <plurals name="saipen_gestures_value_changed">
+        <item quantity="one">%d изменён</item>
+        <item quantity="few">%d изменено</item>
+        <item quantity="many">%d изменено</item>
+        <item quantity="other">%d изменено</item>
+    </plurals>
+    <string name="saipen_gestures_note">Выберите, что делает в SAI каждый жест пальцами и пером. Касание четырьмя пальцами всегда открывает меню, а двумя пальцами холст всегда прокручивается, масштабируется и поворачивается.</string>
+    <string name="saipen_gestures_fingers">Пальцы</string>
+    <string name="saipen_gestures_pen">Перо</string>
+    <string name="saipen_gestures_reset">Вернуть стандартные</string>
+    <string name="saipen_gestures_edge_note">Свайпы от края работают в середине каждой стороны: остальное Android оставляет для своего жеста «Назад».</string>
+    <string name="saipen_gestures_air_note">Кнопка в воздухе: если вместо этого открывается меню пера самого планшета, выключите его в настройках пера.</string>
+    <string name="saipen_gestures_bluetooth_note">S Pen с Bluetooth (у которого в настройках S Pen есть Air actions, например у Galaxy S24 Ultra): если держать перо дальше от экрана, где курсор за ним уже не ходит, одно нажатие кнопки отменяет, а два повторяют. Включите SAI Pen в Настройках: Дополнительные функции, S Pen, Air actions, раздел «Действия в приложениях». Samsung выключает его по умолчанию. Рядом с экраном кнопка делает то, что выбрано выше.</string>
+    <string name="saipen_gesture_two_tap">Касание двумя пальцами</string>
+    <string name="saipen_gesture_two_double_tap">Двойное касание двумя пальцами</string>
+    <string name="saipen_gesture_three_tap">Касание тремя пальцами</string>
+    <string name="saipen_gesture_three_double_tap">Двойное касание тремя пальцами</string>
+    <string name="saipen_gesture_long_press">Один палец, удержание</string>
+    <string name="saipen_gesture_edge_left">Свайп от левого края</string>
+    <string name="saipen_gesture_edge_right">Свайп от правого края</string>
+    <string name="saipen_gesture_pen_button">Перо касается с зажатой кнопкой</string>
+    <string name="saipen_gesture_pen_eraser">Ластик на обратном конце пера</string>
+    <string name="saipen_gesture_pen_hover_button">Кнопка пера в воздухе</string>
+    <string name="saipen_action_none">Ничего</string>
+    <string name="saipen_action_draw">Рисовать</string>
+    <string name="saipen_action_left">Левый клик</string>
+    <string name="saipen_action_right">Правый клик (берёт цвет)</string>
+    <string name="saipen_action_keyboard">Клавиатура</string>
+    <string name="saipen_action_keys">Показать или скрыть экранные клавиши</string>
+    <string name="saipen_action_menu">Меню</string>
+    <string name="saipen_action_key">Клавиша…</string>
+    <string name="saipen_action_key_held">%s, зажата, пока рисуете</string>
+    <string name="saipen_action_pick_title">Что делает</string>
+    <string name="saipen_action_key_title">Какая клавиша</string>
+    <string name="saipen_action_key_ok">OK</string>
+    <string name="saipen_action_kind_once_pen">Нажимается один раз, касание ничего не рисует (как Ctrl+Z)</string>
+    <string name="saipen_action_kind_held_pen">Зажата, пока перо рисует (как клавиша инструмента)</string>
+    <string name="saipen_gestures_done">Готово</string>
+    <string name="saipen_gestures_hold_note">Во время рисования подержите четыре пальца неподвижно, чтобы поменять их прямо поверх SAI.</string>
+</resources>

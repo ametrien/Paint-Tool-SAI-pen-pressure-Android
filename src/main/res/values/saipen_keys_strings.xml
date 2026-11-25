@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- On-screen keys (FloatingKeys, FloatingKeysSettings) -->
+    <string name="saipen_keys_title">On-screen keys</string>
+    <string name="saipen_keys_value_on">On</string>
+    <string name="saipen_keys_value_off">Off</string>
+    <string name="saipen_keys_note">For SAI without a keyboard: a small dot over SAI that you can drag anywhere. Tap it to open your buttons; drag them by ⋮, close them with ×.</string>
+    <string name="saipen_keys_switch">Show the keys when SAI starts</string>
+    <string name="saipen_keys_gesture">Hold three fingers still for a moment to show or hide them</string>
+    <string name="saipen_keys_none">No buttons.</string>
+    <string name="saipen_keys_add">+ Add a button</string>
+    <string name="saipen_keys_reset">Back to the first ones</string>
+    <string name="saipen_keys_remove">Remove</string>
+    <string name="saipen_keys_add_title">A new button</string>
+    <string name="saipen_keys_add_ok">Add</string>
+    <string name="saipen_keys_color_note">Colour:</string>
+    <!-- the dot's label when Ctrl is not among the keys -->
+    <string name="saipen_keys_dot">Keys</string>
+    <!-- a long press on the dot hides it -->
+    <string name="saipen_keys_hidden">The keys are hidden until SAI starts again.</string>
+    <string name="saipen_keys_hidden_gesture">The keys are hidden. Hold three fingers still for a moment to bring them back.</string>
+    <string name="saipen_keys_buttons_note">Buttons (up to %d). Tap Once / Held to switch: Once presses the keys once per tap, Held keeps them down for the pen until you tap again.</string>
+    <string name="saipen_keys_kind_once">Once</string>
+    <string name="saipen_keys_kind_held">Held</string>
+    <string name="saipen_keys_kind_once_long">A tap presses it once (like Ctrl+Z)</string>
+    <string name="saipen_keys_kind_held_long">A tap keeps it down until the next tap (like Ctrl for a perspective ruler)</string>
+    <string name="saipen_keys_no_key">(no key, only Ctrl / Alt / Shift)</string>
+    <!-- SaiLocator.exeBits: a 32-bit sai2.exe -->
+    <string name="saipen_32bit">SAI Pen needs the 64bit SAI. Download it from SYSTEMAX (its file name ends in 64bit-en.zip), unzip it, then tap Change SAI…</string>
+    <string name="saipen_32bit_title">This SAI is 32-bit and won\'t work</string>
+    <string name="saipen_32bit_short">(32-bit, won\'t work)</string>
+    <!-- Change SAI: ask before searching -->
+    <string name="saipen_change_title">Change SAI</string>
+    <string name="saipen_change_text">SAI Pen can look through the device, four folders deep, and list every SAI it finds. Or choose a folder yourself: SAI\'s own folder, or a folder with several SAIs inside.</string>
+    <string name="saipen_change_search">Search the device</string>
+    <string name="saipen_change_folder">Choose a folder</string>
+    <!-- DeviceReadiness -->
+    <string name="saipen_ready_title_ok">Ready to draw</string>
+    <string name="saipen_ready_title_better">Good to draw</string>
+    <string name="saipen_ready_title_lag">SAI may lag</string>
+    <string name="saipen_ready_sub_ok">Everything looks good</string>
+    <plurals name="saipen_ready_sub_better">
+        <item quantity="one">%d thing could be better</item>
+        <item quantity="other">%d things could be better</item>
+    </plurals>
+    <plurals name="saipen_ready_sub_lag">
+        <item quantity="one">%d thing to fix</item>
+        <item quantity="other">%d things to fix</item>
+    </plurals>
+    <string name="saipen_ready_details">Tap for details</string>
+    <string name="saipen_ready_memory_name">Memory</string>
+    <string name="saipen_ready_battery_name">Battery</string>
+    <string name="saipen_ready_heat_name">Temperature</string>
+    <string name="saipen_ready_storage_name">Storage</string>
+    <string name="saipen_ready_sharp_name">Screen sharpness</string>
+    <string name="saipen_ready_past_name">Last sessions</string>
+    <string name="saipen_ready_memory_value">%1$s of %2$s GB free</string>
+    <string name="saipen_ready_battery_ok">Normal</string>
+    <string name="saipen_ready_battery_saver">Battery saver is on</string>
+    <string name="saipen_ready_heat_ok">Cool</string>
+    <string name="saipen_ready_heat_warm">Warm, slowing down</string>
+    <string name="saipen_ready_heat_hot">Hot, slowed down</string>
+    <string name="saipen_ready_unknown">Not known</string>
+    <string name="saipen_ready_storage_value">%1$s GB free</string>
+    <string name="saipen_ready_sharp_value">%1$d</string>
+    <string name="saipen_ready_sharp_ms">%1$d, %2$d ms</string>
+    <string name="saipen_ready_past_value">%1$d ms from pen to screen</string>
+    <string name="saipen_ready_past_none">After a few drawing sessions</string>
+    <string name="saipen_ready_memory_help">Close other apps so SAI has more room.</string>
+    <string name="saipen_ready_battery_help">Android slows the processor down. Turn battery saver off while you draw.</string>
+    <string name="saipen_ready_battery_open">Open battery settings ›</string>
+    <string name="saipen_ready_heat_help">Let the device cool down, or take it out of its case.</string>
+    <string name="saipen_ready_storage_help">Saving and the timelapse may fail. Free up some space.</string>
+    <string name="saipen_ready_sharp_help">On this device %1$d drew faster: %2$d ms against %3$d ms. Settings below, Screen sharpness.</string>
+    <string name="saipen_ready_past_help">Settings below may help: Screen drawing, Screen sharpness, Fast processor cores.</string>
+    <string name="saipen_power_saver_on">Battery saver came on: SAI may draw slower. You can turn it off in the quick settings.</string>
+    <string name="saipen_power_hot">The device is hot: SAI may draw slower. A break or taking off the case helps.</string>
+</resources>

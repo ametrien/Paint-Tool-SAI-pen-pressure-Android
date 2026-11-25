@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bluetooth S Pen, button pressed away from the screen (Samsung "Air
+     actions"). Samsung's S Pen service sends trigger_key to the app as key
+     events; the person can remap the gestures in Settings > Advanced
+     features > S Pen > Air actions. Format:
+     https://developer.samsung.com/galaxy-spen-remote/air-actions.html
+     Only one such file per app (Samsung's rule); it is on
+     XServerDisplayActivity, the screen SAI draws on (AirActionKeys). -->
+<remote-actions version="1.2" actionset_label="@string/saipen_air_actions">
+    <action
+        id="undo"
+        label="@string/saipen_air_undo"
+        priority="1"
+        trigger_key="CTRL_LEFT+Z">
+        <preference name="gesture" value="click" />
+        <preference name="button_only" value="true" />
+    </action>
+    <action
+        id="redo"
+        label="@string/saipen_air_redo"
+        priority="2"
+        trigger_key="CTRL_LEFT+Y">
+        <preference name="gesture" value="double_click" />
+        <preference name="button_only" value="true" />
+    </action>
+</remote-actions>

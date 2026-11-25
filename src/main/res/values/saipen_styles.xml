@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SAI Pen's start screen: cards like the Statistics window -->
+<resources>
+    <style name="SaiPenCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:background">@drawable/saipen_card</item>
+        <item name="android:padding">14dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+    <style name="SaiPenLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">?attr/colorSecondaryText</item>
+    </style>
+    <style name="SaiPenBody">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="SaiPenNote" parent="SaiPenBody">
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/colorSecondaryText</item>
+    </style>
+    <style name="SaiPenButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:background">@drawable/saipen_button</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="SaiPenRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@drawable/saipen_row</item>
+    </style>
+    <style name="SaiPenRowTitle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="SaiPenRowValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorSecondaryText</item>
+    </style>
+    <style name="SaiPenArrow" parent="SaiPenRowValue">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:text">›</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+    <style name="SaiPenDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">#3a4047</item>
+    </style>
+    <style name="SaiPenTile">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/saipen_tile</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+    <style name="SaiPenTileValue">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:text">—</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <!-- a kind in the brushes card: the number, the name, a tap shows them -->
+    <style name="SaiPenKindTile" parent="SaiPenTile">
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">6dp</item>
+        <item name="android:minHeight">60dp</item>
+        <item name="android:foreground">@drawable/saipen_row</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+    <style name="SaiPenKindLabel" parent="SaiPenNote">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+</resources>

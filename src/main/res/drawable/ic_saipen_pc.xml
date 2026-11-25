@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Bring my settings from a PC": a screen with its stand -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#b8c0c8" android:strokeWidth="1.8" android:fillColor="#00000000"
+        android:strokeLineJoin="round" android:pathData="M3.5,4.5h17v11h-17z" />
+    <path android:strokeColor="#b8c0c8" android:strokeWidth="1.8" android:strokeLineCap="round"
+        android:pathData="M12,15.5L12,19.5M8,19.5L16,19.5" />
+    <path android:strokeColor="#b8c0c8" android:strokeWidth="1.8" android:strokeLineCap="round"
+        android:strokeLineJoin="round" android:fillColor="#00000000"
+        android:pathData="M12,7.2L12,12.6M9.6,10.4L12,12.8L14.4,10.4" />
+</vector>

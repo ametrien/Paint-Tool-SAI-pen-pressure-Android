@@ -1,0 +1,917 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SAI Pen: the app's only screen (SaiLauncherActivity).
+     Start SAI on top, then one card per topic, the rarely changed settings
+     folded into rows that open on a tap. Every id the activity reads is
+     the same as in the one long column before. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <!-- width capped in code on a wide screen, so the cards don't stretch -->
+    <LinearLayout
+        android:id="@+id/SaiPenContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp">
+
+        <!-- ===== who we are, and Start ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:contentDescription="@null"
+                android:src="@mipmap/ic_saipen" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="?attr/colorPrimaryText"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/SaiPenStatus"
+            style="@style/SaiPenBody"
+            android:layout_marginTop="20dp"
+            android:textSize="16sp" />
+
+        <!-- a running strip: the round spinner read as a "refresh" button -->
+        <ProgressBar
+            android:id="@+id/SaiPenProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:indeterminate="true" />
+
+        <TextView
+            android:id="@+id/SaiPenPath"
+            style="@style/SaiPenNote" />
+
+        <!-- is the device ready to draw (DeviceReadiness): a summary, a bar
+             with one piece per check, and every check folded under it -->
+        <LinearLayout
+            android:id="@+id/SaiPenReadyCard"
+            style="@style/SaiPenCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/SaiPenReadyHead"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/SaiPenReadyTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="?attr/colorPrimaryText"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/SaiPenReadySub"
+                        style="@style/SaiPenNote"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/SaiPenReadyArrow"
+                    style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenReadyBar"
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal" />
+
+            <LinearLayout
+                android:id="@+id/SaiPenReadyList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="vertical"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/SaiPenStart"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/saipen_button_primary"
+            android:stateListAnimator="@null"
+            android:fontFamily="sans-serif-medium"
+            android:text="@string/saipen_start"
+            android:textAllCaps="false"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenUnzip"
+            style="@style/SaiPenButton"
+            android:layout_width="match_parent"
+            android:layout_marginEnd="0dp"
+            android:text="@string/saipen_unzip"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenSite"
+            style="@style/SaiPenButton"
+            android:layout_width="match_parent"
+            android:layout_marginEnd="0dp"
+            android:text="@string/saipen_site"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenSearch"
+            style="@style/SaiPenButton"
+            android:layout_width="match_parent"
+            android:layout_marginEnd="0dp"
+            android:text="@string/saipen_find_on_device"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/SaiPenChoose"
+            style="@style/SaiPenButton"
+            android:layout_width="match_parent"
+            android:layout_marginEnd="0dp"
+            android:background="@drawable/saipen_row"
+            android:text="@string/saipen_choose"
+            android:textColor="?attr/colorSecondaryText" />
+
+        <Switch
+            android:id="@+id/SaiPenAutostart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:minHeight="48dp"
+            android:text="@string/saipen_autostart"
+            android:textColor="?attr/colorPrimaryText"
+            android:textSize="14sp" />
+
+        <!-- ===== your drawing ===== -->
+        <LinearLayout style="@style/SaiPenCard">
+
+            <TextView
+                style="@style/SaiPenLabel"
+                android:text="@string/saipen_section_drawing" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <LinearLayout style="@style/SaiPenTile">
+                    <TextView style="@style/SaiPenNote" android:layout_marginTop="0dp" android:text="@string/saipen_stat_today" />
+                    <TextView android:id="@+id/SaiPenStatToday" style="@style/SaiPenTileValue" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/SaiPenTile" android:layout_marginStart="8dp">
+                    <TextView style="@style/SaiPenNote" android:layout_marginTop="0dp" android:text="@string/saipen_stat_week" />
+                    <TextView android:id="@+id/SaiPenStatWeek" style="@style/SaiPenTileValue" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/SaiPenTile" android:layout_marginStart="8dp">
+                    <TextView style="@style/SaiPenNote" android:layout_marginTop="0dp" android:text="@string/saipen_stat_streak" />
+                    <TextView android:id="@+id/SaiPenStatStreak" style="@style/SaiPenTileValue" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
+
+            <LinearLayout
+                android:id="@+id/SaiPenOpenStats"
+                style="@style/SaiPenRow"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_open_stats" />
+                <TextView style="@style/SaiPenArrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===== drawings ===== -->
+        <LinearLayout style="@style/SaiPenCard">
+
+            <TextView
+                style="@style/SaiPenLabel"
+                android:text="@string/saipen_section_drawings" />
+
+            <TextView
+                style="@style/SaiPenBody"
+                android:text="@string/saipen_drawings_short" />
+
+            <Button
+                android:id="@+id/SaiPenOpenDrawings"
+                style="@style/SaiPenButton"
+                android:text="@string/saipen_open_drawings" />
+        </LinearLayout>
+
+        <!-- ===== brushes and textures: shown once SAI's settings are found =====
+             Two actions, not one button for both: "Add brushes or textures"
+             also took a PC's whole settings, and nobody could tell (a user
+             on Reddit, 2026-11-24). What the folder is hides behind (i). -->
+        <LinearLayout
+            android:id="@+id/SaiPenBrushesCard"
+            style="@style/SaiPenCard"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/SaiPenLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/saipen_section_brushes" />
+
+                <ImageView
+                    android:id="@+id/SaiPenBrushesInfo"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="-6dp"
+                    android:padding="6dp"
+                    android:background="@drawable/saipen_row"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/saipen_brushes_info_title"
+                    android:src="@drawable/ic_saipen_info" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/SaiPenBrushes"
+                style="@style/SaiPenBody"
+                android:visibility="gone" />
+
+            <!-- what SAI has, kind by kind: a tap shows them (SettingsContents) -->
+            <LinearLayout
+                android:id="@+id/SaiPenKinds"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <LinearLayout android:id="@+id/SaiPenKind0" style="@style/SaiPenKindTile">
+                    <TextView android:id="@+id/SaiPenKind0Count" style="@style/SaiPenTileValue" android:layout_marginTop="0dp" />
+                    <TextView style="@style/SaiPenKindLabel" android:text="@string/saipen_kind_brush_textures" />
+                </LinearLayout>
+                <LinearLayout android:id="@+id/SaiPenKind1" style="@style/SaiPenKindTile" android:layout_marginStart="6dp">
+                    <TextView android:id="@+id/SaiPenKind1Count" style="@style/SaiPenTileValue" android:layout_marginTop="0dp" />
+                    <TextView style="@style/SaiPenKindLabel" android:text="@string/saipen_kind_paper_textures" />
+                </LinearLayout>
+                <LinearLayout android:id="@+id/SaiPenKind2" style="@style/SaiPenKindTile" android:layout_marginStart="6dp">
+                    <TextView android:id="@+id/SaiPenKind2Count" style="@style/SaiPenTileValue" android:layout_marginTop="0dp" />
+                    <TextView style="@style/SaiPenKindLabel" android:text="@string/saipen_kind_brush_shapes" />
+                </LinearLayout>
+                <LinearLayout android:id="@+id/SaiPenKind3" style="@style/SaiPenKindTile" android:layout_marginStart="6dp">
+                    <TextView android:id="@+id/SaiPenKind3Count" style="@style/SaiPenTileValue" android:layout_marginTop="0dp" />
+                    <TextView style="@style/SaiPenKindLabel" android:text="@string/saipen_kind_scatter" />
+                </LinearLayout>
+                <LinearLayout android:id="@+id/SaiPenKind4" style="@style/SaiPenKindTile" android:layout_marginStart="6dp">
+                    <TextView android:id="@+id/SaiPenKind4Count" style="@style/SaiPenTileValue" android:layout_marginTop="0dp" />
+                    <TextView style="@style/SaiPenKindLabel" android:text="@string/saipen_kind_tools" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- everything in SAI's settings folder, like a shop (BrowseDialog) -->
+            <TextView
+                android:id="@+id/SaiPenBrowseAll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/saipen_actions"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:minHeight="48dp"
+                android:text="@string/saipen_browse_all"
+                android:textColor="#FFFFFFFF"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/SaiPenBrushesActions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/saipen_actions"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/SaiPenPcSettings"
+                    style="@style/SaiPenRow"
+                    android:minHeight="56dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_saipen_pc" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/SaiPenRowTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_weight="0"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="@string/saipen_pc_settings" />
+
+                        <TextView
+                            style="@style/SaiPenNote"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/saipen_pc_settings_short" />
+                    </LinearLayout>
+
+                    <TextView style="@style/SaiPenArrow" />
+                </LinearLayout>
+
+                <View style="@style/SaiPenDivider" />
+
+                <LinearLayout
+                    android:id="@+id/SaiPenAddBrushes"
+                    style="@style/SaiPenRow"
+                    android:minHeight="56dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_saipen_brush" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/SaiPenRowTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_weight="0"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="@string/saipen_add_pack" />
+
+                        <TextView
+                            style="@style/SaiPenNote"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/saipen_add_pack_short" />
+                    </LinearLayout>
+
+                    <TextView style="@style/SaiPenArrow" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/SaiPenOpenBrushes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:minHeight="40dp"
+                android:gravity="center_vertical"
+                android:paddingStart="2dp"
+                android:paddingEnd="8dp"
+                android:background="@drawable/saipen_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:textSize="14sp"
+                android:textColor="#4fc3f7"
+                android:text="@string/saipen_open_brushes"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- ===== licence and timelapse ===== -->
+        <LinearLayout style="@style/SaiPenCard">
+
+            <LinearLayout
+                android:id="@+id/SaiPenLicenceCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/SaiPenLabel"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:text="@string/saipen_section_licence" />
+
+                    <ImageView
+                        android:id="@+id/SaiPenLicenceInfo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="-6dp"
+                        android:padding="6dp"
+                        android:background="@drawable/saipen_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="@string/saipen_licence_info_title"
+                        android:src="@drawable/ic_saipen_info" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/SaiPenLicenceStatus"
+                    style="@style/SaiPenBody"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/SaiPenLicenceHint"
+                    style="@style/SaiPenNote"
+                    android:text="@string/saipen_licence_hint"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/SaiPenAddLicence"
+                    style="@style/SaiPenButton"
+                    android:text="@string/saipen_add_licence"
+                    android:visibility="gone" />
+
+                <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/SaiPenLabel"
+                android:text="@string/saipen_section_timelapse" />
+
+            <Switch
+                android:id="@+id/SaiPenTimelapse"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/saipen_timelapse"
+                android:textColor="?attr/colorPrimaryText"
+                android:textSize="15sp" />
+
+            <TextView
+                style="@style/SaiPenNote"
+                android:layout_marginTop="0dp"
+                android:text="@string/saipen_timelapse_note" />
+
+            <LinearLayout
+                android:id="@+id/SaiPenTimelapsePauseBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/SaiPenNote"
+                    android:text="@string/saipen_frame_when" />
+
+                <RadioGroup
+                    android:id="@+id/SaiPenTimelapsePause"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/SaiPenMakeVideo"
+                style="@style/SaiPenButton"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/SaiPenDiscardFrames"
+                style="@style/SaiPenButton"
+                android:text="@string/saipen_discard_frames"
+                android:visibility="gone" />
+
+            <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
+
+            <LinearLayout
+                android:id="@+id/SaiPenOpenTimelapses"
+                style="@style/SaiPenRow"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_my_timelapses" />
+                <TextView style="@style/SaiPenArrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===== settings: folded, the value on the right ===== -->
+        <LinearLayout style="@style/SaiPenCard" android:paddingBottom="6dp">
+
+            <TextView
+                style="@style/SaiPenLabel"
+                android:layout_marginBottom="4dp"
+                android:text="@string/saipen_section_settings" />
+
+            <!-- sharpness -->
+            <!-- SAI's menu language and the font for Japanese text (SaiLanguage, FontLink) -->
+            <LinearLayout android:id="@+id/SaiPenLanguageRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_language_title" />
+                <TextView android:id="@+id/SaiPenLanguageValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenLanguageArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenLanguageBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="0dp"
+                    android:text="@string/saipen_language" />
+
+                <RadioGroup
+                    android:id="@+id/SaiPenLanguage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/saipen_font" />
+
+                <RadioGroup
+                    android:id="@+id/SaiPenFont"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
+            <LinearLayout android:id="@+id/SaiPenSharpnessRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_sharpness_title" />
+                <TextView android:id="@+id/SaiPenSharpnessValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenSharpnessArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenSharpnessBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="0dp"
+                    android:text="@string/saipen_sharpness" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
+
+                    <RadioGroup
+                        android:id="@+id/SaiPenSharpness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- screen drawing: front buffer or standard (FrontBuffer) -->
+            <LinearLayout android:id="@+id/SaiPenBufferRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_buffer" />
+                <TextView android:id="@+id/SaiPenBufferValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenBufferArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenBufferBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <RadioGroup
+                    android:id="@+id/SaiPenBuffer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/SaiPenBufferWhat"
+                    style="@style/SaiPenNote" />
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- fast cores -->
+            <LinearLayout android:id="@+id/SaiPenCoresRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_cores" />
+                <TextView android:id="@+id/SaiPenCoresValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenCoresArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenCoresBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <RadioGroup
+                    android:id="@+id/SaiPenFastCores"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+
+                <TextView
+                    android:id="@+id/SaiPenFastCoresWhat"
+                    style="@style/SaiPenNote" />
+
+                <LinearLayout
+                    android:id="@+id/SaiPenFastCoresPast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        style="@style/SaiPenNote"
+                        android:layout_marginTop="0dp"
+                        android:text="@string/saipen_cores_past" />
+
+                    <TableLayout
+                        android:id="@+id/SaiPenFastCoresTable"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- the speed logs are what fills the table above -->
+                <Switch
+                    android:id="@+id/SaiPenSpeedLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_speed_log"
+                    android:textColor="?attr/colorPrimaryText" />
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- how many processors SAI sees (SaiProcessors) -->
+            <LinearLayout android:id="@+id/SaiPenProcessorsRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_processors" />
+                <TextView android:id="@+id/SaiPenProcessorsValue" style="@style/SaiPenRowValue" />
+                <ImageView
+                    android:id="@+id/SaiPenProcessorsInfo"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:background="@drawable/saipen_row"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/saipen_processors_info_title"
+                    android:src="@drawable/ic_saipen_info" />
+                <TextView android:id="@+id/SaiPenProcessorsArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenProcessorsBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <RadioGroup
+                    android:id="@+id/SaiPenProcessors"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/SaiPenProcessorsWhat"
+                    style="@style/SaiPenNote" />
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- palm rejection -->
+            <LinearLayout android:id="@+id/SaiPenPalmRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_palm_title" />
+                <TextView android:id="@+id/SaiPenPalmValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenPalmArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenPalmBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="0dp"
+                    android:text="@string/saipen_palm" />
+
+                <Switch
+                    android:id="@+id/SaiPenPalmAndroid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_palm_android"
+                    android:textColor="?attr/colorPrimaryText" />
+
+                <Switch
+                    android:id="@+id/SaiPenPalmPenNear"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_palm_pen_near"
+                    android:textColor="?attr/colorPrimaryText" />
+
+                <Switch
+                    android:id="@+id/SaiPenPalmBig"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_palm_big"
+                    android:textColor="?attr/colorPrimaryText" />
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- on-screen keys over SAI (FloatingKeys), filled by FloatingKeysSettings -->
+            <LinearLayout android:id="@+id/SaiPenKeysRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_keys_title" />
+                <TextView android:id="@+id/SaiPenKeysValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenKeysArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenKeysBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone" />
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- what each finger and pen gesture does (Gestures), filled by GesturesSettings -->
+            <LinearLayout android:id="@+id/SaiPenGesturesRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_gestures_title" />
+                <TextView android:id="@+id/SaiPenGesturesValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenGesturesArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenGesturesBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- the cheat sheet again (CheatSheetDialog): it opens by itself
+             only the first time this screen opens -->
+        <TextView
+            android:id="@+id/SaiPenCheatSheet"
+            style="@style/SaiPenNote"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/saipen_row"
+            android:padding="8dp"
+            android:text="@string/saipen_cheat_link" />
+
+        <!-- ===== the small print ===== -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/SaiPenGestures"
+                style="@style/SaiPenNote"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/saipen_row"
+                android:padding="8dp"
+                android:text="@string/saipen_gestures" />
+
+            <TextView
+                android:id="@+id/SaiPenAbout"
+                style="@style/SaiPenNote"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/saipen_row"
+                android:padding="8dp"
+                android:text="@string/saipen_about" />
+
+            <TextView
+                android:id="@+id/SaiPenLicences"
+                style="@style/SaiPenNote"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/saipen_row"
+                android:padding="8dp"
+                android:text="@string/saipen_licences" />
+
+            <TextView
+                android:id="@+id/SaiPenSettings"
+                style="@style/SaiPenNote"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/saipen_row"
+                android:padding="8dp"
+                android:text="@string/saipen_settings" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/SaiPenCredits"
+            style="@style/SaiPenNote"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/SaiPenVersion"
+            style="@style/SaiPenNote"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="6dp" />
+    </LinearLayout>
+    </FrameLayout>
+</ScrollView>

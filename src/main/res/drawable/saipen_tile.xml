@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- a number tile inside a card: the screen's own colour -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#1b1e21" />
+    <corners android:radius="10dp" />
+</shape>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Gestures (GesturesSettings, issue #10) -->
+    <string name="saipen_gestures_title">Gestures</string>
+    <string name="saipen_gestures_value_standard">Standard</string>
+    <plurals name="saipen_gestures_value_changed">
+        <item quantity="one">%d changed</item>
+        <item quantity="other">%d changed</item>
+    </plurals>
+    <string name="saipen_gestures_note">Choose what each finger and pen gesture does in SAI. A four-finger tap always opens the menu, and two fingers always scroll, zoom and rotate the canvas.</string>
+    <string name="saipen_gestures_fingers">Fingers</string>
+    <string name="saipen_gestures_pen">Pen</string>
+    <string name="saipen_gestures_reset">Back to standard</string>
+    <string name="saipen_gestures_edge_note">Swipes from the edge work in the middle of each side: Android keeps the rest for its Back gesture.</string>
+    <string name="saipen_gestures_air_note">The button in the air: if your tablet opens its own pen menu instead, turn that off in the tablet\'s pen settings.</string>
+    <string name="saipen_gestures_bluetooth_note">A Bluetooth S Pen (one with Air actions in Samsung\'s S Pen settings, like the Galaxy S24 Ultra\'s): held farther from the screen, where the cursor no longer follows it, one press of its button undoes and two presses redo. Turn SAI Pen on in Settings, Advanced features, S Pen, Air actions, under App actions: Samsung leaves it off. Near the screen the button does what is chosen above.</string>
+    <!-- the inputs -->
+    <string name="saipen_gesture_two_tap">Two-finger tap</string>
+    <string name="saipen_gesture_two_double_tap">Two-finger double tap</string>
+    <string name="saipen_gesture_three_tap">Three-finger tap</string>
+    <string name="saipen_gesture_three_double_tap">Three-finger double tap</string>
+    <string name="saipen_gesture_long_press">One finger held still</string>
+    <string name="saipen_gesture_edge_left">Swipe in from the left edge</string>
+    <string name="saipen_gesture_edge_right">Swipe in from the right edge</string>
+    <string name="saipen_gesture_pen_button">Pen touches with its button held</string>
+    <string name="saipen_gesture_pen_eraser">Pen\'s eraser end</string>
+    <string name="saipen_gesture_pen_hover_button">Pen\'s button pressed in the air</string>
+    <!-- the actions -->
+    <string name="saipen_action_none">Nothing</string>
+    <string name="saipen_action_draw">Draw</string>
+    <string name="saipen_action_left">Left click</string>
+    <string name="saipen_action_right">Right click (picks a colour)</string>
+    <string name="saipen_action_keyboard">Keyboard</string>
+    <string name="saipen_action_keys">Show or hide the on-screen keys</string>
+    <string name="saipen_action_menu">Menu</string>
+    <string name="saipen_action_key">A key…</string>
+    <!-- a key action in the list: "Ctrl+Z", "E, held" -->
+    <string name="saipen_action_key_held">%s, held while drawing</string>
+    <string name="saipen_action_pick_title">What it does</string>
+    <string name="saipen_action_key_title">Which key</string>
+    <string name="saipen_action_key_ok">OK</string>
+    <string name="saipen_action_kind_once_pen">Pressed once, the touch draws nothing (like Ctrl+Z)</string>
+    <string name="saipen_action_kind_held_pen">Held while the pen draws (like a key for a tool)</string>
+    <string name="saipen_gestures_done">Done</string>
+    <string name="saipen_gestures_hold_note">While drawing, hold four fingers still for a moment to change them over SAI.</string>
+</resources>

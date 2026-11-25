@@ -1,0 +1,10 @@
+dist/
+.DS_Store
+
+# SAI licence certificates are personal: never commit one
+*.slc
+*.SLC
+
+# The app icon's source picture is from Flaticon, whose licence does not let it
+# be passed on by itself: download it (see tools/make-icon.swift), never commit it
+third_party/icon/*.png

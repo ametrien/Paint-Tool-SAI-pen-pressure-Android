@@ -1,0 +1,1698 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index 5a2f248..9adc5be 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -5,14 +5,45 @@ android {
+     compileSdk 35
+ 
+     defaultConfig {
+-        applicationId 'com.winlator'
++        /* SAI Pen: its own package, so it installs next to Winlator. Exactly as
++         * long as com.winlator: build.sh rewrites the path in the prebuilt
++         * binaries in place (tools/rewrite_tar.py) */
++        applicationId 'sai.penpress'
+         minSdkVersion 26
+         targetSdkVersion 28
+-        versionCode 33
+-        versionName "11.2"
++        versionCode 53
++        versionName "0.4.37"
++    }
++
++    /* SAI Pen: the release key lives outside the repository (build.sh says
++     * where); without it there is no release build, only debug */
++    def releaseProps = new Properties()
++    def releasePropsFile = file(System.getenv('SAIPEN_RELEASE_KEY') ?: "${System.getProperty('user.home')}/Documents/sai-android-build/release-key/keystore.properties")
++    if (releasePropsFile.exists()) releasePropsFile.withInputStream { releaseProps.load(it) }
++
++    signingConfigs {
++        if (releaseProps['storeFile']) {
++            release {
++                storeFile file(releaseProps['storeFile'])
++                storePassword releaseProps['storePassword']
++                keyAlias releaseProps['keyAlias']
++                keyPassword releaseProps['keyPassword']
++            }
++        }
+     }
+ 
+     buildTypes {
++        /* SAI Pen: what is given to others. Not debuggable, so Android
++         * compiles the app ahead of time; same shrinking as debug */
++        release {
++            minifyEnabled true
++            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
++            if (releaseProps['storeFile']) signingConfig signingConfigs.release
++
++            ndk {
++                abiFilters 'arm64-v8a'
++            }
++        }
+         debug {
+             minifyEnabled true
+             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+@@ -27,6 +58,15 @@ android {
+         checkReleaseBuilds false
+     }
+ 
++    /* SAI Pen: on Android InetAddress.getLoopbackAddress() is always ::1;
++     * the Mac's JVM says 127.0.0.1 unless it prefers IPv6. With this the
++     * unit tests see what the tablet sees (PenSampleSenderTest). */
++    testOptions {
++        unitTests.all {
++            jvmArgs '-Djava.net.preferIPv6Addresses=true'
++        }
++    }
++
+     ndkVersion '24.0.8215888'
+ 
+     externalNativeBuild {
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 1262c0d..246e2db 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -17,14 +17,17 @@
+     <uses-permission android:name="android.permission.WAKE_LOCK" />
+ 
+     <application
+-        android:icon="@mipmap/ic_launcher"
++        android:icon="@mipmap/ic_saipen"
++        android:roundIcon="@mipmap/ic_saipen_round"
+         android:appCategory="game"
+         android:isGame="true"
+         android:extractNativeLibs="true"
+         android:allowAudioPlaybackCapture="true"
+         android:label="@string/app_name">
+ 
+-        <activity android:name="com.winlator.MainActivity"
++        <!-- SAI Pen: its own screen is the one the icon opens; Winlator's
++             screens stay reachable from it ("Winlator settings") -->
++        <activity android:name="com.winlator.saipen.SaiLauncherActivity"
+             android:theme="@style/AppThemeDark"
+             android:exported="true"
+             android:screenOrientation="sensor"
+@@ -35,13 +38,29 @@
+             </intent-filter>
+         </activity>
+ 
+-        <activity android:name="com.winlator.XServerDisplayActivity"
++        <activity android:name="com.winlator.MainActivity"
++            android:theme="@style/AppThemeDark"
+             android:exported="false"
++            android:screenOrientation="sensor"
++            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation">
++        </activity>
++
++        <!-- SAI Pen: exported only so Samsung's S Pen service finds the Air
++             actions (res/xml/saipen_air_actions.xml, AirActionKeys); a start
++             from outside, without our container_id, closes at once -->
++        <activity android:name="com.winlator.XServerDisplayActivity"
++            android:exported="true"
+             android:theme="@style/AppThemeFullscreenDark"
+             android:supportsPictureInPicture="true"
+             android:launchMode="singleTask"
+             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation"
+-            android:screenOrientation="sensorLandscape" />
++            android:screenOrientation="sensorLandscape">
++            <intent-filter>
++                <action android:name="com.samsung.android.support.REMOTE_ACTION" />
++            </intent-filter>
++            <meta-data android:name="com.samsung.android.support.REMOTE_ACTION"
++                android:resource="@xml/saipen_air_actions" />
++        </activity>
+ 
+         <activity android:name="com.winlator.ControlsEditorActivity"
+             android:exported="false"
+@@ -64,7 +83,7 @@
+ 
+         <provider
+             android:name="androidx.core.content.FileProvider"
+-            android:authorities="com.winlator.FileProvider"
++            android:authorities="${applicationId}.FileProvider"
+             android:exported="false"
+             android:grantUriPermissions="true">
+ 
+diff --git a/app/src/main/cpp/gladiorenderer/include/gladio.h b/app/src/main/cpp/gladiorenderer/include/gladio.h
+index 0bd9f0b..90ed3f0 100644
+--- a/app/src/main/cpp/gladiorenderer/include/gladio.h
++++ b/app/src/main/cpp/gladiorenderer/include/gladio.h
+@@ -13,7 +13,7 @@
+ #define THREAD_POOL_NUM_THREADS 4
+ #define PIXEL_READ_CACHE_SKIP_FRAMES 3
+ #define SKIP_GL_FINISH 1
+-#define X11_SERVER_PATH "/data/data/com.winlator/files/rootfs/tmp/.X11-unix/X0"
++#define X11_SERVER_PATH "/data/data/sai.penpress/files/rootfs/tmp/.X11-unix/X0"
+ 
+ #define GL_STRING_VERSION "3.3"
+ #define GL_STRING_RENDERER "Gladio"
+diff --git a/app/src/main/cpp/vortekrenderer/include/vortek.h b/app/src/main/cpp/vortekrenderer/include/vortek.h
+index e62c188..bbd379e 100644
+--- a/app/src/main/cpp/vortekrenderer/include/vortek.h
++++ b/app/src/main/cpp/vortekrenderer/include/vortek.h
+@@ -5,7 +5,7 @@
+ #define MEMORY_POOL_MAX_SIZE 65536
+ #define SERVER_RING_BUFFER_SIZE 4194304
+ #define CLIENT_RING_BUFFER_SIZE 262144
+-#define VORTEK_SERVER_PATH "/data/data/com.winlator/files/rootfs/tmp/.vortek/V0"
++#define VORTEK_SERVER_PATH "/data/data/sai.penpress/files/rootfs/tmp/.vortek/V0"
+ #define VK_HANDLE_BYTE_COUNT 8
+ #define THREAD_POOL_NUM_THREADS 8
+ #define SWAPCHAIN_STATUS_SUBOPTIMAL (1u<<3)
+diff --git a/app/src/main/cpp/winlator/include/winlator.h b/app/src/main/cpp/winlator/include/winlator.h
+index 2314314..6affe92 100644
+--- a/app/src/main/cpp/winlator/include/winlator.h
++++ b/app/src/main/cpp/winlator/include/winlator.h
+@@ -11,7 +11,7 @@
+ #define BITMASK_UNSET(bits, flag) bits &= ~flag
+ #define GETEXP(x) (31 - __builtin_clz(x))
+ 
+-#define APP_CACHE_DIR "/data/data/com.winlator/cache"
++#define APP_CACHE_DIR "/data/data/sai.penpress/cache"
+ #define LIBVULKAN_PATH "/system/lib64/libvulkan.so"
+ 
+ #define CLOSEFD(x) \
+diff --git a/app/src/main/cpp/winlator/src/gpu_helper.c b/app/src/main/cpp/winlator/src/gpu_helper.c
+index bc58f36..4d8ba43 100644
+--- a/app/src/main/cpp/winlator/src/gpu_helper.c
++++ b/app/src/main/cpp/winlator/src/gpu_helper.c
+@@ -168,4 +168,53 @@ Java_com_winlator_core_GPUHelper_destroyOffscreenEGLContext(JNIEnv *env, jclass
+     EGLDisplay eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+     eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+     eglDestroyContext(eglDisplay, (EGLContext)contextPtr);
+-}
+\ No newline at end of file
++}
++/*
++ * SAI Pen: when a frame of the app reached the glass, from Android's own
++ * frame timestamps (EGL_ANDROID_get_frame_timestamps). Only reads times;
++ * nothing about how frames are drawn changes. Used by
++ * com.winlator.saipen.GlassTimes on the GL thread, with the context current.
++ */
++#include <EGL/eglext.h>
++
++static PFNEGLGETNEXTFRAMEIDANDROIDPROC getNextFrameId;
++static PFNEGLGETFRAMETIMESTAMPSANDROIDPROC getFrameTimestamps;
++
++/* 1: timestamps are on for the current surface; 0: not supported here */
++JNIEXPORT jint JNICALL
++Java_com_winlator_saipen_GlassTimes_nativeEnable(JNIEnv *env, jclass cls) {
++    EGLDisplay dpy = eglGetCurrentDisplay();
++    EGLSurface surf = eglGetCurrentSurface(EGL_DRAW);
++    if (dpy == EGL_NO_DISPLAY || surf == EGL_NO_SURFACE) return 0;
++    const char *ext = eglQueryString(dpy, EGL_EXTENSIONS);
++    if (ext == NULL || strstr(ext, "EGL_ANDROID_get_frame_timestamps") == NULL) return 0;
++    getNextFrameId = (PFNEGLGETNEXTFRAMEIDANDROIDPROC) eglGetProcAddress("eglGetNextFrameIdANDROID");
++    getFrameTimestamps = (PFNEGLGETFRAMETIMESTAMPSANDROIDPROC) eglGetProcAddress("eglGetFrameTimestampsANDROID");
++    if (getNextFrameId == NULL || getFrameTimestamps == NULL) return 0;
++    return eglSurfaceAttrib(dpy, surf, EGL_TIMESTAMPS_ANDROID, EGL_TRUE) ? 1 : 0;
++}
++
++/* the id the next eglSwapBuffers will give its frame, -1 if unknown */
++JNIEXPORT jlong JNICALL
++Java_com_winlator_saipen_GlassTimes_nativeNextFrameId(JNIEnv *env, jclass cls) {
++    if (getNextFrameId == NULL) return -1;
++    EGLuint64KHR id = 0;
++    if (!getNextFrameId(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_DRAW), &id)) return -1;
++    return (jlong) id;
++}
++
++/* out[0]: the GPU finished the frame, out[1]: the display showed it, in ns
++ * of CLOCK_MONOTONIC (uptimeMillis' clock); -2 not known yet, -1 never
++ * (out[1] -1: the frame was replaced before the display took it).
++ * Returns 0 if Android no longer knows the frame. */
++JNIEXPORT jint JNICALL
++Java_com_winlator_saipen_GlassTimes_nativeTimes(JNIEnv *env, jclass cls, jlong frameId, jlongArray out) {
++    if (getFrameTimestamps == NULL) return 0;
++    const EGLint names[2] = {EGL_RENDERING_COMPLETE_TIME_ANDROID, EGL_DISPLAY_PRESENT_TIME_ANDROID};
++    EGLnsecsANDROID values[2] = {0, 0};
++    if (!getFrameTimestamps(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_DRAW),
++                            (EGLuint64KHR) frameId, 2, names, values)) return 0;
++    jlong v[2] = {(jlong) values[0], (jlong) values[1]};
++    (*env)->SetLongArrayRegion(env, out, 0, 2, v);
++    return 1;
++}
+diff --git a/app/src/main/java/com/winlator/ContainerDetailFragment.java b/app/src/main/java/com/winlator/ContainerDetailFragment.java
+index 8b8cd46..59d76c8 100644
+--- a/app/src/main/java/com/winlator/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/ContainerDetailFragment.java
+@@ -174,12 +174,13 @@ public class ContainerDetailFragment extends Fragment {
+ 
+         createWineConfigurationTab(view);
+         final EnvVarsView envVarsView = createEnvVarsTab(view);
+-        createWinComponentsTab(view, isEditMode() ? container.getWinComponents() : Container.DEFAULT_WINCOMPONENTS);
++        // SAI Pen: no Windows components in the APK; the tab is hidden and saves them all off
++        createWinComponentsTab(view, Container.FALLBACK_WINCOMPONENTS);
+         createDrivesTab(view);
+ 
+         AppUtils.setupTabLayout(view, R.id.TabLayout, (tabResId) -> {
+             if (tabResId == R.id.LLTabAdvanced) if ((byte)sWinVersion.getTag() == -1) WinVersions.loadSpinner(container, sWinVersion);
+-        }, R.id.LLTabWineConfiguration, R.id.LLTabWinComponents, R.id.LLTabEnvVars, R.id.LLTabDrives, R.id.LLTabAdvanced);
++        }, R.id.LLTabWineConfiguration, R.id.LLTabEnvVars, R.id.LLTabDrives, R.id.LLTabAdvanced);
+ 
+         view.findViewById(R.id.BTConfirm).setOnClickListener((v) -> {
+             try {
+diff --git a/app/src/main/java/com/winlator/SettingsFragment.java b/app/src/main/java/com/winlator/SettingsFragment.java
+index 3bb2d01..02d6a4f 100644
+--- a/app/src/main/java/com/winlator/SettingsFragment.java
++++ b/app/src/main/java/com/winlator/SettingsFragment.java
+@@ -134,7 +134,7 @@ public class SettingsFragment extends Fragment {
+         rgAppTheme.check(oldAppThemeId);
+ 
+         final CheckBox cbMoveCursorToTouchpoint = view.findViewById(R.id.CBMoveCursorToTouchpoint);
+-        cbMoveCursorToTouchpoint.setChecked(preferences.getBoolean("move_cursor_to_touchpoint", false));
++        cbMoveCursorToTouchpoint.setChecked(preferences.getBoolean("move_cursor_to_touchpoint", true));
+ 
+         final CheckBox cbCapturePointerOnExternalMouse = view.findViewById(R.id.CBCapturePointerOnExternalMouse);
+         cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
+@@ -149,7 +149,8 @@ public class SettingsFragment extends Fragment {
+         cbEnableBackgroundWakelock.setChecked(preferences.getBoolean("enable_background_wakelock", false));
+ 
+         final CheckBox cbEnableBackgroundProtection = view.findViewById(R.id.CBEnableBackgroundProtection);
+-        cbEnableBackgroundProtection.setChecked(preferences.getBoolean("enable_background_protection", false));
++        /* SAI Pen: on by default, as in ForegroundService */
++        cbEnableBackgroundProtection.setChecked(preferences.getBoolean("enable_background_protection", true));
+         cbEnableBackgroundProtection.setOnCheckedChangeListener((buttonView, isChecked) -> {
+             cbEnableBackgroundWakelock.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+             if (!isChecked) cbEnableBackgroundWakelock.setChecked(false);
+diff --git a/app/src/main/java/com/winlator/XServerDisplayActivity.java b/app/src/main/java/com/winlator/XServerDisplayActivity.java
+index 18acd68..433f013 100644
+--- a/app/src/main/java/com/winlator/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/XServerDisplayActivity.java
+@@ -141,6 +141,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     public void onCreate(Bundle savedInstanceState) {
+         AppUtils.setActivityTheme(this);
+         super.onCreate(savedInstanceState);
++        /* SAI Pen: exported for the S Pen's Air actions (AndroidManifest);
++         * a start from another app has no container and would crash */
++        if (!getIntent().hasExtra("container_id") && !isGenerateWineprefix()) {
++            finish();
++            return;
++        }
+         AppUtils.hideSystemUI(this);
+         AppUtils.keepScreenOn(this);
+         setContentView(R.layout.xserver_display_activity);
+@@ -224,13 +230,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 if (intent.hasExtra("exec_path")) win32AppWorkarounds.applyStartupWorkarounds(FileUtils.getName(intent.getStringExtra("exec_path")));
+             }
+ 
++            /* SAI Pen: the APK carries none of the Windows components
++             * (Microsoft's DLLs, left out by build.sh), so none is turned on,
++             * whatever a container or a shortcut says */
++            wincomponents = Container.FALLBACK_WINCOMPONENTS;
++
+             this.graphicsDriver = GraphicsDrivers.parseIdentifiers(graphicsDriver);
+             this.graphicsDriverConfig = GraphicsDrivers.parseConfigs(graphicsDriver, graphicsDriverConfig);
+             this.dxwrapper = DXWrappers.parseIdentifier(dxwrapper);
+             this.dxwrapperConfig = DXWrappers.parseConfigs(dxwrapper, dxwrapperConfig);
+         }
+ 
+-        preloaderDialog.show(R.string.starting_up);
++        /* SAI Pen: its own cover (StartupCover) stands in for this when SAI starts */
++        if (!getIntent().hasExtra("exec_path")) preloaderDialog.show(R.string.starting_up);
+ 
+         inputControlsManager = new InputControlsManager(this);
+         xServer = new XServer(this, screenInfo);
+@@ -419,6 +431,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             case R.id.menu_item_exit:
+                 exit();
+                 break;
++            case R.id.menu_item_saipen:
++                /* SAI Pen's screen (licence, SAI folder, sharpness) is the
++                 * launcher, which shows after a session ends */
++                ContentDialog.confirm(this, R.string.saipen_menu_confirm, this::exit);
++                break;
+         }
+         return true;
+     }
+@@ -428,6 +445,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     }
+ 
+     private void exit() {
++        com.winlator.saipen.SpeedSession.finish();   /* SAI Pen: the speed log's summary */
+         winHandler.stop();
+         if (environment != null) environment.stopEnvironmentComponents();
+ 
+@@ -438,7 +456,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             options.startPath = FileUtils.getDirname(intent.getStringExtra("exec_path"));
+             AppUtils.restartApplication(this, options);
+         }
+-        else AppUtils.restartApplication(this);
++        else {
++            /* SAI Pen: container_id tells its launcher that a session just
++             * ended, so it does not start SAI again (closing SAI would
++             * reopen it) */
++            AppUtils.RestartApplicationOptions options = new AppUtils.RestartApplicationOptions();
++            if (container != null) options.containerId = container.id;
++            AppUtils.restartApplication(this, options);
++        }
+         ForegroundService.stopSession(this);
+     }
+ 
+@@ -508,6 +533,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         GuestProgramLauncherComponent guestProgramLauncherComponent = new GuestProgramLauncherComponent();
+ 
+         if (container != null) {
++            /* SAI Pen: our wintab32.dll and its override, before Wine starts */
++            com.winlator.saipen.SaiPenSetup.installInto(this, container);
+             if (container.getHUDMode() == FrameRating.Mode.FULL.ordinal()) envVars.put("X11_WND_GPU_INFO", "1");
+ 
+             String desktopName = shortcut != null || getIntent().hasExtra("exec_path") ? "nogui" : "shell";
+@@ -595,7 +622,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         capturePointerOnExternalMouse = preferences.getBoolean("capture_pointer_on_external_mouse", true);
+         touchpadView = new TouchpadView(this, xServer, capturePointerOnExternalMouse);
+         touchpadView.setSensitivity(globalCursorSpeed);
+-        touchpadView.setMoveCursorToTouchpoint(preferences.getBoolean("move_cursor_to_touchpoint", false));
++        /* SAI Pen: a finger puts the cursor under itself, by default */
++        touchpadView.setMoveCursorToTouchpoint(preferences.getBoolean("move_cursor_to_touchpoint", true));
++        /* SAI Pen: palm rejection, each check on its own switch, all off by default */
++        touchpadView.setPalmRejection(
++            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_ANDROID, com.winlator.saipen.FirstRun.PALM_ANDROID),
++            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_PEN_NEAR, com.winlator.saipen.FirstRun.PALM_PEN_NEAR),
++            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_BIG, com.winlator.saipen.FirstRun.PALM_BIG));
++        /* SAI Pen: testing only, an S Pen that behaves like a pen with no hover
++         * (issue #1): adb shell setprop debug.saipen.test_no_hover 1 */
++        touchpadView.setPenIgnoreHover("1".equals(com.winlator.saipen.PenInput.systemProperty(
++            com.winlator.saipen.PenInput.PROP_TEST_NO_HOVER)));
+         touchpadView.setFourFingersTapCallback(() -> {
+             if (!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(GravityCompat.START);
+         });
+@@ -629,6 +666,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
+         AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
++
++        /* SAI Pen: "Starting SAI" until SAI's window is up and drawn, and
++         * back to SAI Pen's screen when SAI closes (no empty desktop) */
++        if (getIntent().hasExtra("exec_path")) {
++            String saiExe = FileUtils.getName(getIntent().getStringExtra("exec_path"));
++            com.winlator.saipen.StartupCover.show(this, rootView, xServer, saiExe);
++            com.winlator.saipen.SaiSession.watch(this, rootView, xServer, saiExe, this::exit);
++        }
++        /* SAI Pen: three fingers bring up the tablet's keyboard, to type a
++         * file name in SAI (the menu's Keyboard item is a long way round) */
++        touchpadView.setThreeFingersTapCallback(() -> AppUtils.showKeyboard(this));
++        /* SAI Pen: what each finger and pen gesture does, as set on SAI
++         * Pen's screen (Gestures, issue #10); the defaults are the above */
++        touchpadView.setGestures(new com.winlator.saipen.GestureActions(xServer, preferences,
++            () -> AppUtils.showKeyboard(this),
++            () -> {
++                if (!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(GravityCompat.START);
++            }));
+     }
+ 
+     private void showInputControlsDialog() {
+@@ -797,6 +852,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     @Override
+     public boolean dispatchKeyEvent(KeyEvent event) {
++        /* SAI Pen: a typing keyboard's keys go to SAI, also from a keyboard
++         * Android calls a gamepad as well; before, the gamepad code took its
++         * arrows and dropped the rest (KeyboardKeys, issue #5) */
++        android.view.InputDevice device = event.getDevice();
++        /* SAI Pen: every key in the log for now, to see how the S Pen's Air
++         * actions arrive (AirActionKeys) */
++        if (event.getAction() != KeyEvent.ACTION_MULTIPLE && event.getRepeatCount() == 0)
++            android.util.Log.i("SaiPen", com.winlator.saipen.AirActionKeys.describe(event.getAction(), event.getKeyCode(),
++                event.getMetaState(), event.getDeviceId(), device != null ? device.getName() : "none",
++                device != null && device.isVirtual(), device != null ? device.getKeyboardType() : -1));
++        if (device != null && !device.isVirtual() && com.winlator.saipen.KeyboardKeys.firstKeyFrom(device.getId()))
++            com.winlator.saipen.SpeedSession.note(com.winlator.saipen.KeyboardKeys.describe(device.getName(),
++                device.getSources(), device.getKeyboardType(), ExternalController.isGameController(device)));
++        if (device != null && com.winlator.saipen.KeyboardKeys.toSai(device.getKeyboardType(), event.getKeyCode()))
++            return xServer.keyboard.onKeyEvent(event) || super.dispatchKeyEvent(event);
+         return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
+                (!ExternalController.isGameController(event.getDevice()) && super.dispatchKeyEvent(event));
+     }
+diff --git a/app/src/main/java/com/winlator/contentdialog/AboutDialog.java b/app/src/main/java/com/winlator/contentdialog/AboutDialog.java
+index 84f2567..7fa1760 100644
+--- a/app/src/main/java/com/winlator/contentdialog/AboutDialog.java
++++ b/app/src/main/java/com/winlator/contentdialog/AboutDialog.java
+@@ -19,12 +19,15 @@ public class AboutDialog extends ContentDialog {
+             final PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+ 
+             TextView tvWebpage = findViewById(R.id.TVWebpage);
+-            tvWebpage.setText(Html.fromHtml("<a href=\"https://www.winlator.org\">winlator.org</a>", Html.FROM_HTML_MODE_LEGACY));
++            /* SAI Pen: the attribution NOTICE section 7(b) asks for */
++            tvWebpage.setText(Html.fromHtml("SAI Pen Pressure by ametrien<br /><a href=\"https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix\">github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix</a>", Html.FROM_HTML_MODE_LEGACY));
+             tvWebpage.setMovementMethod(LinkMovementMethod.getInstance());
+ 
+             ((TextView)findViewById(R.id.TVAppVersion)).setText(context.getString(R.string.version)+" "+pInfo.versionName);
+ 
+             String creditsAndThirdPartyAppsHTML = String.join("<br />",
++                "GNU GPL version 3 with additional terms, see LICENSE and NOTICE in the app",
++                "Based on Winlator by brunodev85, changed (<a href=\"https://www.winlator.org\">winlator.org</a>, LGPL-2.1)",
+                 "GLIBC Patches by (<a href=\"https://github.com/termux-pacman/glibc-packages\">Termux Pacman</a>)",
+                 "Wine (<a href=\"https://www.winehq.org\">winehq.org</a>)",
+                 "Box86/Box64 by <a href=\"https://github.com/ptitSeb\">ptitseb</a>",
+diff --git a/app/src/main/java/com/winlator/contentdialog/ShortcutSettingsDialog.java b/app/src/main/java/com/winlator/contentdialog/ShortcutSettingsDialog.java
+index fd3a47d..09e7023 100644
+--- a/app/src/main/java/com/winlator/contentdialog/ShortcutSettingsDialog.java
++++ b/app/src/main/java/com/winlator/contentdialog/ShortcutSettingsDialog.java
+@@ -91,10 +91,11 @@ public class ShortcutSettingsDialog extends ContentDialog {
+         final Spinner sDInputMapperType = findViewById(R.id.SDInputMapperType);
+         sDInputMapperType.setSelection(Byte.parseByte(shortcut.getExtra("dinputMapperType", String.valueOf(GamepadHandler.DINPUT_MAPPER_TYPE_XINPUT))));
+ 
+-        ContainerDetailFragment.createWinComponentsTab(getContentView(), shortcut.getExtra("wincomponents", shortcut.container.getWinComponents()));
++        // SAI Pen: no Windows components in the APK; the tab is hidden and the shortcut keeps none
++        ContainerDetailFragment.createWinComponentsTab(getContentView(), shortcut.container.getWinComponents());
+         final EnvVarsView envVarsView = createEnvVarsTab();
+ 
+-        AppUtils.setupTabLayout(getContentView(), R.id.TabLayout, R.id.LLTabWinComponents, R.id.LLTabEnvVars, R.id.LLTabAdvanced);
++        AppUtils.setupTabLayout(getContentView(), R.id.TabLayout, R.id.LLTabEnvVars, R.id.LLTabAdvanced);
+ 
+         findViewById(R.id.BTNameMenu).setOnClickListener((v) -> {
+             File peFile = null;
+diff --git a/app/src/main/java/com/winlator/core/AppUtils.java b/app/src/main/java/com/winlator/core/AppUtils.java
+index cac686e..5f55abb 100644
+--- a/app/src/main/java/com/winlator/core/AppUtils.java
++++ b/app/src/main/java/com/winlator/core/AppUtils.java
+@@ -44,7 +44,7 @@ import java.util.TimerTask;
+ 
+ public abstract class AppUtils {
+     public static final String DIRECTORY_DOWNLOADS = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
+-    public static final String INTERNAL_STORAGE = "/data/data/com.winlator/storage";
++    public static final String INTERNAL_STORAGE = "/data/data/sai.penpress/storage";
+     private static WeakReference<Toast> globalToastReference = null;
+ 
+     public static class RestartApplicationOptions {
+diff --git a/app/src/main/java/com/winlator/core/FileUtils.java b/app/src/main/java/com/winlator/core/FileUtils.java
+index b503fc0..8700402 100644
+--- a/app/src/main/java/com/winlator/core/FileUtils.java
++++ b/app/src/main/java/com/winlator/core/FileUtils.java
+@@ -410,7 +410,7 @@ public abstract class FileUtils {
+         Intent intent;
+         if (path.startsWith("file://")) {
+             File file = new File(Uri.decode(path.replace("file://", "")));
+-            intent = new Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(activity, "com.winlator.FileProvider", file));
++            intent = new Intent(Intent.ACTION_VIEW, FileProvider.getUriForFile(activity, activity.getPackageName()+".FileProvider", file));
+             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+         }
+         else intent = new Intent(Intent.ACTION_VIEW, Uri.parse(path));
+diff --git a/app/src/main/java/com/winlator/renderer/GLRenderer.java b/app/src/main/java/com/winlator/renderer/GLRenderer.java
+index b144c9f..4a7a8b2 100644
+--- a/app/src/main/java/com/winlator/renderer/GLRenderer.java
++++ b/app/src/main/java/com/winlator/renderer/GLRenderer.java
+@@ -59,6 +59,8 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+     private int cursorBackColor = 0xffffff;
+     private int cursorForeColor = 0x000000;
+     private boolean screenOffsetYRelativeToCursor = false;
++    /* SAI Pen: the keyboard's shift, taken once when it opens (KeyboardShift) */
++    private volatile float keyboardOffsetY = 0;
+     private float magnifierZoom = 1.0f;
+     protected short surfaceWidth;
+     protected short surfaceHeight;
+@@ -82,6 +84,8 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+ 
+     @Override
+     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
++        offscreenFbo = 0;   /* SAI Pen: a new context has none of the old ids */
++        offscreenW = offscreenH = 0;
+         GPUHelper.setGlobalEGLContext();
+ 
+         GLES20.glFrontFace(GLES20.GL_CCW);
+@@ -103,10 +107,13 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+         surfaceHeight = (short)height;
+         viewTransformation.update(width, height, xServer.screenInfo.width, xServer.screenInfo.height);
+         viewportNeedsUpdate = true;
++        com.winlator.saipen.FrontBuffer.surfaceReady(xServerView.frontBuffer);   /* SAI Pen: front buffer, if the device has it */
++        com.winlator.saipen.SpeedSession.surfaceReady();   /* SAI Pen: frames on the glass, for the speed log */
+     }
+ 
+     @Override
+     public void onDrawFrame(GL10 gl) {
++        long frameStart = android.os.SystemClock.uptimeMillis();   /* SAI Pen: the speed log */
+         if (toggleFullscreen) {
+             fullscreen = !fullscreen;
+             toggleFullscreen = false;
+@@ -117,9 +124,52 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+             effectComposer.render();
+         }
+         else drawFrame();
++        long frameEnd = android.os.SystemClock.uptimeMillis();
++        com.winlator.saipen.SpeedSession.frame(frameStart, frameEnd);
++        com.winlator.saipen.SpeedSession.beforeSwap(frameStart, frameEnd);
++    }
++
++    /* SAI Pen: with the front buffer the frame is drawn here, then copied
++     * onto the screen in one blit, so the display never takes a half-drawn
++     * frame (FrontBuffer) */
++    private int offscreenFbo = 0, offscreenTex = 0, offscreenW = 0, offscreenH = 0;
++
++    private void bindOffscreen() {
++        if (offscreenFbo == 0 || offscreenW != surfaceWidth || offscreenH != surfaceHeight) {
++            if (offscreenFbo != 0) {
++                GLES20.glDeleteFramebuffers(1, new int[] {offscreenFbo}, 0);
++                GLES20.glDeleteTextures(1, new int[] {offscreenTex}, 0);
++            }
++            int[] id = new int[1];
++            GLES20.glGenTextures(1, id, 0);
++            offscreenTex = id[0];
++            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, offscreenTex);
++            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, surfaceWidth, surfaceHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
++            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
++            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
++            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
++            GLES20.glGenFramebuffers(1, id, 0);
++            offscreenFbo = id[0];
++            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offscreenFbo);
++            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, offscreenTex, 0);
++            offscreenW = surfaceWidth;
++            offscreenH = surfaceHeight;
++        }
++        else GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offscreenFbo);
++    }
++
++    private void blitOffscreen() {
++        android.opengl.GLES30.glBindFramebuffer(android.opengl.GLES30.GL_READ_FRAMEBUFFER, offscreenFbo);
++        android.opengl.GLES30.glBindFramebuffer(android.opengl.GLES30.GL_DRAW_FRAMEBUFFER, 0);
++        android.opengl.GLES30.glBlitFramebuffer(0, 0, offscreenW, offscreenH, 0, 0, offscreenW, offscreenH,
++                                                GLES20.GL_COLOR_BUFFER_BIT, GLES20.GL_NEAREST);
++        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+     }
+ 
+     protected void drawFrame() {
++        com.winlator.saipen.FrontBuffer.beforeFrame();
++        boolean offscreen = com.winlator.saipen.FrontBuffer.offscreen();
++        if (offscreen) bindOffscreen();
+         if (viewportNeedsUpdate) {
+             if (fullscreen) {
+                 GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
+@@ -138,7 +188,12 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+             pointerX = Mathf.clamp(xServer.pointer.getX() * magnifierZoom - xServer.screenInfo.width * 0.5f, 0, xServer.screenInfo.width * Math.abs(1.0f - magnifierZoom));
+         }
+ 
+-        if (screenOffsetYRelativeToCursor || magnifierZoom != 1.0f) {
++        if (screenOffsetYRelativeToCursor) {
++            /* SAI Pen: fixed while the keyboard is open, not following the
++             * cursor (the picture jumped with every move) */
++            pointerY = keyboardOffsetY;
++        }
++        else if (magnifierZoom != 1.0f) {
+             float scaleY = magnifierZoom != 1.0f ? Math.abs(1.0f - magnifierZoom) : 0.5f;
+             float offsetY = xServer.screenInfo.height * (screenOffsetYRelativeToCursor ? 0.25f : 0.5f);
+             pointerY = Mathf.clamp(xServer.pointer.getY() * magnifierZoom - offsetY, 0, xServer.screenInfo.height * scaleY);
+@@ -148,6 +203,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+ 
+         renderWindows();
+         if (cursorVisible) renderCursor();
++        if (offscreen) blitOffscreen();
+     }
+ 
+     @Override
+@@ -378,7 +434,15 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
+         return screenOffsetYRelativeToCursor;
+     }
+ 
++    /** SAI Pen: how far the picture is up now, in X screen pixels; touches
++     *  add it so they mean the point shown under the finger. */
++    public float getScreenOffsetY() {
++        return screenOffsetYRelativeToCursor ? keyboardOffsetY : 0;
++    }
++
+     public void setScreenOffsetYRelativeToCursor(boolean screenOffsetYRelativeToCursor) {
++        keyboardOffsetY = screenOffsetYRelativeToCursor
++            ? com.winlator.saipen.KeyboardShift.offsetY(xServer.pointer.getY(), xServer.screenInfo.height) : 0;
+         this.screenOffsetYRelativeToCursor = screenOffsetYRelativeToCursor;
+         xServerView.requestRender();
+     }
+diff --git a/app/src/main/java/com/winlator/renderer/Texture.java b/app/src/main/java/com/winlator/renderer/Texture.java
+index fb0252f..e3c0be8 100644
+--- a/app/src/main/java/com/winlator/renderer/Texture.java
++++ b/app/src/main/java/com/winlator/renderer/Texture.java
+@@ -2,6 +2,7 @@ package com.winlator.renderer;
+ 
+ import android.opengl.GLES11Ext;
+ import android.opengl.GLES20;
++import android.opengl.GLES30;
+ import android.opengl.GLES32;
+ 
+ import com.winlator.xserver.Drawable;
+@@ -120,16 +121,33 @@ public class Texture {
+ 
+         ByteBuffer data = owner.getData();
+         if (!isAllocated()) {
++            owner.dirty.take(dirtyBox);   /* all of it goes now */
+             allocateTexture(owner.width, owner.height, data);
++            needsUpdate = false;
+         }
+         else if (needsUpdate) {
++            /* SAI Pen: only the box that changed, not the whole window (9.6 MB for SAI on
++             * a 2000x1200 screen, ~3 ms a frame). The flag goes down before the box is
++             * taken: a change made meanwhile raises it again for the next frame. */
++            needsUpdate = false;
++            if (!owner.dirty.take(dirtyBox)) return;
++            int x = dirtyBox[0], y = dirtyBox[1], w = dirtyBox[2], h = dirtyBox[3];
++            long uploadStart = System.nanoTime();   /* SAI Pen: the speed log */
+             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+-            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, 0, 0, owner.width, owner.height, format, GLES20.GL_UNSIGNED_BYTE, data);
++            /* rows of owner.width pixels, 4 bytes each, from (x, y); a copy of the buffer
++             * object so its position is ours alone (the X server thread rewinds data) */
++            ByteBuffer from = data.duplicate();
++            from.position((y * owner.width + x) * 4);
++            if (w != owner.width) GLES20.glPixelStorei(GLES30.GL_UNPACK_ROW_LENGTH, owner.width);
++            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, x, y, w, h, format, GLES20.GL_UNSIGNED_BYTE, from);
++            if (w != owner.width) GLES20.glPixelStorei(GLES30.GL_UNPACK_ROW_LENGTH, 0);
+             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+-            needsUpdate = false;
++            com.winlator.saipen.SpeedSession.upload(System.nanoTime() - uploadStart, (long) w * h * 4);
+         }
+     }
+ 
++    private final int[] dirtyBox = new int[4];
++
+     public boolean isAllocated() {
+         return textureId > 0;
+     }
+diff --git a/app/src/main/java/com/winlator/services/ForegroundService.java b/app/src/main/java/com/winlator/services/ForegroundService.java
+index 0940581..a217866 100644
+--- a/app/src/main/java/com/winlator/services/ForegroundService.java
++++ b/app/src/main/java/com/winlator/services/ForegroundService.java
+@@ -64,7 +64,8 @@ public class ForegroundService extends Service {
+         if (ctx == null) return;
+         prefs = PreferenceManager.getDefaultSharedPreferences(ctx.getApplicationContext());
+         if (prefs != null) {
+-            if (!prefs.getBoolean("enable_background_protection", false)) {
++            /* SAI Pen: on by default, Android no longer closes SAI in the background (Reddit, Tab S9 FE+) */
++            if (!prefs.getBoolean("enable_background_protection", true)) {
+                 Log.i(TAG, "startSession called with background protection disabled; ignoring");
+                 return;
+             }
+diff --git a/app/src/main/java/com/winlator/widget/TouchpadView.java b/app/src/main/java/com/winlator/widget/TouchpadView.java
+index 89dd3fe..0955ab1 100644
+--- a/app/src/main/java/com/winlator/widget/TouchpadView.java
++++ b/app/src/main/java/com/winlator/widget/TouchpadView.java
+@@ -2,8 +2,12 @@ package com.winlator.widget;
+ 
+ import android.content.Context;
+ import android.graphics.Color;
++import android.graphics.Rect;
+ import android.graphics.drawable.ColorDrawable;
+ import android.graphics.drawable.StateListDrawable;
++import android.os.Build;
++import android.os.SystemClock;
++import android.util.Log;
+ import android.view.InputDevice;
+ import android.view.MotionEvent;
+ import android.view.View;
+@@ -14,9 +18,24 @@ import com.winlator.core.AppUtils;
+ import com.winlator.math.Mathf;
+ import com.winlator.math.XForm;
+ import com.winlator.renderer.ViewTransformation;
++import com.winlator.saipen.EdgeSwipe;
++import com.winlator.saipen.GestureActions;
++import com.winlator.saipen.Gestures;
++import com.winlator.saipen.LongPress;
++import com.winlator.saipen.MultiTap;
++import com.winlator.saipen.PenInput;
++import com.winlator.saipen.KeyboardShift;
++import com.winlator.saipen.PenSampleSender;
++import com.winlator.saipen.PenWire;
++import com.winlator.saipen.PalmFilter;
++import com.winlator.saipen.TwoFingerGesture;
++import com.winlator.saipen.ZoomPacer;
++import com.winlator.xserver.Window;
++import com.winlator.xserver.WindowManager;
+ import com.winlator.winhandler.MouseEventFlags;
+ import com.winlator.winhandler.WinHandler;
+ import com.winlator.xserver.Pointer;
++import com.winlator.xserver.XKeycode;
+ import com.winlator.xserver.XServer;
+ 
+ public class TouchpadView extends View implements View.OnCapturedPointerListener {
+@@ -39,7 +58,62 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+     private boolean scrolling = false;
+     private final XServer xServer;
+     private Runnable fourFingersTapCallback;
++    private Runnable threeFingersTapCallback;   /* SAI Pen: the keyboard */
++    /* SAI Pen: after a three- or four-finger tap the other fingers lift one
++     * by one; they must not count as a two-finger right click or a tap */
++    private boolean suppressTaps = false;
++    /* SAI Pen: palm rejection (PalmFilter), each check on its own switch */
++    private boolean palmAndroid = false, palmPenNear = false, palmBig = false;
++    private long lastPenMs = com.winlator.saipen.PalmFilter.NEVER;
+     private final float[] xform = XForm.getInstance();
++    /* SAI Pen: what each gesture does, as set on SAI Pen's screen
++     * (Gestures, issue #10); null: as Winlator and SAI Pen always did */
++    private GestureActions gestures;
++    private final MultiTap multiTap = new MultiTap();
++    private final LongPress longPress;
++    private final EdgeSwipe edgeSwipe;
++    private final float edgePx;
++    private final Runnable tapExpire = new Runnable() {
++        @Override
++        public void run() {
++            int fingers = multiTap.expire(SystemClock.uptimeMillis());
++            if (fingers != 0) fireGesture(fingers == 2 ? Gestures.Input.TWO_TAP : Gestures.Input.THREE_TAP, multiTap.x(), multiTap.y());
++            else if (multiTap.due() >= 0) postDelayed(this, Math.max(1, multiTap.due() - SystemClock.uptimeMillis()));
++        }
++    };
++    private final Runnable longPressCheck = new Runnable() {
++        @Override
++        public void run() {
++            long now = SystemClock.uptimeMillis();
++            if (longPress.due(now)) {
++                suppressTaps = true;
++                edgeSwipe.cancel();
++                Finger f = findSecondFinger(null);
++                if (f != null) fireGesture(Gestures.Input.LONG_PRESS, f.x, f.y);
++            }
++            else if (longPress.when() >= 0) postDelayed(this, Math.max(1, longPress.when() - now));
++        }
++    };
++    /* SAI Pen: the S Pen as a pen (absolute cursor, held button, pressure
++     * to our wintab32.dll). Logic in com.winlator.saipen.PenInput. */
++    private final PenSampleSender penSender;
++    private final PenInput penInput;
++    /* SAI Pen: two fingers scroll the canvas both ways and pinch-zoom */
++    private final TwoFingerGesture twoFingers;
++    /* SAI Pen: zoom steps go to SAI as fast as it redraws them */
++    private final ZoomPacer zoomPacer = new ZoomPacer();
++    private final Runnable zoomTick = new Runnable() {
++        @Override
++        public void run() {
++            boolean wasBusy = zoomPacer.busy();
++            int steps = zoomPacer.tick(SystemClock.uptimeMillis());
++            if (wasBusy && (steps != 0 || !zoomPacer.busy())) {
++                Log.i("SaiPen", "zoom step drawn in " + zoomPacer.lastRedrawMs() + " ms");
++            }
++            if (steps != 0) sendZoom(steps);
++            if (zoomPacer.busy()) postDelayed(this, 20);
++        }
++    };
+ 
+     public TouchpadView(Context context, XServer xServer, boolean capturePointerOnExternalMouse) {
+         super(context);
+@@ -51,6 +125,106 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         setFocusableInTouchMode(capturePointerOnExternalMouse);
+         updateXform(AppUtils.getScreenWidth(), AppUtils.getScreenHeight(), xServer.screenInfo.width, xServer.screenInfo.height);
+ 
++        float dp = context.getResources().getDisplayMetrics().density;
++        longPress = new LongPress(10 * dp);
++        edgePx = 24 * dp;
++        edgeSwipe = new EdgeSwipe(edgePx, 60 * dp);
++
++        penSender = new PenSampleSender(xServer.screenInfo.width, xServer.screenInfo.height);
++        penInput = new PenInput(new PenInput.Sink() {
++            @Override
++            public void movePointer(int x, int y) {
++                xServer.injectPointerMove(x, y);
++            }
++
++            @Override
++            public void pressButton(int button) {
++                xServer.injectPointerButtonPress(button == PenInput.BUTTON_RIGHT ? Pointer.Button.BUTTON_RIGHT : Pointer.Button.BUTTON_LEFT);
++            }
++
++            @Override
++            public void releaseButton(int button) {
++                xServer.injectPointerButtonRelease(button == PenInput.BUTTON_RIGHT ? Pointer.Button.BUTTON_RIGHT : Pointer.Button.BUTTON_LEFT);
++            }
++
++            @Override
++            public void sample(int p, float sx, float sy, long evUs) {
++                penSender.send(p, sx, sy, evUs);
++            }
++
++            @Override
++            public void setInRange(boolean inRange) {
++                penSender.setInRange(inRange);
++            }
++        }, (vx, vy, out) -> {
++            XForm.transformPoint(xform, vx, vy, out);
++            out[1] = KeyboardShift.touchY(out[1], xServer.getRenderer().getScreenOffsetY());
++        }, PenWire.PMAX,
++           xServer.screenInfo.width, xServer.screenInfo.height);
++
++        twoFingers = new TwoFingerGesture(new TwoFingerGesture.Sink() {
++            @Override
++            public void moveCursor(int x, int y) {
++                xServer.injectPointerMove(Math.max(0, Math.min(x, xServer.screenInfo.width - 1)),
++                                          Math.max(0, Math.min(y, xServer.screenInfo.height - 1)));
++            }
++
++            @Override
++            public void wheel(int button) {
++                Pointer.Button b = button == TwoFingerGesture.WHEEL_UP ? Pointer.Button.BUTTON_SCROLL_UP
++                    : button == TwoFingerGesture.WHEEL_DOWN ? Pointer.Button.BUTTON_SCROLL_DOWN
++                    : button == TwoFingerGesture.WHEEL_LEFT ? Pointer.Button.BUTTON_SCROLL_CLICK_LEFT
++                    : Pointer.Button.BUTTON_SCROLL_CLICK_RIGHT;
++                xServer.injectPointerButtonPress(b);
++                xServer.injectPointerButtonRelease(b);
++            }
++
++            @Override
++            public void zoom(int steps) {
++                int now = zoomPacer.request(steps, SystemClock.uptimeMillis());
++                if (now != 0) sendZoom(now);
++                removeCallbacks(zoomTick);
++                postDelayed(zoomTick, 20);
++            }
++
++            /* SAI's free rotation: hold Alt+Space and drag (THE TRAP: SAI2's
++             * Rotate View CW/CCW have no default keys, Delete is Erase Layer) */
++            @Override
++            public void rotateBegin(int x, int y) {
++                xServer.injectKeyPress(XKeycode.KEY_ALT_L);
++                xServer.injectKeyPress(XKeycode.KEY_SPACE);
++                moveCursor(x, y);
++                xServer.injectPointerButtonPress(Pointer.Button.BUTTON_LEFT);
++                Log.i("SaiPen", "rotate drag from " + x + "," + y);
++            }
++
++            @Override
++            public void rotateDrag(int x, int y) {
++                moveCursor(x, y);
++            }
++
++            @Override
++            public void rotateEnd() {
++                xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
++                xServer.injectKeyRelease(XKeycode.KEY_SPACE);
++                xServer.injectKeyRelease(XKeycode.KEY_ALT_L);
++                Log.i("SaiPen", "rotate drag end");
++            }
++        });
++
++        /* when SAI has drawn a zoom step, the next one may go (ZoomPacer) */
++        xServer.windowManager.addOnWindowModificationListener(new WindowManager.OnWindowModificationListener() {
++            @Override
++            public void onUpdateWindowContent(Window window) {
++                zoomPacer.onContentUpdate(SystemClock.uptimeMillis());
++            }
++        });
++
++        /* No requestUnbufferedDispatch(): Android then hands the pen over once
++         * per frame with the samples in between as history, and every one of
++         * those still reaches the DLL (PenInput). Unbuffered, each sample was
++         * its own trip through the X server, Wine and SAI. */
++
+         if (capturePointerOnExternalMouse) {
+             setOnCapturedPointerListener(this);
+             setOnClickListener(view -> {
+@@ -73,6 +247,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+         super.onSizeChanged(w, h, oldw, oldh);
+         updateXform(w, h, xServer.screenInfo.width, xServer.screenInfo.height);
++        updateEdgeExclusion();   /* SAI Pen: the edge swipes' share of the sides */
+     }
+ 
+     private void updateXform(int outerWidth, int outerHeight, int innerWidth, int innerHeight) {
+@@ -87,6 +262,14 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         else XForm.makeScale(xform, invAspect, invAspect);
+     }
+ 
++    /** SAI Pen: a view point to the X screen point shown there, the
++     *  keyboard's shift of the picture included (KeyboardShift) */
++    private float[] toScreen(float x, float y) {
++        float[] p = XForm.transformPoint(xform, x, y);
++        p[1] = KeyboardShift.touchY(p[1], xServer.getRenderer().getScreenOffsetY());
++        return p;
++    }
++
+     private class Finger {
+         private int x;
+         private int y;
+@@ -97,7 +280,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         private final long touchTime;
+ 
+         public Finger(float x, float y) {
+-            float[] transformedPoint = XForm.transformPoint(xform, x, y);
++            float[] transformedPoint = toScreen(x, y);
+             this.x = this.startX = this.lastX = (int)transformedPoint[0];
+             this.y = this.startY = this.lastY = (int)transformedPoint[1];
+             touchTime = System.currentTimeMillis();
+@@ -106,7 +289,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         public void update(float x, float y) {
+             lastX = this.x;
+             lastY = this.y;
+-            float[] transformedPoint = XForm.transformPoint(xform, x, y);
++            float[] transformedPoint = toScreen(x, y);
+             this.x = (int)transformedPoint[0];
+             this.y = (int)transformedPoint[1];
+         }
+@@ -136,25 +319,139 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         }
+     }
+ 
++    /** SAI Pen: one group of zoom steps to SAI, through the DLL */
++    private void sendZoom(int steps) {
++        Log.i("SaiPen", "zoom " + steps + " sent");
++        penSender.sendControl(PenWire.zoomLine(steps));
++    }
++
++    @Override
++    protected void onDetachedFromWindow() {
++        super.onDetachedFromWindow();
++        removeCallbacks(tapExpire);
++        removeCallbacks(longPressCheck);
++        twoFingers.end();
++        penSender.close();
++    }
++
++    /** One pen pointer of a MotionEvent, history included, for PenInput. */
++    private static final class PenEvent implements PenInput.Event {
++        private final MotionEvent event;
++        private final int index;
++
++        PenEvent(MotionEvent event, int index) {
++            this.event = event;
++            this.index = index;
++        }
++
++        @Override
++        public int historySize() {
++            return event.getHistorySize();
++        }
++
++        @Override
++        public float x(int pos) {
++            return pos < event.getHistorySize() ? event.getHistoricalX(index, pos) : event.getX(index);
++        }
++
++        @Override
++        public float y(int pos) {
++            return pos < event.getHistorySize() ? event.getHistoricalY(index, pos) : event.getY(index);
++        }
++
++        @Override
++        public float pressure(int pos) {
++            return pos < event.getHistorySize() ? event.getHistoricalPressure(index, pos) : event.getPressure(index);
++        }
++
++        @Override
++        public long timeUs(int pos) {
++            boolean hist = pos < event.getHistorySize();
++            if (Build.VERSION.SDK_INT >= 34) {
++                return (hist ? event.getHistoricalEventTimeNanos(pos) : event.getEventTimeNanos()) / 1000;
++            }
++            return (hist ? event.getHistoricalEventTime(pos) : event.getEventTime()) * 1000;
++        }
++
++        @Override
++        public boolean sideButton() {
++            return (event.getButtonState() & (MotionEvent.BUTTON_STYLUS_PRIMARY | MotionEvent.BUTTON_SECONDARY)) != 0;
++        }
++    }
++
++    private static int findPenPointer(MotionEvent event) {
++        for (int i = 0; i < event.getPointerCount(); i++) {
++            if (PenInput.isPenTool(event.getToolType(i))) return i;
++        }
++        return -1;
++    }
++
++    private void onPenTouch(MotionEvent event, int penIndex) {
++        lastPenMs = SystemClock.uptimeMillis();
++        /* a two-finger gesture under way ends first: a rotate drag holds
++         * Alt+Space and the left button, and the pen would rotate, not draw */
++        if (twoFingers.isActive()) twoFingers.end();
++        /* nor is a finger under the pen a long press or an edge swipe */
++        longPress.cancel();
++        edgeSwipe.cancel();
++        /* Fingers that were down when the pen arrived (a palm) are forgotten:
++         * the pen owns the cursor now. A button a finger held is let go at
++         * once, not 30 ms later, so it cannot release the pen's own press. */
++        if (numFingers > 0) {
++            for (byte i = 0; i < MAX_FINGERS; i++) fingers[i] = null;
++            numFingers = 0;
++            if (fingerPointerButtonLeft != null) {
++                xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
++                fingerPointerButtonLeft = null;
++            }
++            if (fingerPointerButtonRight != null) {
++                xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_RIGHT);
++                fingerPointerButtonRight = null;
++            }
++        }
++        if (!isEnabled()) return;
++        int action = PenInput.penAction(event.getActionMasked(), event.getActionIndex(), penIndex);
++        penInput.onTouch(action, new PenEvent(event, penIndex));
++        com.winlator.saipen.SpeedSession.pen(penInput.isTouching(), event.getEventTime());   /* SAI Pen: the speed log */
++        com.winlator.saipen.FrontBuffer.pen(penInput.isTouching());   /* SAI Pen: front buffer while drawing */
++    }
++
+     @Override
+     public boolean onTouchEvent(MotionEvent event) {
++        int penIndex = findPenPointer(event);
++        if (penIndex >= 0) {
++            onPenTouch(event, penIndex);
++            return true;
++        }
++
+         int actionIndex = event.getActionIndex();
+         int pointerId = event.getPointerId(actionIndex);
+         int actionMasked = event.getActionMasked();
++        if ((palmAndroid || palmPenNear || palmBig) && rejectPalm(event, actionMasked, actionIndex, pointerId)) return true;
++        /* a finger went down or up: a two-finger gesture ends (a pinch
++         * tells SAI now) and the next one starts afresh */
++        if (actionMasked != MotionEvent.ACTION_MOVE) twoFingers.end();
+         if (pointerId >= MAX_FINGERS) return true;
++        if (gestures != null && !event.isFromSource(InputDevice.SOURCE_MOUSE)) trackGestures(event, actionMasked);
+ 
+         switch (actionMasked) {
+             case MotionEvent.ACTION_DOWN:
+             case MotionEvent.ACTION_POINTER_DOWN:
+                 if (event.isFromSource(InputDevice.SOURCE_MOUSE)) return true;
++                if (actionMasked == MotionEvent.ACTION_DOWN) suppressTaps = false;
+                 scrollAccumY = 0;
+                 scrolling = false;
+                 fingers[pointerId] = new Finger(event.getX(actionIndex), event.getY(actionIndex));
+                 numFingers++;
++                /* SAI Pen: the cursor jumps under the first finger as it
++                 * touches, not only once it moves */
++                if (moveCursorToTouchpoint && numFingers == 1 && isEnabled()) {
++                    xServer.injectPointerMove(fingers[pointerId].x, fingers[pointerId].y);
++                }
+                 break;
+             case MotionEvent.ACTION_MOVE:
+                 if (event.isFromSource(InputDevice.SOURCE_MOUSE)) {
+-                    float[] transformedPoint = XForm.transformPoint(xform, event.getX(), event.getY());
++                    float[] transformedPoint = toScreen(event.getX(), event.getY());
+                     if (isEnabled()) xServer.injectPointerMove((int)transformedPoint[0], (int)transformedPoint[1]);
+                 }
+                 else {
+@@ -192,23 +489,200 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         return true;
+     }
+ 
++    /** SAI Pen: palm rejection (PalmFilter). True: the event was a palm's
++     *  and is used up here; false: handle it as a finger as before. */
++    private boolean rejectPalm(MotionEvent event, int actionMasked, int actionIndex, int pointerId) {
++        boolean down = actionMasked == MotionEvent.ACTION_DOWN || actionMasked == MotionEvent.ACTION_POINTER_DOWN;
++        if (down) {
++            String why = null;
++            if (palmAndroid && PalmFilter.isPalmTool(event.getToolType(actionIndex))) why = "Android: palm";
++            else if (palmPenNear && PalmFilter.penNear(SystemClock.uptimeMillis(), lastPenMs, penInput.isTouching())) why = "pen near";
++            else if (palmBig && PalmFilter.isBigContact(event.getTouchMajor(actionIndex), contactDpi())) why = "big contact";
++            if (palmBig) Log.i("SaiPen", "finger down, contact " + Math.round(PalmFilter.contactMm(event.getTouchMajor(actionIndex), contactDpi())) + " mm");
++            if (why == null) return false;
++            /* it never becomes a finger: no cursor move, no tap, no gesture */
++            suppressTaps = true;
++            Log.i("SaiPen", "palm ignored (" + why + ")");
++            return true;
++        }
++        if (palmAndroid && PalmFilter.isCanceledLift(actionMasked, event.getFlags())) {
++            twoFingers.cancel();
++            if (pointerId < MAX_FINGERS && fingers[pointerId] != null) dropFinger(pointerId);
++            suppressTaps = true;
++            Log.i("SaiPen", "palm ignored (Android: canceled lift)");
++            return true;
++        }
++        if (palmAndroid && PalmFilter.isCancel(actionMasked)) {
++            twoFingers.cancel();
++            for (byte i = 0; i < MAX_FINGERS; i++) if (fingers[i] != null) dropFinger(i);
++            numFingers = 0;
++            suppressTaps = true;
++            Log.i("SaiPen", "palm ignored (Android: cancel)");
++            return true;
++        }
++        if (palmBig && actionMasked == MotionEvent.ACTION_MOVE) {
++            /* a fingertip that grows into a palm (the hand rolls onto the glass) */
++            for (int idx = 0; idx < event.getPointerCount(); idx++) {
++                int id = event.getPointerId(idx);
++                if (id < MAX_FINGERS && fingers[id] != null && PalmFilter.isBigContact(event.getTouchMajor(idx), contactDpi())) {
++                    twoFingers.cancel();
++                    dropFinger(id);
++                    suppressTaps = true;
++                    Log.i("SaiPen", "palm ignored (grew to a big contact)");
++                }
++            }
++        }
++        return false;
++    }
++
++    /** A finger that turned out to be a palm: forgotten, its button let go
++     *  at once, never a tap. */
++    private void dropFinger(int id) {
++        Finger finger = fingers[id];
++        if (finger == fingerPointerButtonLeft && fingerPointerButtonLeft != null) {
++            xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
++            fingerPointerButtonLeft = null;
++        }
++        if (finger == fingerPointerButtonRight && fingerPointerButtonRight != null) {
++            xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_RIGHT);
++            fingerPointerButtonRight = null;
++        }
++        fingers[id] = null;
++        if (numFingers > 0) numFingers--;
++    }
++
++    private float contactDpi() {
++        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
++        return dm.xdpi > 0 ? dm.xdpi : dm.densityDpi;
++    }
++
++    public void setPalmRejection(boolean android, boolean penNear, boolean big) {
++        palmAndroid = android;
++        palmPenNear = penNear;
++        palmBig = big;
++    }
++
++    /** SAI Pen: testing only, pretend the pen has no hover (PenInput.PROP_TEST_NO_HOVER) */
++    public void setPenIgnoreHover(boolean ignoreHover) {
++        penInput.setIgnoreHover(ignoreHover);
++    }
++
++    /** SAI Pen: what each gesture does (Gestures); null: the old way. */
++    public void setGestures(GestureActions gestures) {
++        this.gestures = gestures;
++        penInput.setButtons(gestures != null ? gestures.penButtons() : null);
++        if (gestures != null) gestures.setOnChanged(this::updateEdgeExclusion);
++        updateEdgeExclusion();
++    }
++
++    /** Android's Back gesture takes swipes from the sides; with an edge
++     *  swipe set, the middle of that side (Android allows 200 dp) is ours. */
++    private void updateEdgeExclusion() {
++        if (Build.VERSION.SDK_INT < 29) return;
++        java.util.List<Rect> rects = new java.util.ArrayList<>();
++        if (gestures != null && getHeight() > 0) {
++            int band = Math.min(getHeight(), (int) (200 * getResources().getDisplayMetrics().density));
++            int top = (getHeight() - band) / 2;
++            int w = (int) Math.ceil(edgePx);
++            if (gestures.isSet(Gestures.Input.EDGE_LEFT)) rects.add(new Rect(0, top, w, top + band));
++            if (gestures.isSet(Gestures.Input.EDGE_RIGHT)) rects.add(new Rect(getWidth() - w, top, getWidth(), top + band));
++        }
++        setSystemGestureExclusionRects(rects);
++    }
++
++    /** SAI Pen: the long press and the edge swipes, looked for only when set. */
++    private void trackGestures(MotionEvent event, int actionMasked) {
++        switch (actionMasked) {
++            case MotionEvent.ACTION_DOWN:
++                if (gestures.isSet(Gestures.Input.LONG_PRESS)) {
++                    longPress.down(event.getX(), event.getY(), SystemClock.uptimeMillis());
++                    removeCallbacks(longPressCheck);
++                    postDelayed(longPressCheck, LongPress.HOLD_MS);
++                }
++                edgeSwipe.down(event.getX(), event.getY(), getWidth(),
++                    gestures.isSet(Gestures.Input.EDGE_LEFT), gestures.isSet(Gestures.Input.EDGE_RIGHT));
++                break;
++            case MotionEvent.ACTION_MOVE:
++                if (event.getPointerCount() != 1) break;
++                longPress.move(event.getX(), event.getY());
++                int side = edgeSwipe.move(event.getX(), event.getY());
++                if (side != EdgeSwipe.NONE) {
++                    suppressTaps = true;
++                    longPress.cancel();
++                    float[] p = toScreen(event.getX(), event.getY());
++                    fireGesture(side == EdgeSwipe.LEFT ? Gestures.Input.EDGE_LEFT : Gestures.Input.EDGE_RIGHT, (int) p[0], (int) p[1]);
++                }
++                break;
++            default:
++                /* another finger, a lift, a cancel: neither */
++                longPress.cancel();
++                edgeSwipe.cancel();
++                break;
++        }
++    }
++
++    /** SAI Pen: a tap of 2 or 3 fingers, single or double (MultiTap). */
++    private void tapped(int n, Finger finger) {
++        Gestures.Input single = n == 2 ? Gestures.Input.TWO_TAP : Gestures.Input.THREE_TAP;
++        Gestures.Input twice = n == 2 ? Gestures.Input.TWO_DOUBLE_TAP : Gestures.Input.THREE_DOUBLE_TAP;
++        int other = multiTap.flushOther(n);
++        if (other != 0) fireGesture(other == 2 ? Gestures.Input.TWO_TAP : Gestures.Input.THREE_TAP, multiTap.x(), multiTap.y());
++        int r = multiTap.tap(n, gestures.isSet(twice), finger.x, finger.y, SystemClock.uptimeMillis());
++        if (r == MultiTap.SINGLE && n == 2 && gestures.action(single).type == Gestures.Type.RIGHT_CLICK) {
++            /* the right click as it always was: let go with the finger */
++            pressPointerButtonRight(finger);
++            return;
++        }
++        /* the other fingers lifting are no tap of their own */
++        suppressTaps = true;
++        if (r == MultiTap.SINGLE) fireGesture(single, finger.x, finger.y);
++        else if (r == MultiTap.DOUBLE) fireGesture(twice, finger.x, finger.y);
++        else {
++            removeCallbacks(tapExpire);
++            postDelayed(tapExpire, MultiTap.DOUBLE_MS);
++        }
++    }
++
++    private void fireGesture(Gestures.Input in, int x, int y) {
++        if (gestures == null || !isEnabled()) return;
++        gestures.run(in, x, y, pointerButtonLeftEnabled, pointerButtonRightEnabled);
++    }
++
+     private void handleFingerUp(Finger finger1) {
+         switch (numFingers) {
+             case 1:
+-                if (finger1.isTap()) {
++                if (finger1.isTap() && !suppressTaps) {
+                     if (moveCursorToTouchpoint) xServer.injectPointerMove(finger1.x, finger1.y);
+                     pressPointerButtonLeft(finger1);
+                 }
+                 break;
+             case 2:
+                 Finger finger2 = findSecondFinger(finger1);
+-                if (finger2 != null && finger1.isTap()) pressPointerButtonRight(finger1);
++                if (finger2 != null && finger1.isTap() && !suppressTaps) {
++                    if (gestures != null) tapped(2, finger1);
++                    else pressPointerButtonRight(finger1);
++                }
++                break;
++            case 3:
++                /* SAI Pen: a three-finger tap */
++                if ((threeFingersTapCallback != null || gestures != null) && !suppressTaps) {
++                    for (byte i = 0; i < MAX_FINGERS; i++) {
++                        if (fingers[i] != null && !fingers[i].isTap()) return;
++                    }
++                    suppressTaps = true;
++                    if (gestures != null) tapped(3, finger1);
++                    else threeFingersTapCallback.run();
++                }
+                 break;
+             case 4:
+-                if (fourFingersTapCallback != null) {
++                /* SAI Pen: !suppressTaps too: the four fingers lift one by
++                 * one, and the next lift used to count as a three-finger tap
++                 * (the keyboard popped up with the menu) */
++                if (fourFingersTapCallback != null && !suppressTaps) {
+                     for (byte i = 0; i < 4; i++) {
+                         if (fingers[i] != null && !fingers[i].isTap()) return;
+                     }
++                    suppressTaps = true;
+                     fourFingersTapCallback.run();
+                 }
+                 break;
+@@ -224,29 +698,12 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+ 
+         Finger finger2 = numFingers == 2 ? findSecondFinger(finger1) : null;
+         if (finger2 != null) {
+-            final float resolutionScale = 1000.0f / Math.min(xServer.screenInfo.width, xServer.screenInfo.height);
+-            float currDistance = (float)Math.hypot(finger1.x - finger2.x, finger1.y - finger2.y) * resolutionScale;
+-
+-            if (currDistance < MAX_TWO_FINGERS_SCROLL_DISTANCE) {
+-                scrollAccumY += ((finger1.y + finger2.y) * 0.5f) - (finger1.lastY + finger2.lastY) * 0.5f;
+-
+-                if (scrollAccumY < -100) {
+-                    xServer.injectPointerButtonPress(Pointer.Button.BUTTON_SCROLL_DOWN);
+-                    xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_SCROLL_DOWN);
+-                    scrollAccumY = 0;
+-                }
+-                else if (scrollAccumY > 100) {
+-                    xServer.injectPointerButtonPress(Pointer.Button.BUTTON_SCROLL_UP);
+-                    xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_SCROLL_UP);
+-                    scrollAccumY = 0;
+-                }
+-                scrolling = true;
+-            }
+-            else if (currDistance >= MAX_TWO_FINGERS_SCROLL_DISTANCE && !xServer.pointer.isButtonPressed(Pointer.Button.BUTTON_LEFT) &&
+-                     finger2.travelDistance() < MAX_TAP_TRAVEL_DISTANCE) {
+-                pressPointerButtonLeft(finger1);
+-                skipPointerMove = true;
+-            }
++            /* SAI Pen: scroll both ways and pinch-zoom instead of Winlator's
++             * vertical-only scroll and its one-finger-holds drag, which took
++             * a pinch for a left-button drag */
++            twoFingers.move(finger1.x, finger1.y, finger2.x, finger2.y);
++            scrolling = true;
++            return;
+         }
+ 
+         if (!scrolling && numFingers <= 2 && !skipPointerMove) {
+@@ -343,6 +800,10 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+         this.pointerButtonRightEnabled = pointerButtonRightEnabled;
+     }
+ 
++    public void setThreeFingersTapCallback(Runnable threeFingersTapCallback) {
++        this.threeFingersTapCallback = threeFingersTapCallback;
++    }
++
+     public void setFourFingersTapCallback(Runnable fourFingersTapCallback) {
+         this.fourFingersTapCallback = fourFingersTapCallback;
+     }
+@@ -356,6 +817,14 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+     }
+ 
+     public boolean onExternalMouseEvent(MotionEvent event) {
++        /* the S Pen hovering near the glass arrives here, not in onTouchEvent */
++        if (event.getPointerCount() > 0 && PenInput.isPenTool(event.getToolType(0))) {
++            lastPenMs = SystemClock.uptimeMillis();
++            com.winlator.saipen.FrontBuffer.pen(false);   /* SAI Pen: the pen is near: front buffer while drawing */
++            if (isEnabled()) penInput.onHover(event.getActionMasked(), new PenEvent(event, 0));
++            return true;
++        }
++
+         boolean handled = false;
+         if (isEnabled() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
+             int actionButton = event.getActionButton();
+@@ -379,7 +848,7 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
+                     handled = true;
+                     break;
+                 case MotionEvent.ACTION_HOVER_MOVE:
+-                    float[] transformedPoint = XForm.transformPoint(xform, event.getX(), event.getY());
++                    float[] transformedPoint = toScreen(event.getX(), event.getY());
+                     xServer.injectPointerMove((int)transformedPoint[0], (int)transformedPoint[1]);
+                     handled = true;
+                     break;
+diff --git a/app/src/main/java/com/winlator/widget/XServerView.java b/app/src/main/java/com/winlator/widget/XServerView.java
+index b651bc1..b7be9b7 100644
+--- a/app/src/main/java/com/winlator/widget/XServerView.java
++++ b/app/src/main/java/com/winlator/widget/XServerView.java
+@@ -3,6 +3,7 @@ package com.winlator.widget;
+ import android.annotation.SuppressLint;
+ import android.content.Context;
+ import android.opengl.GLSurfaceView;
++import android.view.Choreographer;
+ import android.view.ViewGroup;
+ import android.widget.FrameLayout;
+ 
+@@ -12,16 +13,47 @@ import com.winlator.xserver.XServer;
+ @SuppressLint("ViewConstructor")
+ public class XServerView extends GLSurfaceView {
+     private final GLRenderer renderer;
++    /** SAI Pen: at most one frame per display refresh (FramePacer) */
++    private final com.winlator.saipen.FramePacer pacer;
++    /** SAI Pen: Screen drawing, the front buffer or not (FrontBuffer) */
++    public final com.winlator.saipen.FrontBuffer.Mode frontBuffer;
+ 
+     public XServerView(Context context, XServer xServer) {
+         super(context);
+         setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+         setEGLContextClientVersion(3);
+-        setEGLConfigChooser(8, 8, 8, 8, 0, 0);
++        /* SAI Pen: a config that can be single buffered (FrontBuffer), else as before (8, 8, 8, 8, 0, 0) */
++        frontBuffer = com.winlator.saipen.FrontBuffer.readMode(context.getFilesDir());
++        setEGLConfigChooser(com.winlator.saipen.FrontBuffer.chooser(frontBuffer));
+         setPreserveEGLContextOnPause(true);
+         renderer = new GLRenderer(this, xServer);
+         setRenderer(renderer);
+         setRenderMode(RENDERMODE_WHEN_DIRTY);
++        android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
++        Choreographer.FrameCallback refresh = t -> pacerOnRefresh();
++        pacer = new com.winlator.saipen.FramePacer(new com.winlator.saipen.FramePacer.Host() {
++            @Override
++            public void render() {
++                XServerView.super.requestRender();
++            }
++
++            @Override
++            public void atNextRefresh() {
++                if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) Choreographer.getInstance().postFrameCallback(refresh);
++                else main.post(() -> Choreographer.getInstance().postFrameCallback(refresh));
++            }
++        }, com.winlator.saipen.FramePacer.readPaced(context.getFilesDir()));
++        com.winlator.saipen.SpeedSession.pacer = pacer;
++    }
++
++    private void pacerOnRefresh() {
++        pacer.onRefresh();
++    }
++
++    @Override
++    public void requestRender() {
++        if (pacer == null) super.requestRender();   /* before the constructor is done */
++        else pacer.request();
+     }
+ 
+     public GLRenderer getRenderer() {
+diff --git a/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java b/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java
+index 08fbf80..9d6fb43 100644
+--- a/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java
++++ b/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java
+@@ -44,7 +44,14 @@ public abstract class RootFSInstaller {
+         }
+     }
+ 
+-    public static void install(final MainActivity activity) {
++    public static void install(final AppCompatActivity activity) {
++        install(activity, null);
++    }
++
++    /* SAI Pen: also from its own launcher (not MainActivity), which goes on
++     * to find SAI once the files are in place: onDone runs on the UI thread
++     * after a successful install */
++    public static void install(final AppCompatActivity activity, final Runnable onDone) {
+         AppUtils.keepScreenOn(activity);
+         RootFS rootFS = RootFS.find(activity);
+         final File rootDir = rootFS.getRootDir();
+@@ -74,6 +81,7 @@ public abstract class RootFSInstaller {
+             else AppUtils.showToast(activity, R.string.unable_to_install_system_files);
+ 
+             dialog.closeOnUiThread();
++            if (success && onDone != null) activity.runOnUiThread(onDone);
+         });
+     }
+ 
+diff --git a/app/src/main/java/com/winlator/xserver/Drawable.java b/app/src/main/java/com/winlator/xserver/Drawable.java
+index 2680054..f59c1b5 100644
+--- a/app/src/main/java/com/winlator/xserver/Drawable.java
++++ b/app/src/main/java/com/winlator/xserver/Drawable.java
+@@ -20,6 +20,8 @@ public class Drawable extends XResource {
+     private ByteBuffer data;
+     private boolean useSharedData;
+     private Runnable onDrawListener;
++    /* SAI Pen: what changed since the texture took it, so only that goes to the GPU */
++    public final com.winlator.saipen.DirtyRect dirty;
+     private boolean offscreenStorage = false;
+     private Callback<Drawable> onDestroyListener;
+     public final Object renderLock = new Object();
+@@ -33,6 +35,7 @@ public class Drawable extends XResource {
+         this.width = (short)width;
+         this.height = (short)height;
+         this.visual = visual;
++        this.dirty = new com.winlator.saipen.DirtyRect(width, height);
+         this.data = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
+     }
+ 
+@@ -66,6 +69,7 @@ public class Drawable extends XResource {
+ 
+     public void setData(ByteBuffer data) {
+         this.data = data;
++        dirty.addAll();
+     }
+ 
+     private short getStride() {
+@@ -93,6 +97,7 @@ public class Drawable extends XResource {
+ 
+         if (depth == 1) {
+             drawBitmap(width, height, data, this.data);
++            dirty.addAll();
+         }
+         else if (depth == 24 || depth == 32) {
+             dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
+@@ -101,12 +106,13 @@ public class Drawable extends XResource {
+             if ((dstY + height) > this.height) height = (short)((this.height - dstY));
+ 
+             copyArea(srcX, srcY, dstX, dstY, width, height, totalWidth, this.getStride(), data, this.data);
++            dirty.add(dstX, dstY, width, height);
+         }
+ 
+         this.data.rewind();
+         data.rewind();
+ 
+-        forceUpdate();
++        update();
+     }
+ 
+     public ByteBuffer getImage(short x, short y, short width, short height) {
+@@ -141,11 +147,12 @@ public class Drawable extends XResource {
+             copyArea(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data);
+         }
+         else copyAreaOp(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data, gcFunction.ordinal());
++        dirty.add(dstX, dstY, width, height);
+ 
+         this.data.rewind();
+         drawable.data.rewind();
+ 
+-        forceUpdate();
++        update();
+     }
+ 
+     public void fillColor(int color) {
+@@ -160,8 +167,9 @@ public class Drawable extends XResource {
+         if ((y + height) > this.height) height = (short)((this.height - y));
+ 
+         fillRect((short)x, (short)y, (short)width, (short)height, color, this.getStride(), this.data);
++        dirty.add(x, y, width, height);
+         this.data.rewind();
+-        forceUpdate();
++        update();
+     }
+ 
+     public void drawLines(int color, int lineWidth, short... points) {
+@@ -178,20 +186,35 @@ public class Drawable extends XResource {
+         y1 = Mathf.clamp(y1, 0, height-lineWidth);
+ 
+         drawLine((short)x0, (short)y0, (short)x1, (short)y1, color, (short)lineWidth, this.getStride(), this.data);
++        dirty.add(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0) + lineWidth, Math.abs(y1 - y0) + lineWidth);
+ 
+         this.data.rewind();
+-        forceUpdate();
++        update();
+     }
+ 
+     public void drawAlphaMaskedBitmap(byte foreRed, byte foreGreen, byte foreBlue, byte backRed, byte backGreen, byte backBlue, Drawable srcDrawable, Drawable maskDrawable) {
+         if (this.data == null || srcDrawable.data == null || maskDrawable.data == null) return;
+         drawAlphaMaskedBitmap(foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue, srcDrawable.data, maskDrawable.data, this.data);
++        dirty.addAll();
+         this.data.rewind();
+ 
+-        forceUpdate();
++        update();
+     }
+ 
++    /** SAI Pen: only x, y, width, height changed (the drawing calls above say so themselves). */
++    public void forceUpdate(int x, int y, int width, int height) {
++        dirty.add(x, y, width, height);
++        update();
++    }
++
++    /** Everything may have changed: callers that do not say what (Present, Vortek, GLX). */
+     public void forceUpdate() {
++        dirty.addAll();
++        update();
++    }
++
++    /* the drawing calls above have added to dirty before they get here */
++    private void update() {
+         if (!offscreenStorage || useSharedData) {
+             texture.setNeedsUpdate(true);
+             if (onDrawListener != null) onDrawListener.run();
+diff --git a/app/src/main/java/com/winlator/xserver/Keyboard.java b/app/src/main/java/com/winlator/xserver/Keyboard.java
+index 3039610..4005804 100644
+--- a/app/src/main/java/com/winlator/xserver/Keyboard.java
++++ b/app/src/main/java/com/winlator/xserver/Keyboard.java
+@@ -21,6 +21,8 @@ public class Keyboard {
+     private final ArraySet<Byte> pressedKeys = new ArraySet<>();
+     private final ArrayList<OnKeyboardListener> onKeyboardListeners = new ArrayList<>();
+     private final XServer xServer;
++    /* SAI Pen: the key whose press added Ctrl (AirActionKeys), or -1 */
++    private int ctrlAddedFor = -1;
+ 
+     public interface OnKeyboardListener {
+         void onKeyPress(byte keycode, int keysym);
+@@ -96,7 +98,10 @@ public class Keyboard {
+     }
+ 
+     public boolean onKeyEvent(KeyEvent event) {
+-        if (ExternalController.isGameController(event.getDevice())) return false;
++        /* SAI Pen: a typing keyboard Android also calls a gamepad still types
++         * (KeyboardKeys, issue #5) */
++        if (ExternalController.isGameController(event.getDevice())
++            && !com.winlator.saipen.KeyboardKeys.toSai(event.getDevice().getKeyboardType(), event.getKeyCode())) return false;
+ 
+         int action = event.getAction();
+         if (action == KeyEvent.ACTION_DOWN || action == KeyEvent.ACTION_UP) {
+@@ -106,13 +111,24 @@ public class Keyboard {
+             if (xKeycode == null) return false;
+ 
+             if (action == KeyEvent.ACTION_DOWN) {
++                /* SAI Pen: a shortcut whose Ctrl is only in the meta state (the
++                 * S Pen's Air actions may send one) gets Ctrl in X too */
++                if (com.winlator.saipen.AirActionKeys.addCtrl(keyCode, event.getMetaState(), modifiersMask.isSet(getModifierFlag(XKeycode.KEY_CTRL_L.id)))) {
++                    xServer.injectKeyPress(XKeycode.KEY_CTRL_L);
++                    ctrlAddedFor = keyCode;
++                }
+                 boolean shiftPressed = event.isShiftPressed() || keyCode == KeyEvent.KEYCODE_AT || keyCode == KeyEvent.KEYCODE_STAR || keyCode == KeyEvent.KEYCODE_POUND || keyCode == KeyEvent.KEYCODE_PLUS;
+                 if (shiftPressed) xServer.injectKeyPress(XKeycode.KEY_SHIFT_L);
+-                xServer.injectKeyPress(xKeycode, xKeycode != XKeycode.KEY_ENTER ? event.getUnicodeChar() : 0);
++                /* SAI Pen: no control character as a keysym, Tab was lost (KeyboardKeys.typedChar) */
++                xServer.injectKeyPress(xKeycode, com.winlator.saipen.KeyboardKeys.typedChar(event.getUnicodeChar()));
+             }
+             else if (action == KeyEvent.ACTION_UP) {
+                 xServer.injectKeyRelease(XKeycode.KEY_SHIFT_L);
+                 xServer.injectKeyRelease(xKeycode);
++                if (ctrlAddedFor == keyCode) {
++                    xServer.injectKeyRelease(XKeycode.KEY_CTRL_L);
++                    ctrlAddedFor = -1;
++                }
+             }
+         }
+         else if (action == KeyEvent.ACTION_MULTIPLE) {
+diff --git a/app/src/main/java/com/winlator/xserver/extensions/MITSHMExtension.java b/app/src/main/java/com/winlator/xserver/extensions/MITSHMExtension.java
+index 45617d2..1534e35 100644
+--- a/app/src/main/java/com/winlator/xserver/extensions/MITSHMExtension.java
++++ b/app/src/main/java/com/winlator/xserver/extensions/MITSHMExtension.java
+@@ -107,7 +107,9 @@ public class MITSHMExtension extends Extension {
+         if (drawable.isUseSharedData()) {
+             synchronized (drawable.renderLock) {
+                 if (drawable.getData() != data) drawable.setData(data);
+-                drawable.forceUpdate();
++                /* SAI Pen: the segment is the picture itself; what the request puts is what changed */
++                drawable.dirty.add(srcX, srcY, srcWidth, srcHeight);
++                drawable.forceUpdate(dstX, dstY, srcWidth, srcHeight);
+             }
+         }
+         else drawable.drawImage(srcX, srcY, dstX, dstY, srcWidth, srcHeight, depth, data, totalWidth, totalHeight);
+diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
+index bd67ab5..e293f83 100644
+--- a/app/src/main/res/layout/container_detail_fragment.xml
++++ b/app/src/main/res/layout/container_detail_fragment.xml
+@@ -204,11 +204,6 @@
+                     android:layout_height="wrap_content"
+                     android:text="@string/wine_configuration" />
+ 
+-                <com.google.android.material.tabs.TabItem
+-                    android:layout_width="match_parent"
+-                    android:layout_height="wrap_content"
+-                    android:text="@string/win_components" />
+-
+                 <com.google.android.material.tabs.TabItem
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+diff --git a/app/src/main/res/layout/shortcut_settings_dialog.xml b/app/src/main/res/layout/shortcut_settings_dialog.xml
+index 94c140b..9d8da14 100644
+--- a/app/src/main/res/layout/shortcut_settings_dialog.xml
++++ b/app/src/main/res/layout/shortcut_settings_dialog.xml
+@@ -186,11 +186,6 @@
+             app:tabGravity="center"
+             app:tabMode="auto">
+ 
+-            <com.google.android.material.tabs.TabItem
+-                android:layout_width="match_parent"
+-                android:layout_height="wrap_content"
+-                android:text="@string/win_components" />
+-
+             <com.google.android.material.tabs.TabItem
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+diff --git a/app/src/main/res/menu/xserver_menu.xml b/app/src/main/res/menu/xserver_menu.xml
+index 81fd492..4ffa457 100644
+--- a/app/src/main/res/menu/xserver_menu.xml
++++ b/app/src/main/res/menu/xserver_menu.xml
+@@ -2,6 +2,7 @@
+ <menu
+   xmlns:android="http://schemas.android.com/apk/res/android">
+     <group android:checkableBehavior="none">
++        <item android:icon="@mipmap/ic_saipen" android:id="@+id/menu_item_saipen" android:title="@string/saipen_menu" />
+         <item android:icon="@drawable/icon_keyboard" android:id="@+id/menu_item_keyboard" android:title="@string/keyboard" />
+         <item android:icon="@drawable/icon_input_controls" android:id="@+id/menu_item_input_controls" android:title="@string/input_controls" />
+         <item android:icon="@drawable/icon_fullscreen" android:id="@+id/menu_item_toggle_fullscreen" android:title="@string/toggle_fullscreen" />
+diff --git a/app/src/main/res/values-pt/strings.xml b/app/src/main/res/values-pt/strings.xml
+index e2d342c..0d6ddf5 100644
+--- a/app/src/main/res/values-pt/strings.xml
++++ b/app/src/main/res/values-pt/strings.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string name="app_name">Winlator</string>
++    <string name="app_name">SAI Pen</string>
+     <string name="run">Executar</string>
+     <string name="edit">Editar</string>
+     <string name="remove">Remover</string>
+diff --git a/app/src/main/res/values-ru/strings.xml b/app/src/main/res/values-ru/strings.xml
+index 3475814..4d9e953 100644
+--- a/app/src/main/res/values-ru/strings.xml
++++ b/app/src/main/res/values-ru/strings.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string name="app_name">Winlator</string>
++    <string name="app_name">SAI Pen</string>
+     <string name="run">Запустить</string>
+     <string name="edit">Редактировать</string>
+     <string name="remove">Удалить</string>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 7470b18..dd4f0f9 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string name="app_name">Winlator</string>
++    <string name="app_name">SAI Pen</string>
+     <string name="run">Run</string>
+     <string name="edit">Edit</string>
+     <string name="remove">Remove</string>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- a card on SAI Pen's screen: AppThemeDark's colorSecondarySurface -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#2d3238" />
+    <corners android:radius="14dp" />
+</shape>
