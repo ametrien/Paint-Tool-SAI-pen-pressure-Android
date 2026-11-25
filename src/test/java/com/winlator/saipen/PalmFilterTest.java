@@ -97,4 +97,17 @@ public class PalmFilterTest {
         assertEquals(50f, PalmFilter.distanceMm(-300, -400, 254), 0.01f);
         assertEquals(0f, PalmFilter.distanceMm(300, 400, 0), 0f);
     }
+
+    @Test
+    public void bothFingersOfATwoFingerTapAreBrief() {
+        /* 200 ms, 10 px: TouchpadView's own tap */
+        assertTrue(PalmFilter.isTapPartner(120, 3, 200, 10));
+        /* landed a moment before the lifting finger */
+        assertTrue(PalmFilter.isTapPartner(200 + PalmFilter.TAP_PARTNER_SLACK_MS - 1, 3, 200, 10));
+        assertFalse(PalmFilter.isTapPartner(200 + PalmFilter.TAP_PARTNER_SLACK_MS, 3, 200, 10));
+        /* a palm resting for seconds, the side of the hand brushing next to it */
+        assertFalse(PalmFilter.isTapPartner(2500, 0, 200, 10));
+        /* a finger that slid is no tap */
+        assertFalse(PalmFilter.isTapPartner(120, 12, 200, 10));
+    }
 }

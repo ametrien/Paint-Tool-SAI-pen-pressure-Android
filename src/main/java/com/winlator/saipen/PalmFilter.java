@@ -30,6 +30,10 @@ package com.winlator.saipen;
  *    it moved the cursor under the palm while the hovering pen moved it to
  *    the pen. Two fingers are a pinch, scroll or turn under way and stay.
  *
+ * A two-finger tap (a right click: in SAI it picks the colour under it)
+ * needs both fingers brief, not only the one lifting (isTapPartner): a palm
+ * resting on the glass and the side of the hand brushing it made one.
+ *
  * 3. BIG CONTACT (PREF_PALM_BIG): a contact wider than BIG_CONTACT_MM (the
  *    touch's major axis, as Android reports it) is a palm, not a fingertip.
  *
@@ -94,6 +98,18 @@ public final class PalmFilter {
      *  (a palm moving the cursor), kept if two or more (a gesture). */
     public static boolean dropOnPenHover(int fingersDown) {
         return fingersDown == 1;
+    }
+
+    /** A two-finger tap's other finger may have landed this much before
+     *  the lifting one (beyond a tap's own time) and still be in the tap. */
+    public static final long TAP_PARTNER_SLACK_MS = 150;
+
+    /** The other finger of a two-finger tap: down no longer than a tap,
+     *  give or take TAP_PARTNER_SLACK_MS for landing a moment earlier, and
+     *  as still. A palm resting on the glass is not one: with the side of
+     *  the hand brushing the glass next to it, the two were a right click. */
+    public static boolean isTapPartner(long downForMs, float travelPx, long tapMs, float tapTravelPx) {
+        return downForMs >= 0 && downForMs < tapMs + TAP_PARTNER_SLACK_MS && travelPx < tapTravelPx;
     }
 
     /** The contact's width in mm: Android's touch major (px) at this dpi. */

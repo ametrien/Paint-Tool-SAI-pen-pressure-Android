@@ -111,6 +111,7 @@ public final class GestureActions {
                     : eraser ? Gestures.Input.PEN_ERASER : null;
                 if (in == null) return PenInput.BUTTON_LEFT;
                 Gestures.Action a = action(in);
+                Log.i(TAG, "pen touch with " + (sideButton ? "the side button" : "the eraser end") + ": " + a);
                 int touch = Gestures.penTouch(a);
                 if (a.type == Gestures.Type.KEY && a.keys.held) {
                     held = KeyPresses.keys(a.keys);
