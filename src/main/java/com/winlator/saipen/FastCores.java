@@ -50,11 +50,25 @@ public final class FastCores {
     public final long[] speed;
     /** The cores to prefer; empty: none (all alike, or unknown). */
     public final int[] fast;
+    /** True when speed[] is every core's cpu_capacity (the kernel's own
+     *  measure of strength), false when it is the top clock or unknown. */
+    public final boolean fromCapacity;
 
-    private FastCores(int[] cores, long[] speed, int[] fast) {
+    private FastCores(int[] cores, long[] speed, int[] fast, boolean fromCapacity) {
         this.cores = cores;
         this.speed = speed;
         this.fast = fast;
+        this.fromCapacity = fromCapacity;
+    }
+
+    /** cores[i]'s strength as a share of the strongest core, 0 to 100,
+     *  or -1 when only clock speeds are known: a share of the top clock
+     *  would only repeat the GHz and hide how slow the small cores are. */
+    public int strengthPercent(int i) {
+        if (!fromCapacity) return -1;
+        long top = 0;
+        for (long s : speed) top = Math.max(top, s);
+        return top <= 0 ? -1 : (int) Math.round(speed[i] * 100.0 / top);
     }
 
     public static FastCores find(File cpuDir) {
@@ -86,7 +100,7 @@ public final class FastCores {
          * apples with pears: then all must have come from the same file */
         if (known && !sameSource(cpuDir, cores)) known = false;
         int[] fast = !known ? new int[0] : capacity ? notSlow(cores, speed) : fastestKind(cores, speed);
-        return new FastCores(cores, speed, fast);
+        return new FastCores(cores, speed, fast, known && capacity);
     }
 
     /** With cpu_capacity: every core that is not slow; none if no core is. */

@@ -1030,7 +1030,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
     /** The device's cores as bars, like Ready to draw's: one per core, as
      *  tall as it is strong (FastCores' speed: cpu_capacity, or the clock),
      *  green for the fast ones and yellow for the slower ones, its top clock
-     *  under it. Null when the speeds are unknown. */
+     *  under it and, with cpu_capacity, its strength as a share of the
+     *  strongest core. Null when the speeds are unknown. */
     private View coresChart() {
         FastCores f = cpuCores();
         long top = 0;
@@ -1047,9 +1048,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
         TextView caption = new TextView(this);
         caption.setTextColor(textColor);
         caption.setTextSize(13);
+        /* "the fastest is 100%" only where the percentages are shown */
         caption.setText(f.hasFast()
-            ? getString(R.string.saipen_processors_cores, f.cores.length, f.fast.length, f.cores.length - f.fast.length)
-            : getString(R.string.saipen_processors_cores_alike, f.cores.length));
+            ? getString(f.fromCapacity ? R.string.saipen_processors_cores_pct : R.string.saipen_processors_cores,
+                        f.cores.length, f.fast.length, f.cores.length - f.fast.length)
+            : getString(f.fromCapacity ? R.string.saipen_processors_cores_alike_pct : R.string.saipen_processors_cores_alike,
+                        f.cores.length));
         box.addView(caption);
 
         LinearLayout row = new LinearLayout(this);
@@ -1084,6 +1088,17 @@ public class SaiLauncherActivity extends AppCompatActivity {
             long khz = maxKhz(f.cores[i]);
             label.setText(khz > 0 ? getString(R.string.saipen_processors_ghz, khz / 1e6) : "cpu" + f.cores[i]);
             col.addView(label);
+
+            /* its strength under the clock: the bar's own number */
+            int pct = f.strengthPercent(i);
+            if (pct >= 0) {
+                TextView strength = new TextView(this);
+                strength.setTextColor(textColor);
+                strength.setTextSize(11);
+                strength.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+                strength.setText(getString(R.string.saipen_processors_percent, pct));
+                col.addView(strength);
+            }
             row.addView(col);
         }
         box.addView(row);

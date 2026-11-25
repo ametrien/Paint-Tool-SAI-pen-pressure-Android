@@ -44,6 +44,25 @@ public class FastCoresTest {
     }
 
     @Test
+    public void strengthIsAShareOfTheStrongestCore() throws Exception {
+        FastCores c = FastCores.find(withCapacity(467, 467, 467, 467, 467, 467, 1024, 1024));
+        assertTrue(c.fromCapacity);
+        assertEquals(46, c.strengthPercent(0));
+        assertEquals(100, c.strengthPercent(7));
+    }
+
+    @Test
+    public void noStrengthFromClockSpeedsAlone() throws Exception {
+        /* 1.8 against 2.3 GHz would say 78 %, while the kernel says 46 */
+        File cpu = tmp.newFolder();
+        write(new File(cpu, "cpu0/cpufreq/cpuinfo_max_freq"), "1804800");
+        write(new File(cpu, "cpu1/cpufreq/cpuinfo_max_freq"), "2304000");
+        FastCores c = FastCores.find(cpu);
+        assertFalse(c.fromCapacity);
+        assertEquals(-1, c.strengthPercent(0));
+    }
+
+    @Test
     public void allCoresAlikeMeansNoFastCores() throws Exception {
         /* THE TRAP: "the fastest group" would be every core, and pinning to
          * it changes nothing at best; there is nothing to prefer */

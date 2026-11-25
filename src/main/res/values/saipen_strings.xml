@@ -105,7 +105,10 @@
     <string name="saipen_processors_what">SAI splits each stroke into one piece per processor it sees. When it sees only the fast cores, every piece can run on a fast one. A change takes effect the next time SAI starts.</string>
     <string name="saipen_processors_cores">This device\'s %1$d cores by strength: %2$d fast (green), %3$d slower (yellow).</string>
     <string name="saipen_processors_cores_alike">This device\'s %1$d cores by strength: none is much slower.</string>
+    <string name="saipen_processors_cores_pct">This device\'s %1$d cores by strength (the fastest is 100%%): %2$d fast (green), %3$d slower (yellow).</string>
+    <string name="saipen_processors_cores_alike_pct">This device\'s %1$d cores by strength (the fastest is 100%%): none is much slower.</string>
     <string name="saipen_processors_ghz">%1$.1f GHz</string>
+    <string name="saipen_processors_percent">%1$d%%</string>
     <string name="saipen_processors_info_title">Processors SAI sees</string>
     <string name="saipen_processors_info_device">This device has %1$d fast cores and %2$d slower ones.</string>
     <string name="saipen_processors_info_device_none">SAI Pen finds no slower cores on this device, so SAI can see all of them.</string>
