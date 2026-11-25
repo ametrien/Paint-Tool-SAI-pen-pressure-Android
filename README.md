@@ -64,7 +64,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.4.37</summary>
+> <summary>What's new, 0.4.19 to 0.4.38</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -106,6 +106,10 @@ On a Mac? The same, also by me:
 > - **0.4.37:** [choose which brushes and textures SAI lists](#choose-which-ones-sai-lists), so a
 >   big collection doesn't make its lists thousands long; brush samples follow pen pressure (a
 >   line, an S-curve or a heart), and *Try it* draws with a tool right on its page.
+> - **0.4.38:** better [palm rejection](#palm-rejection): no stray lines from the palm to the pen,
+>   and a palm resting on the glass no longer picks colours or leaves dots; a two-finger tap no
+>   longer leaves a dot; steadier two-finger zoom, scroll and turn. *Processors SAI sees* shows
+>   each core's strength (the fastest is 100%).
 >
 > </details>
 
