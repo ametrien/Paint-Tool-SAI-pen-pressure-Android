@@ -1940,6 +1940,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
         int processors = saiProcessors();
         env = EnvVarsEdit.set(env, SaiProcessors.ENV, SaiProcessors.envValue(processors));
         Log.i(TAG, "processors SAI sees: " + (processors == SaiProcessors.ALL ? "all" : processors));
+        /* speed tests only: `adb shell setprop debug.saipen.env "NAME=value ..."` (DebugEnv) */
+        String[] debug = DebugEnv.apply(env, PenInput.systemProperty(DebugEnv.PROP),
+                                        prefs.getString(DebugEnv.PREF_KEYS, ""));
+        env = debug[0];
+        prefs.edit().putString(DebugEnv.PREF_KEYS, debug[1]).apply();
+        if (!debug[1].isEmpty()) Log.i(TAG, "speed test env: " + PenInput.systemProperty(DebugEnv.PROP).trim());
         container.setEnvVars(env);
         container.saveData();
 

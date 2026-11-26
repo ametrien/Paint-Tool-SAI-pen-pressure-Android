@@ -177,7 +177,7 @@ public final class SpeedSession {
     /** The speed-test properties set for this session (adb shell setprop), so a log says what it measured. */
     private static String speedTests() {
         StringBuilder b = new StringBuilder("speed tests:");
-        for (String p : new String[]{PenInput.PROP_CURSOR_MS, PenWire.PROP_KEEPALIVE_MS, AppCores.PROP}) {
+        for (String p : new String[]{PenInput.PROP_CURSOR_MS, PenWire.PROP_KEEPALIVE_MS, AppCores.PROP, DebugEnv.PROP}) {
             String v = PenInput.systemProperty(p).trim();
             if (!v.isEmpty()) b.append(' ').append(p).append('=').append(v);
         }
