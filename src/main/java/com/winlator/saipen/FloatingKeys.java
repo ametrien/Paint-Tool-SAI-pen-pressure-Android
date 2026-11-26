@@ -78,6 +78,8 @@ public final class FloatingKeys {
     /** Exit SAI as a red button of its own, apart from the dot. */
     public static final String PREF_EXIT_OWN = "saipen_keys_exit_own";
     public static final boolean EXIT_OWN_BY_DEFAULT = false;
+    /** Its size: an ExitButtonSize index. */
+    public static final String PREF_EXIT_SIZE = "saipen_keys_exit_size";
 
     private static final String PREF_X = "saipen_keys_x", PREF_Y = "saipen_keys_y";
     private static final String PREF_EXIT_X = "saipen_keys_exit_x", PREF_EXIT_Y = "saipen_keys_exit_y";
@@ -280,7 +282,8 @@ public final class FloatingKeys {
             panel.post(keepInside);
         };
         /* the red Exit SAI of its own, if switched on */
-        final TextView exitOwn = ownExit ? exitButton(activity, dp, exitLabel, paintText) : null;
+        final float exitScale = ExitButtonSize.scale(prefs.getInt(PREF_EXIT_SIZE, ExitButtonSize.BY_DEFAULT));
+        final TextView exitOwn = ownExit ? exitButton(activity, dp, exitScale, exitLabel, paintText) : null;
         final Runnable keepExitInside = () -> {
             if (exitOwn != null) keepInside(root, exitOwn);
         };
@@ -415,7 +418,7 @@ public final class FloatingKeys {
             /* its own two taps, its own place; a drag moves it, a long press does nothing */
             final ExitTaps ownTaps = new ExitTaps();
             Runnable tap = exitTap(ui, ownTaps, exitOwn, exitLabel, exitAsk,
-                rounded(EXIT_RED, 14 * dp), rounded(EXIT_RED_ASKING, 14 * dp), closeSai);
+                rounded(EXIT_RED, 14 * dp * exitScale), rounded(EXIT_RED_ASKING, 14 * dp * exitScale), closeSai);
             exitOwn.setOnTouchListener(dragger(activity, root, exitOwn, prefs, PREF_EXIT_X, PREF_EXIT_Y,
                 keepExitInside, tap, null));
             root.addView(exitOwn, new FrameLayout.LayoutParams(
@@ -456,18 +459,18 @@ public final class FloatingKeys {
     }
 
     /** The red Exit SAI of its own: bigger than a key, so easy to hit; the
-     *  same width asking or not. */
-    private static TextView exitButton(Activity activity, float dp, String label, TextPaint paintText) {
+     *  same width asking or not. `scale`: ExitButtonSize, 1 for medium. */
+    private static TextView exitButton(Activity activity, float dp, float scale, String label, TextPaint paintText) {
         TextView t = new TextView(activity);
         t.setText(label);
         t.setTextColor(Color.WHITE);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16 * scale);
         t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         t.setGravity(Gravity.CENTER);
         t.setSingleLine(true);
-        t.setWidth((int) Math.max(80 * dp, paintText.measureText(label) * 16 / TEXT_SP + 28 * dp));
-        t.setHeight((int) (56 * dp));
-        t.setBackground(rounded(EXIT_RED, 14 * dp));
+        t.setWidth((int) (scale * Math.max(80 * dp, paintText.measureText(label) * 16 / TEXT_SP + 28 * dp)));
+        t.setHeight((int) (56 * dp * scale));
+        t.setBackground(rounded(EXIT_RED, 14 * dp * scale));
         t.setElevation(4 * dp);
         return t;
     }

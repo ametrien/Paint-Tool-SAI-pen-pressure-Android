@@ -69,8 +69,38 @@ public final class FloatingKeysSettings {
         /* Exit SAI: a button of its own kind, so a link of its own */
         final TextView addExit = link(a, dp, R.string.saipen_keys_add_exit);
         body.addView(addExit);
-        body.addView(toggle(a, textColor, R.string.saipen_keys_exit_own, prefs,
-            FloatingKeys.PREF_EXIT_OWN, FloatingKeys.EXIT_OWN_BY_DEFAULT, changed));
+        Switch exitOwn = toggle(a, textColor, R.string.saipen_keys_exit_own, prefs,
+            FloatingKeys.PREF_EXIT_OWN, FloatingKeys.EXIT_OWN_BY_DEFAULT, changed);
+        body.addView(exitOwn);
+        /* its size, shown while it is on */
+        final RadioGroup exitSize = new RadioGroup(a);
+        exitSize.setOrientation(RadioGroup.HORIZONTAL);
+        int[] sizeText = {R.string.saipen_keys_exit_small, R.string.saipen_keys_exit_medium,
+            R.string.saipen_keys_exit_large};
+        int chosenSize = ExitButtonSize.of(prefs.getInt(FloatingKeys.PREF_EXIT_SIZE, ExitButtonSize.BY_DEFAULT));
+        for (int i = 0; i < sizeText.length; i++) {
+            final int size = i;
+            RadioButton r = new RadioButton(a);
+            r.setText(sizeText[i]);
+            r.setTextColor(textColor);
+            r.setId(View.generateViewId());
+            r.setMinHeight((int) (40 * dp));
+            r.setPadding(r.getPaddingLeft(), 0, (int) (16 * dp), 0);
+            exitSize.addView(r);
+            if (i == chosenSize) exitSize.check(r.getId());
+            r.setOnCheckedChangeListener((b, on) -> {
+                if (!on) return;
+                prefs.edit().putInt(FloatingKeys.PREF_EXIT_SIZE, size).apply();
+                changed.run();
+            });
+        }
+        body.addView(exitSize);
+        exitSize.setVisibility(exitOwn.isChecked() ? View.VISIBLE : View.GONE);
+        exitOwn.setOnCheckedChangeListener((CompoundButton b, boolean on) -> {
+            prefs.edit().putBoolean(FloatingKeys.PREF_EXIT_OWN, on).apply();
+            exitSize.setVisibility(on ? View.VISIBLE : View.GONE);
+            changed.run();
+        });
 
         final Runnable[] fill = new Runnable[1];
         fill[0] = () -> {
