@@ -551,6 +551,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
+
+                <!-- room for frames: Auto or 2 to 20 GB (TimelapseBudget) -->
+                <TextView
+                    android:id="@+id/SaiPenTlSpaceLabel"
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="10dp" />
+
+                <SeekBar
+                    android:id="@+id/SaiPenTlSpace"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp" />
+
+                <TextView
+                    android:id="@+id/SaiPenTlSpaceWarn"
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="0dp"
+                    android:textColor="#FFB74D"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <Button

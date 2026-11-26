@@ -246,14 +246,18 @@ public final class TimelapsePack {
     /* ---- the space they take ---- */
 
     /**
-     * Past `budget` bytes, thins the session with the most frames: every
-     * second frame in frame order (never its first or its last), again until
-     * under budget or nothing more can go. Spread like this, a long drawing
-     * keeps its whole span, only coarser, and one session never empties
-     * another. Returns the frames deleted.
+     * Past `budget` bytes, thins the session with the most frames down to
+     * half, keeping frames evenly spread over its TIME (evenKeep), never its
+     * first or its last, again until under budget or nothing more can go. A
+     * long drawing keeps its whole span, only coarser, and one session never
+     * empties another. Returns the frames deleted.
      *
-     * Packed, a budget of 1 GB holds thousands of frames: this is a safety
-     * net, not something a drawing session should meet.
+     * "Every second frame" was the rule before: each pass thinned the old
+     * frames again while the new ones stayed whole, so after a few passes the
+     * video was nearly all the last minutes (furisode, 2026-11-26).
+     *
+     * The room is the artist's choice, 2 GB at least: this is a safety net,
+     * not something a drawing session should meet.
      */
     public static int enforceBudget(File packedRoot, long budget) {
         int deleted = 0;
@@ -266,7 +270,11 @@ public final class TimelapsePack {
             }
             if (biggest == null || biggest.size() < 3) break;
             int before = deleted;
-            for (int i = 1; i < biggest.size() - 1; i += 2) {
+            long[] times = new long[biggest.size()];
+            for (int i = 0; i < times.length; i++) times[i] = biggest.get(i).header.tickMs;
+            boolean[] keep = evenKeep(times, (times.length + 1) / 2);
+            for (int i = 0; i < biggest.size(); i++) {
+                if (keep[i]) continue;
                 File f = biggest.get(i).file;
                 long len = f.length();
                 if (f.delete()) {
@@ -277,6 +285,35 @@ public final class TimelapsePack {
             if (deleted == before) break;
         }
         return deleted;
+    }
+
+    /**
+     * Which of the frames taken at `times` (in order) to keep so that `keep`
+     * of them stay, evenly spread over the time from the first to the last:
+     * for each evenly spaced moment, the nearest frame not yet kept. The first
+     * and the last always stay.
+     */
+    static boolean[] evenKeep(long[] times, int keep) {
+        int n = times.length;
+        boolean[] out = new boolean[n];
+        if (n == 0) return out;
+        if (keep >= n) {
+            java.util.Arrays.fill(out, true);
+            return out;
+        }
+        keep = Math.max(2, keep);
+        out[0] = out[n - 1] = true;
+        long t0 = times[0], t1 = times[n - 1];
+        int j = 1;
+        for (int k = 1; k < keep - 1; k++) {
+            double target = t0 + (t1 - t0) * (double) k / (keep - 1);
+            while (j < n - 2 && Math.abs(times[j + 1] - target) <= Math.abs(times[j] - target)) j++;
+            int pick = j;
+            while (pick < n - 1 && out[pick]) pick++;
+            if (pick < n - 1) out[pick] = true;
+            j = Math.max(j, pick);
+        }
+        return out;
     }
 
     /* ---- reading ---- */

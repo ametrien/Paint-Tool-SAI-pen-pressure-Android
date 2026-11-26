@@ -21,8 +21,11 @@ import java.util.concurrent.TimeUnit;
 public final class TimelapseRecorder {
     private static final String TAG = "SaiPen";
     private static final long POLL_MS = 1000;
-    /** Packed frames on the device before the oldest drawings get coarser. */
-    public static final long BUDGET_BYTES = 1024L << 20;
+    /** Packed frames on the device before the longest session gets
+     *  coarser: the artist's "Room for frames" (TimelapseBudget), set by
+     *  SaiLauncherActivity before SAI starts; 2 GB until then. It was a fixed
+     *  1 GB, which a 30-minute drawing went past (furisode, 2026-11-26). */
+    public static volatile long budgetBytes = TimelapseBudget.MIN_MB << 20;
 
     private final File frames, sessionDir, packedRoot;
     private final ScheduledExecutorService thread;
@@ -77,8 +80,9 @@ public final class TimelapseRecorder {
             total.frames += r.frames;
             total.rawBytes += r.rawBytes;
             total.packedBytes += r.packedBytes;
-            int thinned = TimelapsePack.enforceBudget(packedRoot, BUDGET_BYTES);
-            if (thinned > 0) Log.w(TAG, "timelapse: over " + (BUDGET_BYTES >> 20) + " MB packed, " + thinned + " frame(s) thinned");
+            long budget = budgetBytes;
+            int thinned = TimelapsePack.enforceBudget(packedRoot, budget);
+            if (thinned > 0) Log.w(TAG, "timelapse: over " + (budget >> 20) + " MB packed, " + thinned + " frame(s) thinned");
         }
         catch (Throwable t) {
             /* the frames stay in the DLL's folder: packLeftovers takes them later */
