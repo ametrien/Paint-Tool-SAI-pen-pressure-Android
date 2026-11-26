@@ -302,6 +302,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         super.onResume();
         SaiPenSetup.scanDrawings(this);
         showVideoButton();
+        autoMakeVideo();
         showStats();
         showReadiness();
         showRecent();
@@ -617,7 +618,29 @@ public class SaiLauncherActivity extends AppCompatActivity {
             .show();
     }
 
+    /** Back from SAI with frames recorded: the video is made by itself, no
+     *  button needed (the Mac makes it as frames come; here it is made once
+     *  SAI has closed, from frames already packed while drawing). Not while
+     *  SAI still runs: SAI Pen's screen can be opened over a running SAI. */
+    private void autoMakeVideo() {
+        if (container == null || makingVideo) return;
+        File root = container.getRootDir();
+        worker.execute(() -> {
+            if (SaiProcessWatch.isRunning(new File("/proc"), SaiLocator.EXE)) return;
+            if (TimelapseVideo.countAll(root) == 0) return;
+            runOnUiThread(() -> {
+                if (!isFinishing() && !makingVideo) makeVideo(true);
+            });
+        });
+    }
+
     private void makeVideo() {
+        makeVideo(false);
+    }
+
+    /** `auto`: made by itself (autoMakeVideo): a short note at the end
+     *  instead of a dialog to close; a same-drawing question still asks. */
+    private void makeVideo(boolean auto) {
         if (container == null || makingVideo) return;
         makingVideo = true;
         btnVideo.setEnabled(false);
@@ -659,7 +682,13 @@ public class SaiLauncherActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 makingVideo = false;
                 showVideoButton();
+                showRecent();
                 if (isFinishing()) return;
+                if (auto) {
+                    if (!text.isEmpty()) Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+                    if (q != null) askContinues(lib, q, null);
+                    return;
+                }
                 new AlertDialog.Builder(this, DIALOG_THEME).setMessage(text)
                     .setPositiveButton(android.R.string.ok, null)
                     .setNeutralButton(R.string.saipen_my_timelapses, (d, w) -> openTimelapses())
@@ -857,6 +886,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private void onContainer(Container c) {
         container = c;
         showVideoButton();
+        autoMakeVideo();
         prefs.edit().putInt(PREF_CONTAINER_ID, c.id).apply();
         locate();
     }
