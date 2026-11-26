@@ -23,17 +23,23 @@ public class TimelapseBudgetTest {
     }
 
     @Test
-    public void aChosenSizeIsUsedAsItIs() {
-        assertEquals(10 * 1024, TimelapseBudget.megabytes(15 * GB, 10));
-        assertEquals(20 * 1024, TimelapseBudget.megabytes(15 * GB, 99));   // capped at 20
+    public void aChosenSizeIsCutToAQuarterOfTheFreeSpace() {
+        assertEquals(3 * 1024, TimelapseBudget.megabytes(15 * GB, 10));     // 15 GB free: 3 GB at most
+        assertEquals(2 * 1024, TimelapseBudget.megabytes(15 * GB, 2));
+        assertEquals(20 * 1024, TimelapseBudget.megabytes(200 * GB, 99));  // never past 20
         assertEquals(TimelapseBudget.AUTO, TimelapseBudget.choice(1));
     }
 
     @Test
-    public void tooLittleSpaceWhenTheRoomIsMoreThanIsFree() {
-        assertFalse(TimelapseBudget.tooLittleSpace(15 * GB, TimelapseBudget.AUTO));
-        assertFalse(TimelapseBudget.tooLittleSpace(15 * GB, 10));
-        assertTrue(TimelapseBudget.tooLittleSpace(15 * GB, 20));
-        assertTrue(TimelapseBudget.tooLittleSpace(GB, TimelapseBudget.AUTO));      // under 2 GB free
+    public void theSlidersRightEnd() {
+        assertEquals(3, TimelapseBudget.maxGb(15 * GB));
+        assertEquals(2, TimelapseBudget.maxGb(GB));
+        assertEquals(20, TimelapseBudget.maxGb(500 * GB));
+    }
+
+    @Test
+    public void aNoteOnlyWhenFreeSpaceIsReallyLow() {
+        assertFalse(TimelapseBudget.tooLittleSpace(15 * GB));
+        assertTrue(TimelapseBudget.tooLittleSpace(7 * GB));
     }
 }

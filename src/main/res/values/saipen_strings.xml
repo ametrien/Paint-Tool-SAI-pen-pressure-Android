@@ -76,7 +76,7 @@
     <string name="saipen_frame_every_stroke">after every stroke</string>
     <string name="saipen_tl_space_auto">Room for frames while drawing: Auto, %1$s now (a quarter of the %2$s free)</string>
     <string name="saipen_tl_space_fixed">Room for frames while drawing: %1$s (%2$s free)</string>
-    <string name="saipen_tl_space_low">Too little free space: a long drawing will lose timelapse frames, or the device will fill up. Free some space or choose less.</string>
+    <string name="saipen_tl_space_low">Only %1$s free: a very long drawing may lose timelapse frames. Freeing some space helps.</string>
     <string name="saipen_frame_short_pause">after a short pause</string>
     <string name="saipen_frame_long_pause">after a long pause</string>
     <string name="saipen_palm">Palm rejection: each check works on its own</string>

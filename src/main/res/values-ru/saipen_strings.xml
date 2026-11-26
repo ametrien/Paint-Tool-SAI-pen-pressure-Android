@@ -79,7 +79,7 @@
     <string name="saipen_frame_every_stroke">после каждого штриха</string>
     <string name="saipen_tl_space_auto">Место для кадров во время рисования: Авто, сейчас %1$s (четверть от %2$s свободных)</string>
     <string name="saipen_tl_space_fixed">Место для кадров во время рисования: %1$s (свободно %2$s)</string>
-    <string name="saipen_tl_space_low">Мало свободного места: длинный рисунок потеряет кадры таймлапса, или память заполнится. Освободите место или выберите меньше.</string>
+    <string name="saipen_tl_space_low">Свободно всего %1$s: очень длинный рисунок может потерять кадры таймлапса. Поможет освободить место.</string>
     <string name="saipen_frame_short_pause">после короткой паузы</string>
     <string name="saipen_frame_long_pause">после долгой паузы</string>
     <string name="saipen_palm">Защита от ладони: каждая проверка включается отдельно</string>

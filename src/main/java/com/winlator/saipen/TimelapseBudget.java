@@ -3,8 +3,10 @@ package com.winlator.saipen;
 /**
  * How much room the DLL's timelapse frames get on the device before it
  * starts thinning them (WT_TIMELAPSE_BUDGET_MB). The artist picks it with a
- * slider under the timelapse switch: Auto, or 2 to 20 GB. Auto is a quarter
- * of the free space, at least 2 GB, at most 20 GB. A fixed 512 MB was about
+ * slider under the timelapse switch: Auto, or 2 GB up to a quarter of the
+ * free space (never more than 20 GB). Auto is a quarter of the free space, at
+ * least 2 GB. A choice bigger than today's quarter is cut to it, so the
+ * frames can never fill the device (owner, 2026-11-26). A fixed 512 MB was about
  * 220 frames of a 568x1024 canvas, and a 30-minute drawing lost most of its
  * frames (owner, 2026-11-26).
  *
@@ -30,15 +32,24 @@ public final class TimelapseBudget {
         return saved < MIN_GB ? AUTO : Math.min(MAX_GB, saved);
     }
 
-    /** The room for the artist's choice. */
-    public static long megabytes(long freeBytes, int savedGb) {
-        int gb = choice(savedGb);
-        return gb == AUTO ? megabytes(freeBytes) : gb * 1024L;
+    /** The slider's right end: a quarter of the free space in whole GB,
+     *  MIN_GB to MAX_GB. */
+    public static int maxGb(long freeBytes) {
+        long quarterGb = Math.max(0, freeBytes) / 4 / (1024 * MB);
+        return (int) Math.max(MIN_GB, Math.min(MAX_GB, quarterGb));
     }
 
-    /** Too little free space for that room: frames will be thinned, or the
-     *  device fills up. */
-    public static boolean tooLittleSpace(long freeBytes, int savedGb) {
-        return Math.max(0, freeBytes) / MB < megabytes(freeBytes, savedGb);
+    /** The room for the artist's choice, cut to today's quarter. */
+    public static long megabytes(long freeBytes, int savedGb) {
+        int gb = choice(savedGb);
+        return gb == AUTO ? megabytes(freeBytes) : Math.min(gb, maxGb(freeBytes)) * 1024L;
+    }
+
+    /** Below this much free space even the smallest room is a big share of
+     *  it: the yellow note says so. */
+    public static final long LOW_FREE_MB = 4 * MIN_MB;
+
+    public static boolean tooLittleSpace(long freeBytes) {
+        return Math.max(0, freeBytes) / MB < LOW_FREE_MB;
     }
 }

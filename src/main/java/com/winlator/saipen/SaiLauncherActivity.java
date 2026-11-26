@@ -1004,10 +1004,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
         android.widget.SeekBar bar = findViewById(R.id.SaiPenTlSpace);
         TextView label = findViewById(R.id.SaiPenTlSpaceLabel);
         TextView warn = findViewById(R.id.SaiPenTlSpaceWarn);
-        /* step 0 is Auto, step n is n + 1 GB: 1..19 = 2..20 GB */
-        bar.setMax(TimelapseBudget.MAX_GB - TimelapseBudget.MIN_GB + 1);
+        /* step 0 is Auto, step n is n + 1 GB: 2 GB up to a quarter of the
+           free space, so the right end is all that safely fits */
+        int maxGb = TimelapseBudget.maxGb(getFilesDir().getUsableSpace());
+        bar.setMax(maxGb - TimelapseBudget.MIN_GB + 1);
         int saved = TimelapseBudget.choice(prefs.getInt(TimelapseBudget.PREF_GB, TimelapseBudget.AUTO));
-        bar.setProgress(saved == TimelapseBudget.AUTO ? 0 : saved - TimelapseBudget.MIN_GB + 1);
+        bar.setProgress(saved == TimelapseBudget.AUTO ? 0 : Math.min(saved, maxGb) - TimelapseBudget.MIN_GB + 1);
         java.util.function.IntConsumer show = step -> {
             int gb = step == 0 ? TimelapseBudget.AUTO : step + TimelapseBudget.MIN_GB - 1;
             long free = getFilesDir().getUsableSpace();
@@ -1017,8 +1019,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
             label.setText(gb == TimelapseBudget.AUTO
                 ? getString(R.string.saipen_tl_space_auto, size, freeText)
                 : getString(R.string.saipen_tl_space_fixed, size, freeText));
-            boolean low = TimelapseBudget.tooLittleSpace(free, gb);
-            warn.setText(R.string.saipen_tl_space_low);
+            boolean low = TimelapseBudget.tooLittleSpace(free);
+            warn.setText(getString(R.string.saipen_tl_space_low, freeText));
             warn.setVisibility(low ? View.VISIBLE : View.GONE);
         };
         show.accept(bar.getProgress());
