@@ -13,9 +13,9 @@ public class TimelapseBudgetTest {
     }
 
     @Test
-    public void neverBelowOneGigabyteNorAboveEight() {
-        assertEquals(1024, TimelapseBudget.megabytes(GB));
-        assertEquals(1024, TimelapseBudget.megabytes(-1));
-        assertEquals(8192, TimelapseBudget.megabytes(200 * GB));
+    public void neverBelowTwoGigabytesNorAboveTwenty() {
+        assertEquals(2048, TimelapseBudget.megabytes(GB));
+        assertEquals(2048, TimelapseBudget.megabytes(-1));
+        assertEquals(20480, TimelapseBudget.megabytes(200 * GB));
     }
 }
