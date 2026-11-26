@@ -51,7 +51,8 @@ public final class TimelapseVideo {
 
     /** Frames waiting for a video: raw ones and packed ones. */
     public static int countAll(File containerRoot) {
-        return countFrames(framesDir(containerRoot)) + TimelapsePack.count(TimelapsePack.packedDir(containerRoot));
+        File packed = TimelapsePack.packedDir(containerRoot);
+        return countFrames(framesDir(containerRoot)) + TimelapsePack.count(packed) + TimelapseLive.pendingFrames(packed);
     }
 
     /**
@@ -64,6 +65,7 @@ public final class TimelapseVideo {
         int left = deleteFiles(framesDir(containerRoot));
         File packedRoot = TimelapsePack.packedDir(containerRoot);
         for (File s : TimelapsePack.sessions(packedRoot)) {
+            for (File live : TimelapseLive.dirs(s)) TimelapseLive.remove(live);
             left += deleteFiles(s);
             s.delete();
         }
@@ -117,19 +119,54 @@ public final class TimelapseVideo {
         packLeftovers(containerRoot);
         File packedRoot = TimelapsePack.packedDir(containerRoot);
         List<TimelapseFrames.Segment> segments = TimelapseFrames.segments(TimelapsePack.list(packedRoot));
+        /* frames a chunk made while SAI ran already holds go (TimelapseLive) */
+        java.util.Set<String> withFrames = new java.util.HashSet<>();
+        for (TimelapseFrames.Segment s : segments) {
+            File live = TimelapseLive.dirOf(packedRoot, s);
+            if (live.isDirectory()) {
+                List<TimelapseFrames.Frame> rest = TimelapseLive.dropEncoded(s.frames, live);
+                s.frames.clear();
+                s.frames.addAll(rest);
+            }
+            withFrames.add(live.getAbsolutePath());
+        }
+        /* chunks with no frame left after them: their last frame stands in */
+        java.util.Set<TimelapseFrames.Segment> chunksOnly = new java.util.HashSet<>();
+        for (File session : TimelapsePack.sessions(packedRoot)) {
+            for (File live : TimelapseLive.dirs(session)) {
+                if (withFrames.contains(live.getAbsolutePath()) || TimelapseLive.chunks(live).isEmpty()) continue;
+                TimelapseFrames.Frame last = TimelapseLive.frame(TimelapseLive.last(live), session.getName());
+                if (last == null) continue;
+                TimelapseFrames.Segment s = new TimelapseFrames.Segment(session.getName(), last.header.canvasId,
+                    TimelapseLive.name(live), TimelapseFrames.even(last.header.width), TimelapseFrames.even(last.header.height));
+                s.frames.add(last);
+                segments.add(s);
+                chunksOnly.add(s);
+            }
+        }
+        segments.removeIf(s -> s.frames.isEmpty());
         Made made = new Made();
         List<TimelapseFrames.Segment> todo = new ArrayList<>();
         for (TimelapseFrames.Segment s : segments) {
-            if (TimelapseFrames.nothingDrawn(s, TimelapsePack::readPixels)) {
+            File live = TimelapseLive.dirOf(packedRoot, s);
+            TimelapseFrames.Frame began = live.isDirectory() ? TimelapseLive.frame(TimelapseLive.first(live), s.session) : null;
+            TimelapseFrames.Segment ends = s;
+            if (began != null) {
+                ends = new TimelapseFrames.Segment(s.session, s.canvasId, s.name, s.width, s.height);
+                ends.frames.add(began);
+                ends.frames.add(s.frames.get(s.frames.size() - 1));
+            }
+            if (TimelapseFrames.nothingDrawn(ends, TimelapsePack::readPixels)) {
                 made.skipped.add(s.name);
-                for (TimelapseFrames.Frame f : s.frames) f.file.delete();
+                if (!chunksOnly.contains(s)) for (TimelapseFrames.Frame f : s.frames) f.file.delete();
+                if (live.isDirectory()) TimelapseLive.remove(live);
                 Log.i(TAG, "timelapse: " + s.name + " (" + s.session + "), " + s.frames.size()
                       + " frame(s), nothing drawn: no video");
             }
             else todo.add(s);
         }
         int total = 0, done = 0;
-        for (TimelapseFrames.Segment s : todo) total += s.frames.size();
+        for (TimelapseFrames.Segment s : todo) if (!chunksOnly.contains(s)) total += s.frames.size();
         File pieces = TimelapseShelf.piecesRoot();
         if (!todo.isEmpty() && !pieces.isDirectory() && !pieces.mkdirs()) throw new IOException("cannot create " + pieces);
 
@@ -138,14 +175,33 @@ public final class TimelapseVideo {
         Set<File> videos = new LinkedHashSet<>();
         for (TimelapseFrames.Segment s : todo) {
             File out = new File(pieces, "encoding.mp4");
+            File live = TimelapseLive.dirOf(packedRoot, s);
+            List<File> chunks = live.isDirectory() ? TimelapseLive.chunks(live) : new ArrayList<>();
+            boolean onlyChunks = chunksOnly.contains(s);
             final int before = done;
             final int all = total;
-            encode(s, out, n -> progress.onFrame(before + n, all));
-            done += s.frames.size();
+            if (chunks.isEmpty()) {
+                encode(s, out, n -> progress.onFrame(before + n, all));
+            }
+            else {
+                /* the chunks made while SAI ran, then what was left after them */
+                List<File> parts = new ArrayList<>(chunks);
+                File rest = new File(pieces, "encoding-rest.mp4");
+                if (!onlyChunks) {
+                    encode(s, rest, n -> progress.onFrame(before + n, all));
+                    parts.add(rest);
+                }
+                TimelapseShelf.join(parts, out);
+                rest.delete();
+            }
+            if (!onlyChunks) done += s.frames.size();
+            int frameCount = (onlyChunks ? 0 : s.frames.size()) + (live.isDirectory() ? TimelapseLive.encodedFrames(live) : 0);
 
             /* the fingerprints of where this session began and ended: how
              * the next session finds its drawing (DrawingLibrary) */
-            TimelapseFrames.Frame first = s.frames.get(0), last = s.frames.get(s.frames.size() - 1);
+            TimelapseFrames.Frame first = live.isDirectory() ? TimelapseLive.frame(TimelapseLive.first(live), s.session) : null;
+            if (first == null) first = s.frames.get(0);
+            TimelapseFrames.Frame last = s.frames.get(s.frames.size() - 1);
             byte[] a = new byte[first.header.stride * first.header.height];
             TimelapsePack.readPixels(first, a);
             DrawingLibrary.Signature opening = DrawingLibrary.Signature.of(a, first.header.width, first.header.height, first.header.stride);
@@ -153,17 +209,19 @@ public final class TimelapseVideo {
             TimelapsePack.readPixels(last, b);
             DrawingLibrary.Signature closing = DrawingLibrary.Signature.of(b, last.header.width, last.header.height, last.header.stride);
 
-            String title = titleOf(s.name, startOf(s), names);
-            DrawingLibrary.Drawing d = TimelapseShelf.add(lib, out, title, startOf(s), s.frames.size(), s.width, s.height,
+            String name = s.name.isEmpty() && live.isDirectory() ? TimelapseLive.name(live) : s.name;
+            String title = titleOf(name, startOf(s), names);
+            DrawingLibrary.Drawing d = TimelapseShelf.add(lib, out, title, startOf(s), frameCount, s.width, s.height,
                                                           opening, closing, b, last.header.stride);
             made.filed.add(d.pieces.get(d.pieces.size() - 1).file);
             for (int i = 0; i < 8; i++) {
                 File j = TimelapseShelf.joined(d, i);
                 if (j.isFile()) videos.add(j);
             }
-            for (TimelapseFrames.Frame f : s.frames) f.file.delete();
-            Log.i(TAG, "timelapse: " + s.name + ", " + s.frames.size() + " frames, into the drawing " + d.folder
-                  + " (" + d.pieces.size() + " session(s))");
+            if (!onlyChunks) for (TimelapseFrames.Frame f : s.frames) f.file.delete();
+            if (live.isDirectory()) TimelapseLive.remove(live);
+            Log.i(TAG, "timelapse: " + name + ", " + frameCount + " frames (" + chunks.size() + " made while drawing), into the drawing "
+                  + d.folder + " (" + d.pieces.size() + " session(s))");
         }
         made.videos.addAll(videos);
         TimelapsePack.removeEmptySessions(packedRoot);
@@ -192,6 +250,13 @@ public final class TimelapseVideo {
     private interface FrameDone {
         void done(int n);
     }
+
+    /** For TimelapseLive while SAI runs: one chunk of a canvas's frames. */
+    static final TimelapseLive.Encoder LIVE = (frames, width, height, out) -> {
+        TimelapseFrames.Segment s = new TimelapseFrames.Segment("", 0, "", width, height);
+        s.frames.addAll(frames);
+        encode(s, out, n -> { });
+    };
 
     private static void encode(TimelapseFrames.Segment s, File out, FrameDone onFrame) throws IOException {
         int w = s.width, h = s.height;

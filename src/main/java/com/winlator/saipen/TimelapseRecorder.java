@@ -80,6 +80,16 @@ public final class TimelapseRecorder {
             total.frames += r.frames;
             total.rawBytes += r.rawBytes;
             total.packedBytes += r.packedBytes;
+            /* the video as it goes, like the Mac's encoder: a canvas with
+               enough frames gets a chunk of video now, and they go */
+            try {
+                int encoded = TimelapseLive.encodeReady(sessionDir, TimelapseVideo.LIVE);
+                if (encoded > 0) Log.i(TAG, "timelapse: " + encoded + " frame(s) into video while drawing");
+            }
+            catch (Throwable t) {
+                /* the encoder busy or failing: the frames wait for the video after SAI */
+                Log.w(TAG, "timelapse: no video while drawing this time: " + t.getMessage());
+            }
             long budget = budgetBytes;
             int thinned = TimelapsePack.enforceBudget(packedRoot, budget);
             if (thinned > 0) Log.w(TAG, "timelapse: over " + (budget >> 20) + " MB packed, " + thinned + " frame(s) thinned");
