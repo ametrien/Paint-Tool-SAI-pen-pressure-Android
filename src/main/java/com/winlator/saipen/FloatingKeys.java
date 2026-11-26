@@ -88,7 +88,7 @@ public final class FloatingKeys {
     private static final float DEFAULT_EXIT_X = 1f, DEFAULT_EXIT_Y = 0.1f;
     /* SAI's own close button: #A00040 behind a white cross (from a tablet screenshot, 2026-11-26) */
     /* as see-through as the keys' panel: both follow KeysOpacity; the cross stays solid */
-    private static final int EXIT_RED = Color.rgb(0xA0, 0x00, 0x40);
+    static final int EXIT_RED = Color.rgb(0xA0, 0x00, 0x40);
     private static final int EXIT_RED_ASKING = Color.rgb(0xD8, 0x1B, 0x60);
     /* where the dot is the first time: the right edge, a third down */
     private static final float DEFAULT_X = 1f, DEFAULT_Y = 0.35f;

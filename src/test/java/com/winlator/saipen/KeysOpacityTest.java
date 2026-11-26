@@ -10,7 +10,9 @@ public class KeysOpacityTest {
         assertEquals(85, KeysOpacity.of(85));
         assertEquals(40, KeysOpacity.of(40));
         assertEquals(85, KeysOpacity.of(0));
-        assertEquals(85, KeysOpacity.of(73));
+        assertEquals(73, KeysOpacity.of(73));
+        assertEquals(20, KeysOpacity.of(20));
+        assertEquals(85, KeysOpacity.of(19));
         assertEquals(85, KeysOpacity.of(250));
     }
 

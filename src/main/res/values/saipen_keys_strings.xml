@@ -10,11 +10,15 @@
     <string name="saipen_keys_none">No buttons.</string>
     <string name="saipen_keys_add">+ Add a button</string>
     <string name="saipen_keys_reset">Back to the first ones</string>
+    <string name="saipen_keys_up">↑</string>
+    <string name="saipen_keys_down">↓</string>
+    <string name="saipen_keys_up_long">Move up</string>
+    <string name="saipen_keys_down_long">Move down</string>
     <string name="saipen_keys_remove">Remove</string>
     <string name="saipen_keys_add_title">A new button</string>
     <string name="saipen_keys_add_ok">Add</string>
     <string name="saipen_keys_opacity_note">Opacity (the keys and the red Exit SAI):</string>
-    <string name="saipen_keys_exit_dark">Darker (from SAI\'s red towards black):</string>
+    <string name="saipen_keys_exit_dark">Darker:</string>
     <string name="saipen_keys_exit_same_opacity">Same opacity as the keys</string>
     <string name="saipen_keys_color_note">Colour:</string>
     <!-- the dot's label when Ctrl is not among the keys -->

@@ -9,11 +9,15 @@
     <string name="saipen_keys_none">Кнопок нет.</string>
     <string name="saipen_keys_add">+ Добавить кнопку</string>
     <string name="saipen_keys_reset">Вернуть первоначальные</string>
+    <string name="saipen_keys_up">↑</string>
+    <string name="saipen_keys_down">↓</string>
+    <string name="saipen_keys_up_long">Выше</string>
+    <string name="saipen_keys_down_long">Ниже</string>
     <string name="saipen_keys_remove">Убрать</string>
     <string name="saipen_keys_add_title">Новая кнопка</string>
     <string name="saipen_keys_add_ok">Добавить</string>
     <string name="saipen_keys_opacity_note">Непрозрачность (кнопки и красный Exit SAI):</string>
-    <string name="saipen_keys_exit_dark">Темнее (от красного SAI к чёрному):</string>
+    <string name="saipen_keys_exit_dark">Темнее:</string>
     <string name="saipen_keys_exit_same_opacity">Прозрачность как у кнопок</string>
     <string name="saipen_keys_color_note">Цвет:</string>
     <string name="saipen_keys_dot">Клавиши</string>

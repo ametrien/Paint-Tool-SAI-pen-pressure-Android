@@ -99,14 +99,34 @@ public final class FloatingKeysSettings {
         final LinearLayout exitLook = new LinearLayout(a);
         exitLook.setOrientation(LinearLayout.VERTICAL);
         exitLook.addView(note(a, R.string.saipen_keys_exit_dark));
+        /* the slider, and at its end the red as it will be: shown, not told */
+        LinearLayout darkRow = new LinearLayout(a);
+        darkRow.setOrientation(LinearLayout.HORIZONTAL);
+        darkRow.setGravity(Gravity.CENTER_VERTICAL);
         android.widget.SeekBar dark = new android.widget.SeekBar(a);
         dark.setMax(ExitLook.MAX_DARK);
         dark.setProgress(ExitLook.dark(prefs.getInt(ExitLook.PREF_DARK, 0)));
-        dark.setOnSeekBarChangeListener(saveOnRelease(v -> {
-            prefs.edit().putInt(ExitLook.PREF_DARK, v).apply();
-            changed.run();
-        }));
-        exitLook.addView(dark, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (40 * dp)));
+        final View darkSwatch = new View(a);
+        final GradientDrawable darkPaint = new GradientDrawable();
+        darkPaint.setCornerRadius(8 * dp);
+        darkPaint.setStroke(Math.max(1, (int) dp), dimColor);
+        darkPaint.setColor(ExitLook.color(FloatingKeys.EXIT_RED, dark.getProgress(), 100));
+        darkSwatch.setBackground(darkPaint);
+        dark.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar s, int v, boolean user) {
+                darkPaint.setColor(ExitLook.color(FloatingKeys.EXIT_RED, v, 100));
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar s) {
+                prefs.edit().putInt(ExitLook.PREF_DARK, s.getProgress()).apply();
+                changed.run();
+            }
+        });
+        darkRow.addView(dark, new LinearLayout.LayoutParams(0, (int) (40 * dp), 1));
+        LinearLayout.LayoutParams swatchLp = new LinearLayout.LayoutParams((int) (48 * dp), (int) (28 * dp));
+        swatchLp.setMarginStart((int) (8 * dp));
+        darkRow.addView(darkSwatch, swatchLp);
+        exitLook.addView(darkRow);
         int savedOwn = prefs.getInt(ExitLook.PREF_OPACITY, ExitLook.SAME_AS_KEYS);
         final android.widget.SeekBar own = new android.widget.SeekBar(a);
         own.setMax(100 - ExitLook.MIN_OPACITY);
@@ -155,6 +175,26 @@ public final class FloatingKeysSettings {
                 name.setTextColor(textColor);
                 name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                 row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+                /* ↑ ↓: the order on the panel, top to bottom */
+                for (final int step : new int[]{-1, 1}) {
+                    TextView move = link(a, dp, step < 0 ? R.string.saipen_keys_up : R.string.saipen_keys_down);
+                    move.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                    move.setPadding((int) (10 * dp), 0, (int) (10 * dp), 0);
+                    move.setContentDescription(a.getString(step < 0 ? R.string.saipen_keys_up_long
+                        : R.string.saipen_keys_down_long));
+                    final int to = index + step;
+                    if (to < 0 || to >= now.size()) {
+                        move.setEnabled(false);
+                        move.setAlpha(0.25f);
+                    } else move.setOnClickListener(v -> {
+                        List<Shortcut> l = FloatingKeys.buttons(prefs);
+                        if (index < l.size() && to < l.size()) java.util.Collections.swap(l, index, to);
+                        save(prefs, l);
+                        fill[0].run();
+                        changed.run();
+                    });
+                    row.addView(move);
+                }
                 /* once / held: a tap switches, unless it can only be held */
                 TextView kind = link(a, dp, s.held ? R.string.saipen_keys_kind_held : R.string.saipen_keys_kind_once);
                 if (s.exitSai) kind.setVisibility(View.INVISIBLE);   /* two taps, neither once nor held */
@@ -247,28 +287,43 @@ public final class FloatingKeysSettings {
 
         /* how solid: the panel and the red Exit SAI together */
         body.addView(note(a, R.string.saipen_keys_opacity_note));
-        final RadioGroup solid = new RadioGroup(a);
-        solid.setOrientation(RadioGroup.HORIZONTAL);
-        int chosenOpacity = KeysOpacity.of(prefs.getInt(KeysOpacity.PREF, KeysOpacity.BY_DEFAULT));
-        for (int percent : KeysOpacity.CHOICES) {
-            RadioButton r = new RadioButton(a);
-            r.setText(percent + "%");
-            r.setTextColor(textColor);
-            r.setId(View.generateViewId());
-            r.setMinHeight((int) (40 * dp));
-            r.setPadding(r.getPaddingLeft(), 0, (int) (12 * dp), 0);
-            solid.addView(r);
-            if (percent == chosenOpacity) solid.check(r.getId());
-            r.setOnCheckedChangeListener((b, on) -> {
-                if (!on) return;
-                prefs.edit().putInt(KeysOpacity.PREF, percent).apply();
+        body.addView(percentSlider(a, dp, textColor, KeysOpacity.MIN,
+            KeysOpacity.of(prefs.getInt(KeysOpacity.PREF, KeysOpacity.BY_DEFAULT)), v -> {
+                prefs.edit().putInt(KeysOpacity.PREF, v).apply();
                 changed.run();
-            });
-        }
-        body.addView(solid);
+            }));
     }
 
     interface OnButton { void picked(Shortcut s); }
+
+    /**
+     * A slider from `min` to 100 percent with the percent beside it, which
+     * follows the finger; `save` gets the percent once the finger lets go.
+     */
+    private static LinearLayout percentSlider(Activity a, float dp, int textColor, int min, int now,
+                                              java.util.function.IntConsumer save) {
+        LinearLayout row = new LinearLayout(a);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        android.widget.SeekBar bar = new android.widget.SeekBar(a);
+        bar.setMax(100 - min);
+        bar.setProgress(now - min);
+        final TextView shown = new TextView(a);
+        shown.setTextColor(textColor);
+        shown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        shown.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        shown.setText(now + "%");
+        bar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar s, int v, boolean user) {
+                shown.setText((v + min) + "%");
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar s) { save.accept(s.getProgress() + min); }
+        });
+        row.addView(bar, new LinearLayout.LayoutParams(0, (int) (40 * dp), 1));
+        row.addView(shown, new LinearLayout.LayoutParams((int) (56 * dp), ViewGroup.LayoutParams.WRAP_CONTENT));
+        return row;
+    }
 
     /** A slider that saves once the finger lets go, not on every step. */
     private static android.widget.SeekBar.OnSeekBarChangeListener saveOnRelease(java.util.function.IntConsumer save) {

@@ -10,15 +10,14 @@ package com.winlator.saipen;
  */
 public final class KeysOpacity {
     public static final String PREF = "saipen_keys_opacity";
-    public static final int[] CHOICES = {40, 55, 70, 85, 100};
+    public static final int MIN = 20;
     public static final int BY_DEFAULT = 85;
 
     private KeysOpacity() {}
 
-    /** A saved percent as one of CHOICES; anything else reads as the default. */
+    /** A saved percent from MIN to 100; anything else reads as the default. */
     public static int of(int saved) {
-        for (int c : CHOICES) if (c == saved) return c;
-        return BY_DEFAULT;
+        return saved >= MIN && saved <= 100 ? saved : BY_DEFAULT;
     }
 
     /** `rgb` (its own alpha ignored) at `percent` opacity, as an ARGB int. */
