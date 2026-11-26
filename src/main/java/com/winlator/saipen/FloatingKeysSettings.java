@@ -69,6 +69,8 @@ public final class FloatingKeysSettings {
         /* Exit SAI: a button of its own kind, so a link of its own */
         final TextView addExit = link(a, dp, R.string.saipen_keys_add_exit);
         body.addView(addExit);
+        body.addView(toggle(a, textColor, R.string.saipen_keys_exit_own, prefs,
+            FloatingKeys.PREF_EXIT_OWN, FloatingKeys.EXIT_OWN_BY_DEFAULT, changed));
 
         final Runnable[] fill = new Runnable[1];
         fill[0] = () -> {

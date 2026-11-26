@@ -28,6 +28,7 @@
     <string name="saipen_keys_exit">Exit SAI</string>
     <string name="saipen_keys_exit_ask">Exit?</string>
     <string name="saipen_keys_add_exit">+ Exit SAI (two taps)</string>
+    <string name="saipen_keys_exit_own">Exit SAI as its own red button (top right, drag to move)</string>
     <string name="saipen_keys_no_key">(no key, only Ctrl / Alt / Shift)</string>
     <!-- SaiLocator.exeBits: a 32-bit sai2.exe -->
     <string name="saipen_32bit">SAI Pen needs the 64bit SAI. Download it from SYSTEMAX (its file name ends in 64bit-en.zip), unzip it, then tap Change SAI…</string>

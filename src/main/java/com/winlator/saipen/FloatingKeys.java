@@ -44,8 +44,11 @@ import java.util.List;
  * - held: a tap keeps the keys down (the button lit) for the pen until the
  *   next tap, or they stay down while a finger is on the button
  *   (ModifierKeys). Ctrl held moves a perspective ruler's handles.
- * An Exit SAI button may be among them (Shortcut.EXIT_SAI): two taps
- * (ExitTaps) close SAI the way its red cross does (SaiPenRequests.closeSai).
+ * An Exit SAI button may be among them (Shortcut.EXIT_SAI), and, if the
+ * artist switches it on (PREF_EXIT_OWN), a big red one of its own, floating
+ * apart from the dot (top right at first, dragged like the dot, hidden and
+ * shown with it). Either one: two taps (ExitTaps) close SAI the way its red
+ * cross does (SaiPenRequests.closeSai).
  * Open, the grip on the left drags the buttons and × in the top corner
  * closes them back into the dot; a key still down keeps the dot lit. A long
  * press on the dot hides it, and three fingers held still for a moment
@@ -72,7 +75,17 @@ public final class FloatingKeys {
     public static final String PREF_GESTURE = "saipen_keys_gesture";
     public static final boolean GESTURE_BY_DEFAULT = true;
 
+    /** Exit SAI as a red button of its own, apart from the dot. */
+    public static final String PREF_EXIT_OWN = "saipen_keys_exit_own";
+    public static final boolean EXIT_OWN_BY_DEFAULT = false;
+
     private static final String PREF_X = "saipen_keys_x", PREF_Y = "saipen_keys_y";
+    private static final String PREF_EXIT_X = "saipen_keys_exit_x", PREF_EXIT_Y = "saipen_keys_exit_y";
+    /* where the red Exit SAI is the first time: top right, under SAI's own
+     * title bar and menu */
+    private static final float DEFAULT_EXIT_X = 1f, DEFAULT_EXIT_Y = 0.1f;
+    private static final int EXIT_RED = Color.rgb(0xC6, 0x28, 0x28);
+    private static final int EXIT_RED_ASKING = Color.rgb(0xFF, 0x52, 0x52);
     /* where the dot is the first time: the right edge, a third down */
     private static final float DEFAULT_X = 1f, DEFAULT_Y = 0.35f;
     /* a press on the dot this long, without moving, hides it */
@@ -130,7 +143,10 @@ public final class FloatingKeys {
         final List<Shortcut> buttons = buttons(prefs);
         /* a finger or pen gesture may show them too (Gestures) */
         final boolean byGesture = Gestures.usesOnScreenKeys(Gestures.actions(prefs.getAll()));
-        if ((!onAtStart && !gesture && !byGesture) || buttons.isEmpty()) return;
+        final boolean ownExit = prefs.getBoolean(PREF_EXIT_OWN, EXIT_OWN_BY_DEFAULT);
+        if ((!onAtStart && !gesture && !byGesture) || (buttons.isEmpty() && !ownExit)) return;
+        /* no buttons, only the red Exit SAI: the dot stays away */
+        final boolean hasKeys = !buttons.isEmpty();
         final int color = colorIndex(prefs);
         final int lit = COLORS_LIT[color];
         final int pressed = blend(lit, Color.WHITE, 0.45f);
@@ -263,18 +279,42 @@ public final class FloatingKeys {
             paint.run();
             panel.post(keepInside);
         };
+        /* the red Exit SAI of its own, if switched on */
+        final TextView exitOwn = ownExit ? exitButton(activity, dp, exitLabel, paintText) : null;
+        final Runnable keepExitInside = () -> {
+            if (exitOwn != null) keepInside(root, exitOwn);
+        };
+        final boolean[] shown = {onAtStart};
         final Runnable hide = () -> {
+            shown[0] = false;
             held.releaseAll();
             if (isOpen[0]) closeButtons.run();
             panel.setVisibility(View.GONE);
+            if (exitOwn != null) exitOwn.setVisibility(View.GONE);
         };
         final Runnable unhide = () -> {
-            panel.setVisibility(View.VISIBLE);
-            panel.post(keepInside);
+            shown[0] = true;
+            if (hasKeys) {
+                panel.setVisibility(View.VISIBLE);
+                panel.post(keepInside);
+            }
+            if (exitOwn != null) {
+                exitOwn.setVisibility(View.VISIBLE);
+                exitOwn.post(keepExitInside);
+            }
         };
-        toggle = () -> {
-            if (panel.getVisibility() == View.VISIBLE) hide.run();
+        final Runnable flip = () -> {
+            if (shown[0]) hide.run();
             else unhide.run();
+        };
+        toggle = flip;
+        /* Exit SAI's second tap, in the row or on its own: no key left down
+         * under SAI's own Save dialog, the buttons out of its way */
+        final Runnable closeSai = () -> {
+            held.releaseAll();
+            if (isOpen[0]) closeButtons.run();
+            if (activity instanceof XServerDisplayActivity)
+                SaiPenRequests.closeSai(((XServerDisplayActivity) activity).getWinHandler());
         };
 
         /* the dot drags, opens on a tap and hides on a long press; the grip drags */
@@ -290,27 +330,9 @@ public final class FloatingKeys {
             final int index = i;
             final TextView t = views.get(i);
             if (buttons.get(i).exitSai) {
-                /* the first tap asks, the second closes SAI (ExitTaps) */
-                t.setOnClickListener(v -> {
-                    long now = SystemClock.uptimeMillis();
-                    if (!exitTaps.tap(now)) {
-                        t.setText(exitAsk);
-                        t.setBackground(rounded(lit, 9 * dp));
-                        ui.postDelayed(() -> {
-                            if (!exitTaps.asking(SystemClock.uptimeMillis())) {
-                                t.setText(exitLabel);
-                                t.setBackground(rounded(Color.TRANSPARENT, 9 * dp));
-                            }
-                        }, ExitTaps.CONFIRM_MS + 50);
-                        return;
-                    }
-                    /* no key left down under SAI's own Save dialog; the
-                     * buttons out of its way */
-                    held.releaseAll();
-                    closeButtons.run();
-                    if (activity instanceof XServerDisplayActivity)
-                        SaiPenRequests.closeSai(((XServerDisplayActivity) activity).getWinHandler());
-                });
+                Runnable tap = exitTap(ui, exitTaps, t, exitLabel, exitAsk,
+                    rounded(Color.TRANSPARENT, 9 * dp), rounded(lit, 9 * dp), closeSai);
+                t.setOnClickListener(v -> tap.run());
             } else if (buttons.get(i).held) {
                 /* down on touch, then a tap latches and a hold lets go */
                 t.setOnTouchListener((v, e) -> {
@@ -343,8 +365,7 @@ public final class FloatingKeys {
             final FingersHold hold = new FingersHold(24 * dp);
             final Runnable check = () -> {
                 if (!hold.due(SystemClock.uptimeMillis())) return;
-                if (panel.getVisibility() == View.VISIBLE) hide.run();
-                else unhide.run();
+                flip.run();
                 panel.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
                     HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
             };
@@ -383,12 +404,80 @@ public final class FloatingKeys {
         root.addView(panel, lp);
         open.setVisibility(View.GONE);
         paint.run();
-        if (!onAtStart) panel.setVisibility(View.GONE);
+        if (!onAtStart || !hasKeys) panel.setVisibility(View.GONE);
         panel.post(() -> {
             panel.setX(prefs.getFloat(PREF_X, DEFAULT_X) * Math.max(0, root.getWidth() - panel.getWidth()));
             panel.setY(prefs.getFloat(PREF_Y, DEFAULT_Y) * Math.max(0, root.getHeight() - panel.getHeight()));
             keepInside.run();
         });
+
+        if (exitOwn != null) {
+            /* its own two taps, its own place; a drag moves it, a long press does nothing */
+            final ExitTaps ownTaps = new ExitTaps();
+            Runnable tap = exitTap(ui, ownTaps, exitOwn, exitLabel, exitAsk,
+                rounded(EXIT_RED, 14 * dp), rounded(EXIT_RED_ASKING, 14 * dp), closeSai);
+            exitOwn.setOnTouchListener(dragger(activity, root, exitOwn, prefs, PREF_EXIT_X, PREF_EXIT_Y,
+                keepExitInside, tap, null));
+            root.addView(exitOwn, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START));
+            if (!onAtStart) exitOwn.setVisibility(View.GONE);
+            exitOwn.post(() -> {
+                exitOwn.setX(prefs.getFloat(PREF_EXIT_X, DEFAULT_EXIT_X) * Math.max(0, root.getWidth() - exitOwn.getWidth()));
+                exitOwn.setY(prefs.getFloat(PREF_EXIT_Y, DEFAULT_EXIT_Y) * Math.max(0, root.getHeight() - exitOwn.getHeight()));
+                keepExitInside.run();
+            });
+        }
+    }
+
+    /**
+     * What a tap on an Exit SAI button does (ExitTaps): the first lights it
+     * and asks `ask`, going back to `label` if no second tap comes; the second
+     * runs `close`.
+     */
+    private static Runnable exitTap(Handler ui, ExitTaps taps, TextView t, String label, String ask,
+                                    android.graphics.drawable.Drawable idle,
+                                    android.graphics.drawable.Drawable asking, Runnable close) {
+        return () -> {
+            if (taps.tap(SystemClock.uptimeMillis())) {
+                t.setText(label);
+                t.setBackground(idle);
+                close.run();
+                return;
+            }
+            t.setText(ask);
+            t.setBackground(asking);
+            ui.postDelayed(() -> {
+                if (!taps.asking(SystemClock.uptimeMillis())) {
+                    t.setText(label);
+                    t.setBackground(idle);
+                }
+            }, ExitTaps.CONFIRM_MS + 50);
+        };
+    }
+
+    /** The red Exit SAI of its own: bigger than a key, so easy to hit; the
+     *  same width asking or not. */
+    private static TextView exitButton(Activity activity, float dp, String label, TextPaint paintText) {
+        TextView t = new TextView(activity);
+        t.setText(label);
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setGravity(Gravity.CENTER);
+        t.setSingleLine(true);
+        t.setWidth((int) Math.max(80 * dp, paintText.measureText(label) * 16 / TEXT_SP + 28 * dp));
+        t.setHeight((int) (56 * dp));
+        t.setBackground(rounded(EXIT_RED, 14 * dp));
+        t.setElevation(4 * dp);
+        return t;
+    }
+
+    /** Keeps `v` inside `root`. */
+    private static void keepInside(FrameLayout root, View v) {
+        float maxX = Math.max(0, root.getWidth() - v.getWidth());
+        float maxY = Math.max(0, root.getHeight() - v.getHeight());
+        v.setX(Math.max(0, Math.min(v.getX(), maxX)));
+        v.setY(Math.max(0, Math.min(v.getY(), maxY)));
     }
 
     interface KeyPress {
@@ -403,6 +492,14 @@ public final class FloatingKeys {
     @SuppressLint("ClickableViewAccessibility")
     private static View.OnTouchListener dragger(Activity activity, FrameLayout root, View panel,
                                                 SharedPreferences prefs, Runnable keepInside,
+                                                Runnable onTap, Runnable onLongPress) {
+        return dragger(activity, root, panel, prefs, PREF_X, PREF_Y, keepInside, onTap, onLongPress);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private static View.OnTouchListener dragger(Activity activity, FrameLayout root, View panel,
+                                                SharedPreferences prefs, String prefX, String prefY,
+                                                Runnable keepInside,
                                                 Runnable onTap, Runnable onLongPress) {
         final int slop = ViewConfiguration.get(activity).getScaledTouchSlop();
         return new View.OnTouchListener() {
@@ -432,7 +529,7 @@ public final class FloatingKeys {
                         return true;
                     }
                     case MotionEvent.ACTION_UP:
-                        if (dragging) savePosition(prefs, root, panel);
+                        if (dragging) savePosition(prefs, prefX, prefY, root, panel);
                         else if (SystemClock.uptimeMillis() - downAt >= HIDE_MS) {
                             if (onLongPress != null) onLongPress.run();
                         } else if (onTap != null) onTap.run();
@@ -495,12 +592,13 @@ public final class FloatingKeys {
 
     /** Where the panel is, as a share of the room it has, so it stays at the
      *  same edge when the screen turns. */
-    private static void savePosition(SharedPreferences prefs, FrameLayout root, View panel) {
+    private static void savePosition(SharedPreferences prefs, String prefX, String prefY,
+                                     FrameLayout root, View panel) {
         float roomX = Math.max(1, root.getWidth() - panel.getWidth());
         float roomY = Math.max(1, root.getHeight() - panel.getHeight());
         prefs.edit()
-            .putFloat(PREF_X, Math.max(0f, Math.min(1f, panel.getX() / roomX)))
-            .putFloat(PREF_Y, Math.max(0f, Math.min(1f, panel.getY() / roomY)))
+            .putFloat(prefX, Math.max(0f, Math.min(1f, panel.getX() / roomX)))
+            .putFloat(prefY, Math.max(0f, Math.min(1f, panel.getY() / roomY)))
             .apply();
     }
 
