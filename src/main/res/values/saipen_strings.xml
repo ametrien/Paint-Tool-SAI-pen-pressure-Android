@@ -254,6 +254,8 @@
     <string name="saipen_continues_card">More of \"%1$s\"?</string>
     <string name="saipen_continues_title">The same drawing?</string>
     <string name="saipen_continues">This session looks like more of \"%1$s\" (last drawn %2$s). Join them into one video?</string>
+    <string name="saipen_continues_ended">How \"%1$s\" ended</string>
+    <string name="saipen_continues_began">How this session began</string>
     <string name="saipen_continues_yes">Yes, join</string>
     <string name="saipen_continues_no">No, another drawing</string>
     <string name="saipen_timelapse_missing">The video is not there any more.</string>

@@ -222,6 +222,8 @@
     <string name="saipen_continues_card">Продолжение «%1$s»?</string>
     <string name="saipen_continues_title">Тот же рисунок?</string>
     <string name="saipen_continues">Этот сеанс похож на продолжение рисунка «%1$s» (последний раз %2$s). Соединить в одно видео?</string>
+    <string name="saipen_continues_ended">Каким был конец «%1$s»</string>
+    <string name="saipen_continues_began">С чего началась эта сессия</string>
     <string name="saipen_continues_yes">Да, соединить</string>
     <string name="saipen_continues_no">Нет, другой рисунок</string>
     <string name="saipen_timelapse_missing">Этого видео больше нет.</string>

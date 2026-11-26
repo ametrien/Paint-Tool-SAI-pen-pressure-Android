@@ -674,11 +674,82 @@ public class SaiLauncherActivity extends AppCompatActivity {
     void askContinues(DrawingLibrary lib, DrawingLibrary.Pending q, Runnable after) {
         DrawingLibrary.Drawing to = lib.drawing(q.candidateId);
         if (to == null || isFinishing()) return;
+        /* the two pictures the question is about, side by side: how the
+           earlier drawing ended, and how this session began */
+        DrawingLibrary.Drawing from = lib.drawing(q.drawingId);
+        int px = (int) (220 * getResources().getDisplayMetrics().density);
+        worker.execute(() -> {
+            File stillFile = TimelapseShelf.still(to);
+            android.graphics.Bitmap ended = stillFile.isFile() ? pictureFile(stillFile, px) : null;
+            android.graphics.Bitmap began = null;
+            if (from != null) {
+                for (DrawingLibrary.Piece p : from.pieces) {
+                    if (!p.file.equals(q.pieceFile)) continue;
+                    android.media.MediaMetadataRetriever r = new android.media.MediaMetadataRetriever();
+                    try {
+                        r.setDataSource(TimelapseShelf.pieceFile(from, p).getPath());
+                        began = r.getFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+                    }
+                    catch (RuntimeException e) {
+                        Log.w(TAG, "timelapse: no first frame for the question: " + e.getMessage());
+                    }
+                    finally {
+                        try { r.release(); } catch (Exception ignored) {}
+                    }
+                }
+            }
+            android.graphics.Bitmap first = began;
+            ui.post(() -> showContinues(lib, q, to, ended, first, after));
+        });
+    }
+
+    /** One picture with its caption, for the same-drawing question. */
+    private View captioned(android.graphics.Bitmap b, String caption) {
+        float dp = getResources().getDisplayMetrics().density;
+        android.widget.LinearLayout col = new android.widget.LinearLayout(this);
+        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+        android.widget.ImageView img = new android.widget.ImageView(this);
+        img.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        img.setBackgroundColor(0xFF24282C);
+        if (b != null) img.setImageBitmap(b);
+        col.addView(img, new android.widget.LinearLayout.LayoutParams(-1, (int) (180 * dp)));
+        TextView t = new TextView(this);
+        t.setText(caption);
+        t.setTextSize(13);
+        t.setTextColor(StatisticsDialog.TEXT2);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setPadding(0, (int) (6 * dp), 0, 0);
+        col.addView(t);
+        return col;
+    }
+
+    private void showContinues(DrawingLibrary lib, DrawingLibrary.Pending q, DrawingLibrary.Drawing to,
+                               android.graphics.Bitmap ended, android.graphics.Bitmap began, Runnable after) {
+        if (isFinishing()) return;
+        float dp = getResources().getDisplayMetrics().density;
+        String name = to.title.isEmpty() ? to.folder : to.title;
         String when = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
             .format(new java.util.Date(DrawingLibrary.lastDrawn(to)));
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = (int) (20 * dp);
+        box.setPadding(pad, (int) (8 * dp), pad, 0);
+        TextView msg = new TextView(this);
+        msg.setText(getString(R.string.saipen_continues, name, when));
+        msg.setTextSize(15);
+        msg.setTextColor(StatisticsDialog.TEXT);
+        box.addView(msg);
+        android.widget.LinearLayout pics = new android.widget.LinearLayout(this);
+        android.widget.LinearLayout.LayoutParams half = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+        half.setMargins(0, (int) (12 * dp), (int) (6 * dp), 0);
+        pics.addView(captioned(ended, getString(R.string.saipen_continues_ended, name)), half);
+        android.widget.LinearLayout.LayoutParams half2 = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+        half2.setMargins((int) (6 * dp), (int) (12 * dp), 0, 0);
+        pics.addView(captioned(began, getString(R.string.saipen_continues_began)), half2);
+        box.addView(pics);
         new AlertDialog.Builder(this, DIALOG_THEME)
             .setTitle(R.string.saipen_continues_title)
-            .setMessage(getString(R.string.saipen_continues, to.title.isEmpty() ? to.folder : to.title, when))
+            .setView(box)
             .setPositiveButton(R.string.saipen_continues_yes, (d, w) -> worker.execute(() -> {
                 try {
                     DrawingLibrary.Drawing joined = TimelapseShelf.accept(lib, q);
