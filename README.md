@@ -64,7 +64,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.4.38</summary>
+> <summary>What's new, 0.4.19 to 0.4.39</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -110,6 +110,9 @@ On a Mac? The same, also by me:
 >   and a palm resting on the glass no longer picks colours or leaves dots; a two-finger tap no
 >   longer leaves a dot; steadier two-finger zoom, scroll and turn. *Processors SAI sees* shows
 >   each core's strength (the fastest is 100%).
+> - **0.4.39:** your recent drawings on SAI Pen's screen, a tap opens one in SAI; *All drawings*
+>   to search, sort, swipe through, share and delete them, with their timelapses; SAI Pen uses
+>   less of the processor while you aren't drawing.
 >
 > </details>
 
