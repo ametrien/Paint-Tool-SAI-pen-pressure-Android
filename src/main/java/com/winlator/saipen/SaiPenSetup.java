@@ -173,6 +173,15 @@ public final class SaiPenSetup {
         return moveDrawingsOut(containerRoot, false);
     }
 
+    /** The folders inside the app where SAI may have saved drawings
+     *  (users/xuser and DeviceDrawings.FOLDERS in it). */
+    public static java.util.List<File> inAppDrawingFolders(File containerRoot) {
+        File xuser = new File(containerRoot, ".wine/drive_c/users/xuser");
+        java.util.List<File> folders = new java.util.ArrayList<>();
+        for (String f : DeviceDrawings.FOLDERS) folders.add(f.isEmpty() ? xuser : new File(xuser, f));
+        return folders;
+    }
+
     /**
      * When `keepOriginals` is true, the in-app file is left in place after
      * copying it to the device: SAI's Recent list (which remembers the
@@ -180,12 +189,9 @@ public final class SaiPenSetup {
      * SAI starts; with false (move, delete the original) after SAI closes.
      */
     public static java.util.List<File> moveDrawingsOut(File containerRoot, boolean keepOriginals) {
-        File xuser = new File(containerRoot, ".wine/drive_c/users/xuser");
-        java.util.List<File> folders = new java.util.ArrayList<>();
-        for (String f : DeviceDrawings.FOLDERS) folders.add(f.isEmpty() ? xuser : new File(xuser, f));
         java.util.List<File> moved;
         try {
-            moved = DeviceDrawings.moveOut(folders, drawingsFolder(), keepOriginals);
+            moved = DeviceDrawings.moveOut(inAppDrawingFolders(containerRoot), drawingsFolder(), keepOriginals);
         }
         catch (RuntimeException e) {
             android.util.Log.w("SaiPen", "drawings not moved out", e);

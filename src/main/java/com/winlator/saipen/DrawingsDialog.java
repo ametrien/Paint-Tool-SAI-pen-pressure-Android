@@ -1,5 +1,6 @@
 package com.winlator.saipen;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -54,8 +55,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,9 +73,13 @@ import java.util.concurrent.RejectedExecutionException;
  * (HoverVideo); a tap plays it in the device's player. A card whose drawing
  * has a timelapse carries a small ▶.
  *
+ * Holding a card selects it; then a tap adds or takes away more, and
+ * Delete removes them for good, after asking (DeviceDrawings.delete: a copy
+ * inside the app goes too, or it would come back). Timelapses stay.
+ *
  * The picture is the small one SAI keeps in the file (Sai2Thumb, 256 pixels
- * at most); nothing else of the drawing is read. Nothing is renamed or
- * deleted here (the owner's choice, 2026-11-26).
+ * at most); nothing else of the drawing is read. Nothing is renamed here
+ * (the owner's choice, 2026-11-26).
  *
  * The cards are a GridView, as BrowseDialog's: only the cards on the screen
  * exist, and the pictures sit in a bounded cache, so a few hundred drawings
@@ -85,6 +92,7 @@ final class DrawingsDialog {
     private static final int BG = StatisticsDialog.BG, SURFACE = StatisticsDialog.SURFACE,
                              TEXT = StatisticsDialog.TEXT, TEXT2 = StatisticsDialog.TEXT2,
                              TEXT3 = StatisticsDialog.TEXT3, ACCENT = StatisticsDialog.ACCENT;
+    private static final int DANGER = 0xFFD32F2F;
     /** A card: its narrowest width and its picture's height. */
     private static final int CARD_W_DP = 170, CARD_PICTURE_DP = 150;
     /** SAI's preview is 256 pixels at most: the page shows it at most this
@@ -108,12 +116,17 @@ final class DrawingsDialog {
 
     private List<Entry> all = Collections.emptyList();
     /** Each drawing's timelapse, for those that have one (DrawingIndex.timelapseFor). */
-    private Map<File, Drawing> videoOf = Collections.emptyMap();
+    private Map<File, Drawing> videoOf = new HashMap<>();
     private String query = "";
     private String folder = null;
     private Sort sort = Sort.NEWEST;
     /** The drawing whose page is open; null on the cards. */
     private Entry shown;
+    /** Cards held to be deleted; selecting while not empty. */
+    private final Set<File> selected = new LinkedHashSet<>();
+    private boolean deleting;
+    /** The title row of the cards: it changes while selecting. */
+    private LinearLayout cardsHead;
     /** The first card on the screen when a page opened: Back returns there. */
     private int cardsAt;
     private boolean sharing;
@@ -154,8 +167,11 @@ final class DrawingsDialog {
         }
         /* back on a drawing's page goes to the cards, not out */
         dialog.setOnKeyListener((d, key, e) -> {
-            if (key != KeyEvent.KEYCODE_BACK || shown == null) return false;
-            if (e.getAction() == KeyEvent.ACTION_UP) showCards();
+            if (key != KeyEvent.KEYCODE_BACK || (shown == null && selected.isEmpty())) return false;
+            if (e.getAction() == KeyEvent.ACTION_UP) {
+                if (shown != null) showCards();
+                else clearSelection();
+            }
             return true;
         });
         dialog.setOnDismissListener(d -> {
@@ -222,7 +238,9 @@ final class DrawingsDialog {
         page.removeAllViews();
         LinearLayout top = column();
         top.setPadding(dp(20), dp(16), dp(20), 0);
-        top.addView(head(null), lp(-1, -2, 0, 0, 0, 10));
+        cardsHead = new LinearLayout(activity);
+        top.addView(cardsHead, lp(-1, -2, 0, 0, 0, 10));
+        fillCardsHead();
 
         if (!all.isEmpty()) {
             EditText search = new EditText(activity);
@@ -348,8 +366,13 @@ final class DrawingsDialog {
     /** The cards for the search, the order and the folder now chosen. */
     private void refill() {
         list = DrawingIndex.view(all, query, folder, sort);
+        /* only what can be seen stays selected: Delete never takes a hidden one */
+        Set<File> visible = new HashSet<>();
+        for (Entry e : list) visible.add(e.file);
+        if (selected.retainAll(visible) || !selected.isEmpty()) fillCardsHead();
         String n = activity.getResources().getQuantityString(R.plurals.saipen_n_drawings, list.size(), list.size());
-        summary.setText(list.isEmpty() ? "" : n + " · " + Formatter.formatShortFileSize(activity, DrawingIndex.totalSize(list)));
+        summary.setText(list.isEmpty() ? "" : n + " · " + Formatter.formatShortFileSize(activity, DrawingIndex.totalSize(list))
+                        + " · " + activity.getString(R.string.saipen_drawings_hold_hint));
         summary.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
         empty.setText(all.isEmpty() ? R.string.saipen_drawings_none : R.string.saipen_drawings_none_found);
         empty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
@@ -361,6 +384,7 @@ final class DrawingsDialog {
         final LinearLayout view = column();
         final ImageView picture = new ImageView(activity);
         final TextView badge = text(11, true, TEXT);
+        final TextView check = text(13, true, Color.WHITE);
         final TextView name = text(14, true, TEXT), line = text(12, false, TEXT3), where = text(12, false, TEXT3);
         Entry entry;
 
@@ -382,6 +406,11 @@ final class DrawingsDialog {
             FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
             bp.setMargins(dp(6), dp(6), dp(6), dp(6));
             frame.addView(badge, bp);
+            /* while selecting: an empty ring, or a tick on the accent colour */
+            check.setGravity(Gravity.CENTER);
+            FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(dp(26), dp(26), Gravity.TOP | Gravity.START);
+            cp.setMargins(dp(6), dp(6), dp(6), dp(6));
+            frame.addView(check, cp);
             view.addView(frame, lp(-1, dp(CARD_PICTURE_DP), 0, 0, 0, 8));
             for (TextView t : new TextView[] {name, line, where}) {
                 t.setSingleLine();
@@ -391,7 +420,29 @@ final class DrawingsDialog {
             view.addView(name);
             view.addView(line, lp(-1, -2, 0, 2, 0, 0));
             view.addView(where);
-            view.setOnClickListener(v -> { if (entry != null) showDrawing(entry); });
+            view.setOnClickListener(v -> {
+                if (entry == null) return;
+                if (selected.isEmpty()) showDrawing(entry);
+                else toggle(entry);
+            });
+            view.setOnLongClickListener(v -> {
+                if (entry != null) toggle(entry);
+                return true;
+            });
+        }
+
+        void showSelection() {
+            boolean selecting = !selected.isEmpty(), on = entry != null && selected.contains(entry.file);
+            check.setVisibility(selecting ? View.VISIBLE : View.GONE);
+            check.setText(on ? "✓" : "");
+            GradientDrawable ring = new GradientDrawable();
+            ring.setShape(GradientDrawable.OVAL);
+            ring.setColor(on ? ACCENT : 0x991B1E21);
+            ring.setStroke(dp(2), on ? ACCENT : TEXT);
+            check.setBackground(ring);
+            GradientDrawable bg = round(SURFACE, 14);
+            if (on) bg.setStroke(dp(2), ACCENT);
+            view.setBackground(bg);
         }
 
         void bind(Entry e) {
@@ -407,7 +458,112 @@ final class DrawingsDialog {
             badge.setVisibility(videoOf.containsKey(e.file) ? View.VISIBLE : View.GONE);
             picture.setImageBitmap(pictures.get(e.file));
             load(e.file, dp(CARD_PICTURE_DP));
+            showSelection();
         }
+    }
+
+    /* ---- selecting and deleting ---- */
+
+    private void toggle(Entry e) {
+        if (deleting) return;
+        if (!selected.remove(e.file)) selected.add(e.file);
+        fillCardsHead();
+        showSelectionOnCards();
+    }
+
+    private void clearSelection() {
+        selected.clear();
+        fillCardsHead();
+        showSelectionOnCards();
+    }
+
+    private void showSelectionOnCards() {
+        if (grid == null) return;
+        for (int i = 0; i < grid.getChildCount(); i++) {
+            Object tag = grid.getChildAt(i).getTag();
+            if (tag instanceof Card) ((Card) tag).showSelection();
+        }
+    }
+
+    /** "Drawings" and Close; while selecting, how many, Select all, Delete
+     *  and Cancel. */
+    private void fillCardsHead() {
+        if (cardsHead == null) return;
+        cardsHead.removeAllViews();
+        cardsHead.setGravity(Gravity.CENTER_VERTICAL);
+        if (selected.isEmpty()) {
+            LinearLayout h = head(null);
+            cardsHead.addView(h, new LinearLayout.LayoutParams(-1, -2));
+            return;
+        }
+        TextView title = text(21, true, TEXT);
+        title.setText(activity.getResources().getQuantityString(R.plurals.saipen_n_selected, selected.size(), selected.size()));
+        title.setSingleLine();
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        cardsHead.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+        if (selected.size() < list.size()) {
+            TextView all = pill(activity.getString(R.string.saipen_select_all), SURFACE, TEXT);
+            all.setOnClickListener(v -> {
+                for (Entry e : list) selected.add(e.file);
+                fillCardsHead();
+                showSelectionOnCards();
+            });
+            cardsHead.addView(all, lpw(-2, -2, 0, 8, 0, 0, 0));
+        }
+        TextView delete = pill(activity.getString(R.string.saipen_delete), DANGER, Color.WHITE);
+        delete.setOnClickListener(v -> askDelete());
+        cardsHead.addView(delete, lpw(-2, -2, 0, 8, 0, 0, 0));
+        TextView cancel = pill(activity.getString(android.R.string.cancel), SURFACE, TEXT);
+        cancel.setOnClickListener(v -> clearSelection());
+        cardsHead.addView(cancel, lpw(-2, -2, 0, 8, 0, 0, 0));
+    }
+
+    private void askDelete() {
+        if (deleting || selected.isEmpty()) return;
+        List<File> files = new ArrayList<>(selected);
+        int n = files.size();
+        new AlertDialog.Builder(activity, SaiLauncherActivity.DIALOG_THEME)
+            .setTitle(activity.getResources().getQuantityString(R.plurals.saipen_drawings_delete_q, n, n))
+            .setMessage(R.string.saipen_drawings_delete_what)
+            .setPositiveButton(R.string.saipen_delete, (d, w) -> delete(files))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    /** Deletes them (and their copies inside the app), then shows what is left. */
+    private void delete(List<File> files) {
+        deleting = true;
+        File root = activity.containerRootDir();
+        List<File> inApp = root == null ? Collections.emptyList() : SaiPenSetup.inAppDrawingFolders(root);
+        boolean queued = run(io, () -> {
+            List<File> gone = new ArrayList<>();
+            for (File f : files) if (DeviceDrawings.delete(f, inApp)) gone.add(f);
+            String[] paths = new String[gone.size()];
+            for (int i = 0; i < paths.length; i++) paths[i] = gone.get(i).getPath();
+            /* the Gallery and My Files forget them too */
+            if (paths.length > 0) android.media.MediaScannerConnection.scanFile(activity, paths, null, null);
+            activity.runOnUiThread(() -> {
+                deleting = false;
+                Set<File> goneSet = new HashSet<>(gone);
+                List<Entry> left = new ArrayList<>();
+                for (Entry e : all) if (!goneSet.contains(e.file)) left.add(e);
+                all = left;
+                for (File f : gone) {
+                    pictures.remove(f);
+                    videoOf.remove(f);
+                }
+                selected.clear();
+                int failed = files.size() - gone.size();
+                String msg = activity.getResources().getQuantityString(R.plurals.saipen_drawings_deleted, gone.size(), gone.size());
+                if (failed > 0) msg += ". " + activity.getString(R.string.saipen_drawings_not_deleted, failed);
+                Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+                activity.drawingsChanged();
+                if (closed) return;
+                if (folder != null && !DrawingIndex.folders(all).contains(folder)) folder = null;
+                showCards();
+            });
+        });
+        if (!queued) deleting = false;
     }
 
     /** Decodes a drawing's picture once, off the UI thread, then puts it on

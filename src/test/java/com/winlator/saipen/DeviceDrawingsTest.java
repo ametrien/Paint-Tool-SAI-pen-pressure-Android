@@ -305,4 +305,54 @@ public class DeviceDrawingsTest {
         assertTrue(new File(timelapses, "draw1 timelapse.mp4").exists());
         assertTrue(new File(timelapses, "draw2 timelapse.mp4").exists());
     }
+
+    /* ---- delete (the Drawings window) ---- */
+
+    @Test
+    public void deleteTakesTheInAppCopyWithIt() throws Exception {
+        write(new File(xuser, "Desktop"), "fox.sai2", "fox");
+        DeviceDrawings.moveOut(folders, device, true);          /* before SAI starts: copied, kept */
+        File onDevice = new File(device, "fox.sai2");
+        assertTrue(onDevice.isFile());
+        assertTrue(DeviceDrawings.delete(onDevice, folders));
+        assertTrue(gone(onDevice));
+        assertTrue(gone(new File(xuser, "Desktop/fox.sai2")));
+        pass();
+        assertEquals(0, deviceNames().length);                  /* it does not come back */
+    }
+
+    @Test
+    public void deleteKeepsAnInAppFileWithOtherContent() throws Exception {
+        File onDevice = write(device, "fox.sai2", "old fox");
+        File newer = write(new File(xuser, "Desktop"), "fox.sai2", "new fox");
+        assertTrue(DeviceDrawings.delete(onDevice, folders));
+        assertTrue(gone(onDevice));
+        assertEquals("new fox", read(newer));
+    }
+
+    @Test
+    public void deleteFindsACopyUnderAnotherName() throws Exception {
+        File onDevice = write(device, "fox (2).sai2", "fox");
+        File inApp = write(xuser, "fox.sai2", "fox");
+        assertTrue(DeviceDrawings.delete(onDevice, folders));
+        assertTrue(gone(inApp));
+    }
+
+    @Test
+    public void deletePassesOverTheLinkedDrawingsFolder() throws Exception {
+        File onDevice = write(device, "fox.sai2", "fox");
+        File other = write(device, "fox copy.sai2", "fox");     /* the same picture saved twice on purpose */
+        Files.createSymbolicLink(new File(xuser, "SAI Drawings").toPath(), device.toPath());
+        assertTrue(DeviceDrawings.delete(onDevice, folders));
+        assertTrue(gone(onDevice));
+        assertTrue(other.isFile());
+    }
+
+    @Test
+    public void aDrawingThatCannotBeDeletedKeepsItsInAppCopy() throws Exception {
+        File missing = new File(device, "fox.sai2");
+        File inApp = write(new File(xuser, "Desktop"), "fox.sai2", "fox");
+        assertFalse(DeviceDrawings.delete(missing, folders));
+        assertTrue(inApp.isFile());
+    }
 }

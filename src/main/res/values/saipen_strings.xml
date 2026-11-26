@@ -340,4 +340,21 @@
     <string name="saipen_drawing_share">Share the drawing</string>
     <string name="saipen_drawing_share_picture">Share the preview</string>
     <string name="saipen_drawing_share_failed">Could not share it: %1$s</string>
+    <plurals name="saipen_n_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="saipen_select_all">Select all</string>
+    <string name="saipen_delete">Delete</string>
+    <string name="saipen_drawings_hold_hint">hold one to select</string>
+    <plurals name="saipen_drawings_delete_q">
+        <item quantity="one">Delete %d drawing?</item>
+        <item quantity="other">Delete %d drawings?</item>
+    </plurals>
+    <string name="saipen_drawings_delete_what">This can\'t be undone: the files leave Documents/SAI Drawings for good, there is no bin for this folder. Their timelapses stay.</string>
+    <plurals name="saipen_drawings_deleted">
+        <item quantity="one">%d drawing deleted</item>
+        <item quantity="other">%d drawings deleted</item>
+    </plurals>
+    <string name="saipen_drawings_not_deleted">%1$d could not be deleted</string>
 </resources>

@@ -197,6 +197,56 @@ public final class DeviceDrawings {
     }
 
     /** "name (2).ext", "name (3).ext"...: the first not taken in `dir`. */
+    /**
+     * Deletes a drawing from the device for good (the Drawings window's
+     * Delete), and with it every copy inside the app that moveOut would copy
+     * back: a file with the same content right in one of `folders` (left
+     * when SAI did not close normally, or kept for SAI's Recent list).
+     * Linked folders are passed over: SAI Drawings inside the app is the
+     * device folder itself. A copy with other content stays: it is another
+     * drawing.
+     *
+     * Returns false when the drawing itself could not be deleted; the copies
+     * inside the app are then left too.
+     */
+    public static boolean delete(File drawing, List<File> folders) {
+        Path it = drawing.toPath().toAbsolutePath().normalize();
+        List<Path> twins = new ArrayList<>();
+        for (File folder : folders) {
+            Path dir = folder.toPath();
+            if (Files.isSymbolicLink(dir) || !Files.isDirectory(dir)) continue;
+            String[] names = folder.list();
+            if (names == null) continue;
+            for (String name : names) {
+                if (!isDrawing(name)) continue;
+                Path at = new File(folder, name).toPath();
+                try {
+                    if (!Files.isRegularFile(at, LinkOption.NOFOLLOW_LINKS)) continue;
+                    if (at.toAbsolutePath().normalize().equals(it)) continue;
+                    if (sameContent(at, it)) twins.add(at);
+                }
+                catch (IOException | RuntimeException e) {
+                    /* unreadable: not known to be a copy, so it stays */
+                }
+            }
+        }
+        try {
+            Files.delete(it);
+        }
+        catch (IOException | RuntimeException e) {
+            return false;
+        }
+        for (Path t : twins) {
+            try {
+                Files.delete(t);
+            }
+            catch (IOException | RuntimeException e) {
+                /* it comes back to the device on the next pass: nothing is lost */
+            }
+        }
+        return true;
+    }
+
     static File freeName(File dir, String name) {
         int dot = name.lastIndexOf('.');
         String base = dot > 0 ? name.substring(0, dot) : name;

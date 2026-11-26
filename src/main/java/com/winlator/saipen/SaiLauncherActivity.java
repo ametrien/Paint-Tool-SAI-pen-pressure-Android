@@ -1665,6 +1665,16 @@ public class SaiLauncherActivity extends AppCompatActivity {
         DrawingsDialog.show(this, thumbs);
     }
 
+    /** DrawingsDialog deleted some: the row of recent ones and the count follow. */
+    void drawingsChanged() {
+        if (!isDestroyed()) showRecent();
+    }
+
+    /** Where SAI's C: drive is, for the copies inside the app; null before the container is ready. */
+    File containerRootDir() {
+        return container == null ? null : container.getRootDir();
+    }
+
     /** The picture SAI keeps in the file, or null if it cannot be read. */
     static android.graphics.Bitmap thumbnail(File drawing, int maxPx) {
         try {
