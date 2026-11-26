@@ -91,6 +91,7 @@ public final class SaiSession {
                     @Override
                     public void onEvent(int event, String path) {
                         if (path == null || path.startsWith(".")) return;
+                        SpeedSession.fileSaved(path);
                         if (DeviceDrawings.isDrawing(path) || path.toLowerCase(java.util.Locale.ROOT).endsWith(".mp4")) {
                             File f = new File(drawingsDir, path);
                             if (f.isFile()) SaiPenSetup.scanFile(activity, f);
@@ -103,6 +104,7 @@ public final class SaiSession {
                     @Override
                     public void onEvent(int event, String path) {
                         if (path == null || path.startsWith(".")) return;
+                        SpeedSession.fileSaved(path);
                         if (DeviceDrawings.isDrawing(path) || path.toLowerCase(java.util.Locale.ROOT).endsWith(".mp4")) {
                             File f = new File(drawingsDir, path);
                             if (f.isFile()) SaiPenSetup.scanFile(activity, f);

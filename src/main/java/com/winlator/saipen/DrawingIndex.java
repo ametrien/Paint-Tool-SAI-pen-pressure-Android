@@ -10,12 +10,12 @@ import java.util.Locale;
 import java.util.TreeSet;
 
 /**
- * Every drawing in Documents/SAI Drawings, for the Drawings window
+ * Every drawing in Documents/SAI Drawings (each kind SAI opens, DrawingFormats), for the Drawings window
  * (DrawingsDialog): search by name, a folder, three orders, and the timelapse
  * a drawing has, if any. RecentDrawings finds the files.
  *
- * Only what the file system says (name, folder, date, size) and SAI's own
- * small picture (Sai2Thumb): nothing else of the .sai2 is read.
+ * Only what the file system says (name, folder, date, size) and the file's
+ * small picture (Sai2Thumb, PsdThumb): nothing else of a drawing is read.
  *
  * No Android types: the JVM tests run it as it is.
  */
@@ -69,9 +69,21 @@ public final class DrawingIndex {
      * case; blank for all), in `sort` order.
      */
     public static List<Entry> view(List<Entry> all, String query, String folder, Sort sort) {
+        return view(all, query, folder, sort, false);
+    }
+
+    /** As above; `reversed` flips the order: oldest first, Z to A, smallest first. */
+    public static List<Entry> view(List<Entry> all, String query, String folder, Sort sort, boolean reversed) {
+        return view(all, query, folder, sort, reversed, java.util.Collections.emptySet());
+    }
+
+    /** As above, leaving out the kinds in `hidden` (DrawingFormats). */
+    public static List<Entry> view(List<Entry> all, String query, String folder, Sort sort, boolean reversed,
+                                   java.util.Set<String> hidden) {
         String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         List<Entry> out = new ArrayList<>();
         for (Entry e : all) {
+            if (hidden.contains(DrawingFormats.of(e.file))) continue;
             if (folder != null && !inFolder(e.folder, folder)) continue;
             if (!q.isEmpty() && !e.title.toLowerCase(Locale.ROOT).contains(q)) continue;
             out.add(e);
@@ -88,6 +100,7 @@ public final class DrawingIndex {
             default:
                 c = (a, b) -> Long.compare(b.modified, a.modified);
         }
+        if (reversed) c = c.reversed();
         out.sort(c.thenComparing(byPath));
         return out;
     }

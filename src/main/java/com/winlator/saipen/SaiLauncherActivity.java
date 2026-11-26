@@ -204,6 +204,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
         btnStats.setOnClickListener(v -> openStats());
         brushesActions = findViewById(R.id.SaiPenBrushesActions);
         findViewById(R.id.SaiPenBrushesInfo).setOnClickListener(v -> brushesInfo());
+        /* what each of the two rows does, behind its info button instead of under it */
+        findViewById(R.id.SaiPenPcSettingsInfo).setOnClickListener(v -> rowInfo(R.string.saipen_pc_settings, R.string.saipen_pc_settings_short));
+        findViewById(R.id.SaiPenAddBrushesInfo).setOnClickListener(v -> rowInfo(R.string.saipen_add_pack, R.string.saipen_add_pack_short));
         findViewById(R.id.SaiPenLicenceInfo).setOnClickListener(v -> licenceInfo());
         for (int k = 0; k < SettingsContents.KINDS; k++) {
             final int kind = k;
@@ -273,6 +276,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         fold(R.id.SaiPenProcessorsRow, R.id.SaiPenProcessorsBody, R.id.SaiPenProcessorsArrow);
         fold(R.id.SaiPenBufferRow, R.id.SaiPenBufferBody, R.id.SaiPenBufferArrow);
         fold(R.id.SaiPenPalmRow, R.id.SaiPenPalmBody, R.id.SaiPenPalmArrow);
+        fold(R.id.SaiPenHomeRow, R.id.SaiPenHomeBody, R.id.SaiPenHomeArrow);
         fold(R.id.SaiPenKeysRow, R.id.SaiPenKeysBody, R.id.SaiPenKeysArrow);
         fold(R.id.SaiPenGesturesRow, R.id.SaiPenGesturesBody, R.id.SaiPenGesturesArrow);
 
@@ -937,9 +941,24 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
         /* palm rejection: three checks, each on its own, all off by default */
         palmSwitch(R.id.SaiPenPalmAndroid, PalmFilter.PREF_PALM_ANDROID, FirstRun.PALM_ANDROID);
-        palmSwitch(R.id.SaiPenPalmPenNear, PalmFilter.PREF_PALM_PEN_NEAR, FirstRun.PALM_PEN_NEAR);
         palmSwitch(R.id.SaiPenPalmBig, PalmFilter.PREF_PALM_BIG, FirstRun.PALM_BIG);
+        palmSwitch(R.id.SaiPenPalmPenNear, PalmFilter.PREF_PALM_PEN_NEAR, FirstRun.PALM_PEN_NEAR);
+        /* the pen-near check can swallow two-finger gestures: a yellow note while it is on */
+        View penNearWarn = findViewById(R.id.SaiPenPalmPenNearWarn);
+        android.widget.CompoundButton penNear = findViewById(R.id.SaiPenPalmPenNear);
+        penNearWarn.setVisibility(penNear.isChecked() ? View.VISIBLE : View.GONE);
+        penNear.setOnCheckedChangeListener((v, on) -> {
+            prefs.edit().putBoolean(PalmFilter.PREF_PALM_PEN_NEAR, on).apply();
+            showPalmCount();
+            penNearWarn.setVisibility(on ? View.VISIBLE : View.GONE);
+        });
         showPalmCount();
+
+        /* the Drawings card's rows: recent drawings on, references and timelapses off */
+        homeSwitch(R.id.SaiPenHomeDrawings, PREF_HOME_DRAWINGS, true);
+        homeSwitch(R.id.SaiPenHomeRefs, PREF_HOME_REFERENCES, false);
+        homeSwitch(R.id.SaiPenHomeTimelapses, PREF_HOME_TIMELAPSES, false);
+        showHomeCount();
 
         /* on-screen keys over SAI: which keys, shortcuts, colour (FloatingKeysSettings) */
         TextView keysValue = findViewById(R.id.SaiPenKeysValue);
@@ -961,6 +980,24 @@ public class SaiLauncherActivity extends AppCompatActivity {
         if (prefs.getBoolean(PalmFilter.PREF_PALM_PEN_NEAR, FirstRun.PALM_PEN_NEAR)) on++;
         if (prefs.getBoolean(PalmFilter.PREF_PALM_BIG, FirstRun.PALM_BIG)) on++;
         ((TextView) findViewById(R.id.SaiPenPalmValue)).setText(getString(R.string.saipen_palm_on, on));
+    }
+
+    private void homeSwitch(int id, String pref, boolean byDefault) {
+        android.widget.CompoundButton b = findViewById(id);
+        b.setChecked(prefs.getBoolean(pref, byDefault));
+        b.setOnCheckedChangeListener((v, on) -> {
+            prefs.edit().putBoolean(pref, on).apply();
+            showHomeCount();
+            showRecent();
+        });
+    }
+
+    private void showHomeCount() {
+        int on = 0;
+        if (prefs.getBoolean(PREF_HOME_DRAWINGS, true)) on++;
+        if (prefs.getBoolean(PREF_HOME_REFERENCES, false)) on++;
+        if (prefs.getBoolean(PREF_HOME_TIMELAPSES, false)) on++;
+        ((TextView) findViewById(R.id.SaiPenHomeValue)).setText(getString(R.string.saipen_home_on, on));
     }
 
     private void palmSwitch(int id, String pref, boolean byDefault) {
@@ -1139,6 +1176,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         RadioGroup group = findViewById(R.id.SaiPenBuffer);
         TextView what = findViewById(R.id.SaiPenBufferWhat);
         TextView value = findViewById(R.id.SaiPenBufferValue);
+        View warn = findViewById(R.id.SaiPenBufferWarn);
         FrontBuffer.Mode current = FrontBuffer.readMode(getFilesDir());
         final FrontBuffer.Mode[] choices = {FrontBuffer.Mode.FRONT, FrontBuffer.Mode.WHILE_DRAWING, FrontBuffer.Mode.STANDARD};
         final int[] names = {R.string.saipen_buffer_front, R.string.saipen_buffer_drawing, R.string.saipen_buffer_standard};
@@ -1154,11 +1192,13 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 b.setChecked(true);
                 what.setText(whatText);
                 value.setText(name);
+                warn.setVisibility(mode == FrontBuffer.Mode.STANDARD ? View.GONE : View.VISIBLE);
             }
             b.setOnCheckedChangeListener((v, checked) -> {
                 if (!checked) return;
                 what.setText(whatText);
                 value.setText(name);
+                warn.setVisibility(mode == FrontBuffer.Mode.STANDARD ? View.GONE : View.VISIBLE);
                 if (!FrontBuffer.writeMode(getFilesDir(), mode)) Log.w(TAG, "screen drawing choice not saved");
             });
         }
@@ -1630,23 +1670,71 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
     private static final int RECENT_W_DP = 92, RECENT_H_DP = 120;
 
-    /** Fills the row of thumbnails in the Drawings card; tapping one opens it in SAI. */
+    /* Which rows the Drawings card shows (Settings, Start screen). */
+    static final String PREF_HOME_DRAWINGS = "home_show_drawings";
+    static final String PREF_HOME_REFERENCES = "home_show_references";
+    static final String PREF_HOME_TIMELAPSES = "home_show_timelapses";
+
+    /** Fills the Drawings card's rows of thumbnails: the newest drawings (a
+     *  tap opens one in SAI), and, when turned on, the reference pictures
+     *  (open in SAI too) and the timelapses (a tap plays one). */
     private void showRecent() {
         File folder = SaiPenSetup.drawingsFolder();
         int round = ++recentRound;
         int px = (int) (RECENT_H_DP * getResources().getDisplayMetrics().density);
+        boolean wantDrawings = prefs.getBoolean(PREF_HOME_DRAWINGS, true);
+        boolean wantRefs = prefs.getBoolean(PREF_HOME_REFERENCES, false);
+        boolean wantTimelapses = prefs.getBoolean(PREF_HOME_TIMELAPSES, false);
+        java.util.Set<String> hidden = DrawingFormats.parse(prefs.getString(DrawingFormats.PREF_HIDDEN, ""));
         thumbs.execute(() -> {
-            List<File> every = RecentDrawings.newest(folder, Integer.MAX_VALUE);
-            List<File> files = new ArrayList<>(every.subList(0, Math.min(every.size(), RecentDrawings.MAX)));
-            List<android.graphics.Bitmap> pictures = new ArrayList<>();
+            List<File> every = DrawingFormats.shown(RecentDrawings.newest(folder, Integer.MAX_VALUE), hidden);
+            /* references are the artist's, not drawings: their own row */
+            List<File> own = new ArrayList<>(), refs = new ArrayList<>();
+            for (File f : every) (RecentDrawings.isReference(f, folder) ? refs : own).add(f);
+            List<File> files = wantDrawings ? first(own) : new ArrayList<>();
+            List<File> refFiles = wantRefs ? first(refs) : new ArrayList<>();
+            List<android.graphics.Bitmap> pictures = new ArrayList<>(), refPictures = new ArrayList<>();
             for (File f : files) pictures.add(thumbnail(f, px));
+            for (File f : refFiles) refPictures.add(thumbnail(f, px));
+            List<DrawingLibrary.Drawing> videos = new ArrayList<>();
+            List<android.graphics.Bitmap> stills = new ArrayList<>();
+            if (wantTimelapses) {
+                try {
+                    for (DrawingLibrary.Drawing d : TimelapseShelf.load().newestFirst()) {
+                        if (videos.size() >= RecentDrawings.MAX) break;
+                        if (d.pieces.isEmpty() || !TimelapseShelf.joined(d, 0).isFile()) continue;
+                        videos.add(d);
+                        File still = TimelapseShelf.still(d);
+                        stills.add(still.isFile() ? pictureFile(still, px) : null);
+                    }
+                }
+                catch (RuntimeException e) {
+                    Log.w(TAG, "start screen: no timelapse list", e);
+                }
+            }
             ui.post(() -> {
                 if (round != recentRound || isDestroyed()) return;
-                fillRecent(files, pictures);
+                List<String> titles = new ArrayList<>(), refTitles = new ArrayList<>(), videoTitles = new ArrayList<>();
+                List<Runnable> taps = new ArrayList<>(), refTaps = new ArrayList<>(), videoTaps = new ArrayList<>();
+                for (File f : files) { titles.add(RecentDrawings.title(f)); taps.add(() -> openDrawing(f, null)); }
+                for (File f : refFiles) { refTitles.add(RecentDrawings.title(f)); refTaps.add(() -> openDrawing(f, null)); }
+                for (DrawingLibrary.Drawing d : videos) {
+                    videoTitles.add(d.title.isEmpty() ? d.folder : d.title);
+                    videoTaps.add(() -> TimelapsesDialog.play(this, d));
+                }
+                fillRow(R.id.SaiPenRecentScroll, R.id.SaiPenRecent, 0, titles, pictures, taps, R.string.saipen_recent_open);
+                fillRow(R.id.SaiPenRefsScroll, R.id.SaiPenRefs, R.id.SaiPenRefsLabel, refTitles, refPictures, refTaps,
+                        R.string.saipen_recent_open);
+                fillRow(R.id.SaiPenTlScroll, R.id.SaiPenTl, R.id.SaiPenTlLabel, videoTitles, stills, videoTaps, 0);
                 ((TextView) findViewById(R.id.SaiPenAllDrawingsValue))
                     .setText(every.isEmpty() ? "" : String.valueOf(every.size()));
             });
         });
+    }
+
+    /** The newest RecentDrawings.MAX of `files`. */
+    private static List<File> first(List<File> files) {
+        return new ArrayList<>(files.subList(0, Math.min(files.size(), RecentDrawings.MAX)));
     }
 
     /** "All drawings": every drawing, searched and sorted (DrawingsDialog). */
@@ -1664,10 +1752,18 @@ public class SaiLauncherActivity extends AppCompatActivity {
         return container == null ? null : container.getRootDir();
     }
 
-    /** The picture SAI keeps in the file, or null if it cannot be read. */
+    /** The drawing's picture, no bigger than about twice `maxPx` across: the
+     *  small one SAI or Photoshop keeps in a .sai2 or .psd/.psb, the picture
+     *  itself for .png, .jpg and .bmp. Null if it cannot be read, and for
+     *  .sai and .tga, which Android cannot show. */
     static android.graphics.Bitmap thumbnail(File drawing, int maxPx) {
         try {
-            byte[] jpeg = Sai2Thumb.jpeg(drawing);
+            String kind = DrawingFormats.of(drawing);
+            byte[] jpeg;
+            if (kind.equals("sai2")) jpeg = Sai2Thumb.jpeg(drawing);
+            else if (kind.equals("psd") || kind.equals("psb")) jpeg = PsdThumb.jpeg(drawing);
+            else if (kind.equals("png") || kind.equals("jpg") || kind.equals("bmp")) return pictureFile(drawing, maxPx);
+            else return null;
             android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
             o.inJustDecodeBounds = true;
             android.graphics.BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length, o);
@@ -1683,22 +1779,40 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
     }
 
-    private void fillRecent(List<File> files, List<android.graphics.Bitmap> pictures) {
-        View scroll = findViewById(R.id.SaiPenRecentScroll);
-        android.widget.LinearLayout row = findViewById(R.id.SaiPenRecent);
+    /** A picture file decoded no bigger than about twice `maxPx` across. */
+    static android.graphics.Bitmap pictureFile(File f, int maxPx) {
+        android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        android.graphics.BitmapFactory.decodeFile(f.getPath(), o);
+        if (o.outWidth <= 0 || o.outHeight <= 0) return null;
+        int sample = 1;
+        while (Math.max(o.outWidth, o.outHeight) / (sample * 2) >= maxPx) sample *= 2;
+        android.graphics.BitmapFactory.Options d = new android.graphics.BitmapFactory.Options();
+        d.inSampleSize = sample;
+        return android.graphics.BitmapFactory.decodeFile(f.getPath(), d);
+    }
+
+    /** One row of thumbnails with names under them; empty hides the row
+     *  and its label (`labelId`, 0 for none). `describe` reads "Open %s"
+     *  for a picture, 0 to use the name alone. */
+    private void fillRow(int scrollId, int rowId, int labelId, List<String> titles,
+                         List<android.graphics.Bitmap> pictures, List<Runnable> taps, int describe) {
+        View scroll = findViewById(scrollId);
+        android.widget.LinearLayout row = findViewById(rowId);
         row.removeAllViews();
-        scroll.setVisibility(files.isEmpty() ? View.GONE : View.VISIBLE);
+        scroll.setVisibility(titles.isEmpty() ? View.GONE : View.VISIBLE);
+        if (labelId != 0) findViewById(labelId).setVisibility(titles.isEmpty() ? View.GONE : View.VISIBLE);
         float dp = getResources().getDisplayMetrics().density;
-        for (int i = 0; i < files.size(); i++) {
-            File f = files.get(i);
-            String title = RecentDrawings.title(f);
+        for (int i = 0; i < titles.size(); i++) {
+            String title = titles.get(i);
+            Runnable tap = taps.get(i);
 
             android.widget.LinearLayout item = new android.widget.LinearLayout(this);
             item.setOrientation(android.widget.LinearLayout.VERTICAL);
             item.setBackgroundResource(R.drawable.saipen_row);
             item.setPadding((int) (4 * dp), (int) (4 * dp), (int) (4 * dp), (int) (4 * dp));
-            item.setContentDescription(getString(R.string.saipen_recent_open, title));
-            item.setOnClickListener(v -> openDrawing(f, null));
+            item.setContentDescription(describe != 0 ? getString(describe, title) : title);
+            item.setOnClickListener(v -> tap.run());
 
             android.widget.ImageView picture = new android.widget.ImageView(this);
             picture.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
@@ -2007,6 +2121,11 @@ public class SaiLauncherActivity extends AppCompatActivity {
     }
 
     /** (i): what SAI's settings folder is and what the two actions do. */
+    private void rowInfo(int title, int text) {
+        new AlertDialog.Builder(this, DIALOG_THEME).setTitle(title).setMessage(text)
+            .setPositiveButton(android.R.string.ok, null).show();
+    }
+
     private void brushesInfo() {
         new AlertDialog.Builder(this, DIALOG_THEME).setTitle(R.string.saipen_brushes_info_title)
             .setMessage(R.string.saipen_brushes_info_text)

@@ -62,6 +62,10 @@ public final class SpeedSession {
     /** How much you draw (DrawingStats), counted with the speed log on or off. */
     private volatile DrawingStats stats;
     private File statsFile;
+    /** Time per drawing (CanvasTime), and SAI's window title: it names the open canvas. */
+    private volatile CanvasTime canvas;
+    private File canvasFile;
+    private volatile String saiTitle;
     /** Seconds since the stats were last saved (saved every SAVE_EVERY ticks). */
     private int ticksSinceSave;
     private static final int SAVE_EVERY = 15;
@@ -128,6 +132,8 @@ public final class SpeedSession {
         s.header("frames: " + (p == null ? "?" : p.isPaced() ? "at most one per display refresh (vsync)" : "one per request (free)"));
         s.statsFile = new File(activity.getFilesDir(), DrawingStats.FILE);
         s.stats = DrawingStats.load(s.statsFile);
+        s.canvasFile = new File(activity.getFilesDir(), CanvasTime.FILE);
+        s.canvas = CanvasTime.load(s.canvasFile);
         s.cores = new SaiCores(new File("/proc"), SaiProcessWatch.commOf(exeName),
                                FastCores.find(new File("/sys/devices/system/cpu")),
                                SaiCores.readMode(activity.getFilesDir()), SaiCores::taskset, s::header);
@@ -146,8 +152,18 @@ public final class SpeedSession {
         xServer.windowManager.addOnWindowModificationListener(new WindowManager.OnWindowModificationListener() {
             @Override
             public void onMapWindow(Window window) {
-                if (!window.isDesktopWindow() && SaiStartup.isSaiTitle(window.getName()))
+                if (!window.isDesktopWindow() && SaiStartup.isSaiTitle(window.getName())) {
                     log.onSaiWindow(SystemClock.uptimeMillis());
+                    s.titleNow(window.getName());
+                }
+            }
+
+            /* SAI names the open canvas in its title: a new name, another canvas */
+            @Override
+            public void onModifyWindowProperty(Window window, com.winlator.xserver.Property property) {
+                if (window.isDesktopWindow()) return;
+                String name = window.getName();
+                if (SaiStartup.isSaiTitle(name)) s.titleNow(name);
             }
 
             @Override
@@ -207,7 +223,24 @@ public final class SpeedSession {
         }
     }
 
+    private void titleNow(String title) {
+        String was = saiTitle;
+        if (title.equals(was)) return;
+        saiTitle = title;
+        CanvasTime ct = canvas;
+        if (ct != null) ct.titleChanged(CanvasTime.key(was), CanvasTime.key(title), System.currentTimeMillis());
+    }
+
+    /** SAI wrote a file under SAI Drawings (SaiSession's watcher): `path`
+     *  relative to it. A new canvas saved under a name keeps its time. */
+    public static void fileSaved(String path) {
+        SpeedSession s = current;
+        CanvasTime ct = s == null ? null : s.canvas;
+        if (ct != null) ct.fileSaved(path, System.currentTimeMillis());
+    }
+
     private void saveStats() {
+        if (canvas != null && !canvas.saveIfChanged(canvasFile)) Log.w(TAG, "time per drawing not saved");
         if (stats != null && !stats.saveIfChanged(statsFile)) Log.w(TAG, "drawing stats not saved");
     }
 
@@ -276,6 +309,11 @@ public final class SpeedSession {
         if (nowTouching) s.penSinceTick = true;
         if (nowTouching) s.log.onPenDown(now, touchedAt);
         else s.log.onPenUp(now);
+        CanvasTime ct = s.canvas;
+        if (ct != null) {
+            if (nowTouching) ct.penDown(now / 1000.0);
+            else ct.penUp(now / 1000.0, CanvasTime.key(s.saiTitle), System.currentTimeMillis());
+        }
         DrawingStats st = s.stats;
         if (st != null) {
             if (nowTouching) st.penDown(now / 1000.0);
@@ -356,10 +394,9 @@ public final class SpeedSession {
         String fb = FrontBuffer.switchesWords();
         if (fb != null) s.log.note(SystemClock.uptimeMillis(), "front buffer: " + fb);
         s.log.finish(SystemClock.uptimeMillis());
-        if (s.stats != null) {
-            s.stats.cancel();
-            s.saveStats();
-        }
+        if (s.canvas != null) s.canvas.cancel();
+        if (s.stats != null) s.stats.cancel();
+        s.saveStats();
         if (s.file != null) {
             try {
                 s.file.close();

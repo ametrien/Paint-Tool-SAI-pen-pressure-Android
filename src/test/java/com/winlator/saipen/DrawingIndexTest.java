@@ -71,6 +71,28 @@ public class DrawingIndexTest {
     }
 
     @Test
+    public void hiddenKindsLeftOut() throws Exception {
+        drawing("a.sai2", 1);
+        drawing("b.png", 1);
+        drawing("c.jpeg", 1);
+        List<Entry> all = DrawingIndex.all(tmp.getRoot());
+        assertEquals(Arrays.asList("a"), titles(DrawingIndex.view(all, "", null, Sort.NAME, false,
+                                                                  DrawingFormats.parse("png,jpg"))));
+        assertEquals(Arrays.asList("a", "b.png", "c.jpeg"), titles(DrawingIndex.view(all, "", null, Sort.NAME)));
+    }
+
+    @Test
+    public void eachOrderFlips() throws Exception {
+        drawing("banana.sai2", 30);
+        drawing("Apple.sai2", 10);
+        drawing("cherry.sai2", 20);
+        List<Entry> all = DrawingIndex.all(tmp.getRoot());
+        assertEquals(Arrays.asList("banana", "Apple", "cherry"), titles(DrawingIndex.view(all, "", null, Sort.NEWEST, true)));
+        assertEquals(Arrays.asList("cherry", "banana", "Apple"), titles(DrawingIndex.view(all, "", null, Sort.NAME, true)));
+        assertEquals(Arrays.asList("Apple", "cherry", "banana"), titles(DrawingIndex.view(all, "", null, Sort.SIZE, true)));
+    }
+
+    @Test
     public void searchIgnoresCaseAndSpaces() throws Exception {
         drawing("Red Fox.sai2", 1);
         drawing("blue fox.sai2", 1);

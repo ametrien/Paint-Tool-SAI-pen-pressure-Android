@@ -256,6 +256,50 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
+            <!-- reference pictures and timelapses: each its own row, off until
+                 turned on under Settings, Start screen (showRecent) -->
+            <TextView
+                android:id="@+id/SaiPenRefsLabel"
+                style="@style/SaiPenNote"
+                android:layout_marginTop="12dp"
+                android:text="@string/saipen_home_references"
+                android:visibility="gone" />
+            <HorizontalScrollView
+                android:id="@+id/SaiPenRefsScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/SaiPenRefs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/SaiPenTlLabel"
+                style="@style/SaiPenNote"
+                android:layout_marginTop="12dp"
+                android:text="@string/saipen_home_timelapses"
+                android:visibility="gone" />
+            <HorizontalScrollView
+                android:id="@+id/SaiPenTlScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/SaiPenTl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
             <!-- every drawing, with search and sorting (DrawingsDialog) -->
             <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
             <LinearLayout android:id="@+id/SaiPenAllDrawings" style="@style/SaiPenActionRow">
@@ -369,19 +413,33 @@
 
                 <View style="@style/SaiPenDivider" />
                 <LinearLayout android:id="@+id/SaiPenPcSettings" style="@style/SaiPenActionRow">
-                    <LinearLayout style="@style/SaiPenRowText">
-                        <TextView style="@style/SaiPenRowTitle" android:layout_width="match_parent" android:layout_weight="0" android:text="@string/saipen_pc_settings" />
-                        <TextView style="@style/SaiPenRowSub" android:text="@string/saipen_pc_settings_short" />
-                    </LinearLayout>
+                    <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_pc_settings" />
+                    <ImageView
+                        android:id="@+id/SaiPenPcSettingsInfo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
+                        android:background="@drawable/saipen_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="@string/saipen_pc_settings"
+                        android:src="@drawable/ic_saipen_info" />
                     <TextView style="@style/SaiPenArrow" />
                 </LinearLayout>
 
                 <View style="@style/SaiPenDivider" />
                 <LinearLayout android:id="@+id/SaiPenAddBrushes" style="@style/SaiPenActionRow">
-                    <LinearLayout style="@style/SaiPenRowText">
-                        <TextView style="@style/SaiPenRowTitle" android:layout_width="match_parent" android:layout_weight="0" android:text="@string/saipen_add_pack" />
-                        <TextView style="@style/SaiPenRowSub" android:text="@string/saipen_add_pack_short" />
-                    </LinearLayout>
+                    <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_add_pack" />
+                    <ImageView
+                        android:id="@+id/SaiPenAddBrushesInfo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
+                        android:background="@drawable/saipen_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="@string/saipen_add_pack"
+                        android:src="@drawable/ic_saipen_info" />
                     <TextView style="@style/SaiPenArrow" />
                 </LinearLayout>
 
@@ -620,6 +678,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
 
+                <!-- yellow, while a front buffer choice is picked -->
+                <TextView
+                    android:id="@+id/SaiPenBufferWarn"
+                    style="@style/SaiPenNote"
+                    android:textColor="#FFB74D"
+                    android:text="@string/saipen_buffer_warn"
+                    android:visibility="gone" />
+
                 <TextView
                     android:id="@+id/SaiPenBufferWhat"
                     style="@style/SaiPenNote" />
@@ -752,6 +818,15 @@
                     android:textColor="?attr/colorPrimaryText" />
 
                 <Switch
+                    android:id="@+id/SaiPenPalmBig"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_palm_big"
+                    android:textColor="?attr/colorPrimaryText" />
+
+                <!-- last on purpose: it can get in the way of two-finger gestures -->
+                <Switch
                     android:id="@+id/SaiPenPalmPenNear"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -759,13 +834,13 @@
                     android:text="@string/saipen_palm_pen_near"
                     android:textColor="?attr/colorPrimaryText" />
 
-                <Switch
-                    android:id="@+id/SaiPenPalmBig"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="44dp"
-                    android:text="@string/saipen_palm_big"
-                    android:textColor="?attr/colorPrimaryText" />
+                <TextView
+                    android:id="@+id/SaiPenPalmPenNearWarn"
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="0dp"
+                    android:textColor="#FFB74D"
+                    android:text="@string/saipen_palm_pen_near_warn"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <View style="@style/SaiPenDivider" />
@@ -801,6 +876,48 @@
                 android:orientation="vertical"
                 android:paddingBottom="8dp"
                 android:visibility="gone" />
+
+            <View style="@style/SaiPenDivider" />
+
+            <!-- which rows of pictures the Drawings card shows -->
+            <LinearLayout android:id="@+id/SaiPenHomeRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_home_title" />
+                <TextView android:id="@+id/SaiPenHomeValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenHomeArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenHomeBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <Switch
+                    android:id="@+id/SaiPenHomeDrawings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_home_drawings"
+                    android:textColor="?attr/colorPrimaryText" />
+
+                <Switch
+                    android:id="@+id/SaiPenHomeRefs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_home_references_switch"
+                    android:textColor="?attr/colorPrimaryText" />
+
+                <Switch
+                    android:id="@+id/SaiPenHomeTimelapses"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_home_timelapses_switch"
+                    android:textColor="?attr/colorPrimaryText" />
+            </LinearLayout>
 
         </LinearLayout>
 

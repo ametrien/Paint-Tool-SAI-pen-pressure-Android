@@ -39,6 +39,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.preference.PreferenceManager;
 import androidx.core.content.FileProvider;
 
 import com.winlator.R;
@@ -72,7 +73,7 @@ import java.util.concurrent.RejectedExecutionException;
  * page: its picture larger, where it is, when it was saved, how big it is,
  * its timelapse if it has one, and Open in SAI and Share. The timelapse
  * shows as its last frame and plays in place while the pen hovers over it
- * (HoverVideo); a tap plays it in the device's player. A card whose drawing
+ * (HoverVideo); a tap plays it on the whole screen, inside the app. A card whose drawing
  * has a timelapse carries a small ▶. On a page, ‹ › or a sideways swipe
  * goes to the previous or next drawing of the cards, as in BrowseDialog.
  *
@@ -123,6 +124,10 @@ final class DrawingsDialog {
     private String query = "";
     private String folder = null;
     private Sort sort = Sort.NEWEST;
+    /** The kinds the artist hid (DrawingFormats); all shown by default. */
+    private Set<String> hiddenFormats;
+    /** A second tap on the chosen sort flips it: oldest first, Z to A, smallest first. */
+    private boolean reversed = false;
     /** The drawing whose page is open; null on the cards. */
     private Entry shown;
     /** Cards held to be deleted; selecting while not empty. */
@@ -265,15 +270,63 @@ final class DrawingsDialog {
                     refill();
                 }
             });
+            /* hidden behind a small button: a wide field was easy to hit by
+               accident with the pen, and it then waited for typing */
+            search.setVisibility(query.isEmpty() ? View.GONE : View.VISIBLE);
             top.addView(search, lp(-1, -2, 0, 0, 0, 10));
+            InputMethodManager ime = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            search.setOnFocusChangeListener((v, has) -> {
+                if (has || search.getText().length() > 0) return;
+                search.setVisibility(View.GONE);
+                if (ime != null) ime.hideSoftInputFromWindow(search.getWindowToken(), 0);
+            });
+            search.setOnEditorActionListener((v, action, ev) -> {
+                if (ime != null) ime.hideSoftInputFromWindow(search.getWindowToken(), 0);
+                search.clearFocus();
+                return true;
+            });
 
+            LinearLayout sortRow = new LinearLayout(activity);
+            sortRow.setGravity(Gravity.CENTER_VERTICAL);
             LinearLayout bar = new LinearLayout(activity);
             bar.setBackground(round(SURFACE, 10));
             bar.setPadding(dp(3), dp(3), dp(3), dp(3));
-            addSort(bar, R.string.saipen_sort_newest, Sort.NEWEST);
-            addSort(bar, R.string.saipen_sort_name, Sort.NAME);
-            addSort(bar, R.string.saipen_sort_size, Sort.SIZE);
-            top.addView(bar, lp(-1, -2, 0, 0, 0, 10));
+            addSort(bar, Sort.NEWEST);
+            addSort(bar, Sort.NAME);
+            addSort(bar, Sort.SIZE);
+            sortRow.addView(bar, new LinearLayout.LayoutParams(0, -2, 1f));
+            TextView find = text(16, true, TEXT2);
+            find.setText("⌕");
+            find.setGravity(Gravity.CENTER);
+            find.setBackground(round(SURFACE, 10));
+            find.setContentDescription(activity.getString(R.string.saipen_drawings_search));
+            find.setOnClickListener(v -> {
+                if (search.getVisibility() == View.VISIBLE && search.getText().length() == 0) {
+                    search.clearFocus();
+                    return;
+                }
+                search.setVisibility(View.VISIBLE);
+                search.requestFocus();
+                if (ime != null) ime.showSoftInput(search, InputMethodManager.SHOW_IMPLICIT);
+            });
+            sortRow.addView(find, lpw(dp(48), -1, 0, 8, 0, 0, 0));
+            top.addView(sortRow, lp(-1, -2, 0, 0, 0, 10));
+
+            List<File> files = new ArrayList<>();
+            for (Entry e : all) files.add(e.file);
+            List<String> formats = DrawingFormats.present(files);
+            if (formats.size() > 1) {
+                HorizontalScrollView hs = new HorizontalScrollView(activity);
+                hs.setHorizontalScrollBarEnabled(false);
+                LinearLayout chips = new LinearLayout(activity);
+                chips.setGravity(Gravity.CENTER_VERTICAL);
+                TextView label = text(13, false, TEXT3);
+                label.setText(R.string.saipen_formats_show);
+                chips.addView(label, lp(-2, -2, 0, 0, 8, 0));
+                for (String k : formats) chips.addView(formatChip(k), lp(-2, -2, 0, 0, 6, 0));
+                hs.addView(chips);
+                top.addView(hs, lp(-1, -2, 0, 0, 0, 10));
+            }
 
             List<String> folders = DrawingIndex.folders(all);
             if (folders.size() > 1) {
@@ -317,6 +370,18 @@ final class DrawingsDialog {
             }
         };
         grid.setAdapter(adapter);
+        /* scrolling the cards puts the search's keyboard away */
+        grid.setOnScrollListener(new android.widget.AbsListView.OnScrollListener() {
+            @Override public void onScrollStateChanged(android.widget.AbsListView v, int state) {
+                if (state != SCROLL_STATE_TOUCH_SCROLL) return;
+                View f = page.findFocus();
+                if (f == null) return;
+                InputMethodManager im = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (im != null) im.hideSoftInputFromWindow(f.getWindowToken(), 0);
+                f.clearFocus();
+            }
+            @Override public void onScroll(android.widget.AbsListView v, int first, int count, int total) {}
+        });
         page.addView(grid, new LinearLayout.LayoutParams(-1, 0, 1f));
         refill();
         if (cardsAt > 0 && cardsAt < list.size()) grid.setSelection(cardsAt);
@@ -331,26 +396,79 @@ final class DrawingsDialog {
         return Math.max(2, room / (dp(CARD_W_DP) + dp(10)));
     }
 
-    private void addSort(LinearLayout bar, int label, Sort s) {
+    /** The sort button: its name, and on the chosen one an arrow for the
+     *  direction, ↓ for the usual one (newest, A first, largest), ↑ flipped. */
+    private String sortLabel(Sort s, boolean chosen, boolean reversed) {
+        int name = s == Sort.NAME ? R.string.saipen_sort_name : s == Sort.SIZE ? R.string.saipen_sort_size
+                 : R.string.saipen_sort_date;
+        return activity.getString(name) + (chosen ? (reversed ? "  ↑" : "  ↓") : "");
+    }
+
+    /** What the chosen order means, under the buttons: "Newest first". */
+    private int sortMeaning() {
+        switch (sort) {
+            case NAME: return reversed ? R.string.saipen_sort_name_za : R.string.saipen_sort_name_az;
+            case SIZE: return reversed ? R.string.saipen_sort_size_small : R.string.saipen_sort_size_large;
+            default: return reversed ? R.string.saipen_sort_oldest : R.string.saipen_sort_newest;
+        }
+    }
+
+    private void addSort(LinearLayout bar, Sort s) {
         TextView t = text(14, true, s == sort ? Color.WHITE : TEXT2);
-        t.setText(label);
+        t.setText(sortLabel(s, s == sort, reversed));
         t.setGravity(Gravity.CENTER);
         t.setSingleLine();
         t.setPadding(dp(6), dp(8), dp(6), dp(8));
         if (s == sort) t.setBackground(round(ACCENT, 8));
         t.setOnClickListener(v -> {
-            if (sort == s) return;
-            sort = s;
+            if (sort == s) {
+                reversed = !reversed;
+            } else {
+                sort = s;
+                reversed = false;
+            }
             for (int i = 0; i < bar.getChildCount(); i++) {
                 TextView o = (TextView) bar.getChildAt(i);
                 boolean on = o == t;
                 o.setBackground(on ? round(ACCENT, 8) : null);
                 o.setTextColor(on ? Color.WHITE : TEXT2);
+                o.setText(sortLabel(Sort.values()[i], on, reversed));
             }
             refill();
             grid.setSelection(0);
         });
         bar.addView(t, new LinearLayout.LayoutParams(0, -2, 1f));
+    }
+
+    /** A kind of file: tap to hide it, tap again to show it. Remembered, and
+     *  the start screen's row follows. */
+    private TextView formatChip(String kind) {
+        boolean on = !hiddenFormats().contains(kind);
+        TextView c = text(13, on, on ? Color.WHITE : TEXT2);
+        c.setText("." + kind);
+        c.setSingleLine();
+        c.setBackground(round(on ? ACCENT : SURFACE, 16));
+        c.setPadding(dp(14), dp(7), dp(14), dp(7));
+        c.setOnClickListener(v -> {
+            Set<String> hidden = hiddenFormats();
+            if (!hidden.remove(kind)) hidden.add(kind);
+            PreferenceManager.getDefaultSharedPreferences(activity).edit()
+                .putString(DrawingFormats.PREF_HIDDEN, DrawingFormats.join(hidden)).apply();
+            boolean nowOn = !hidden.contains(kind);
+            c.setBackground(round(nowOn ? ACCENT : SURFACE, 16));
+            c.setTextColor(nowOn ? Color.WHITE : TEXT2);
+            c.setTypeface(null, nowOn ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            refill();
+            grid.setSelection(0);
+            activity.drawingsChanged();
+        });
+        return c;
+    }
+
+    private Set<String> hiddenFormats() {
+        if (hiddenFormats == null) hiddenFormats = DrawingFormats.parse(
+            PreferenceManager.getDefaultSharedPreferences(activity).getString(DrawingFormats.PREF_HIDDEN, ""));
+        return hiddenFormats;
     }
 
     private TextView chip(String label, String f) {
@@ -370,13 +488,14 @@ final class DrawingsDialog {
 
     /** The cards for the search, the order and the folder now chosen. */
     private void refill() {
-        list = DrawingIndex.view(all, query, folder, sort);
+        list = DrawingIndex.view(all, query, folder, sort, reversed, hiddenFormats());
         /* only what can be seen stays selected: Delete never takes a hidden one */
         Set<File> visible = new HashSet<>();
         for (Entry e : list) visible.add(e.file);
         if (selected.retainAll(visible) || !selected.isEmpty()) fillCardsHead();
         String n = activity.getResources().getQuantityString(R.plurals.saipen_n_drawings, list.size(), list.size());
         summary.setText(list.isEmpty() ? "" : n + " · " + Formatter.formatShortFileSize(activity, DrawingIndex.totalSize(list))
+                        + " · " + activity.getString(sortMeaning())
                         + " · " + activity.getString(R.string.saipen_drawings_hold_hint));
         summary.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
         empty.setText(all.isEmpty() ? R.string.saipen_drawings_none : R.string.saipen_drawings_none_found);
@@ -387,8 +506,11 @@ final class DrawingsDialog {
     /** One card, reused for another drawing as the grid scrolls. */
     private final class Card {
         final LinearLayout view = column();
-        final ImageView picture = new ImageView(activity);
+        /* the drawing's picture; with a timelapse, that plays under a hovering pen */
+        final HoverVideo picture = new HoverVideo(activity);
         final TextView badge = text(11, true, TEXT);
+        /* the file's kind, so .sai2, .png and .jpg side by side tell apart */
+        final TextView kind = text(11, true, TEXT);
         final TextView check = text(13, true, Color.WHITE);
         final TextView name = text(14, true, TEXT), line = text(12, false, TEXT3), where = text(12, false, TEXT3);
         Entry entry;
@@ -399,8 +521,8 @@ final class DrawingsDialog {
             /* a tap shows, as on the start screen's rows */
             view.setForeground(new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), null, round(Color.WHITE, 14)));
             view.setPadding(dp(8), dp(8), dp(8), dp(10));
-            picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
             picture.setBackground(round(0xFF24282C, 10));
+            picture.setClipToOutline(true);
             FrameLayout frame = new FrameLayout(activity);
             frame.addView(picture, new FrameLayout.LayoutParams(-1, -1));
             /* this drawing has a timelapse */
@@ -411,6 +533,11 @@ final class DrawingsDialog {
             FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
             bp.setMargins(dp(6), dp(6), dp(6), dp(6));
             frame.addView(badge, bp);
+            kind.setBackground(round(0xCC1B1E21, 10));
+            kind.setPadding(dp(7), dp(2), dp(7), dp(3));
+            FrameLayout.LayoutParams kp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
+            kp.setMargins(dp(6), dp(6), dp(6), dp(6));
+            frame.addView(kind, kp);
             /* while selecting: an empty ring, or a tick on the accent colour */
             check.setGravity(Gravity.CENTER);
             FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(dp(26), dp(26), Gravity.TOP | Gravity.START);
@@ -460,8 +587,11 @@ final class DrawingsDialog {
             boolean showWhere = folder == null && !e.folder.isEmpty();
             where.setText(showWhere ? e.folder : "");
             where.setVisibility(showWhere ? View.VISIBLE : View.INVISIBLE);
-            badge.setVisibility(videoOf.containsKey(e.file) ? View.VISIBLE : View.GONE);
-            picture.setImageBitmap(pictures.get(e.file));
+            kind.setText("." + DrawingFormats.of(e.file));
+            Drawing video = videoOf.get(e.file);
+            badge.setVisibility(video != null ? View.VISIBLE : View.GONE);
+            picture.setVideo(video == null ? null : TimelapseShelf.joined(video, 0));
+            picture.setStill(pictures.get(e.file));
             load(e.file, dp(CARD_PICTURE_DP));
             showSelection();
         }
@@ -589,7 +719,7 @@ final class DrawingsDialog {
                     for (int i = 0; i < grid.getChildCount(); i++) {
                         Object tag = grid.getChildAt(i).getTag();
                         if (tag instanceof Card && ((Card) tag).entry != null && ((Card) tag).entry.file.equals(f)) {
-                            ((Card) tag).picture.setImageBitmap(b);
+                            ((Card) tag).picture.setStill(b);
                         }
                     }
                 }
@@ -701,7 +831,22 @@ final class DrawingsDialog {
         fact(facts, R.string.saipen_drawing_folder, where, true);
         fact(facts, R.string.saipen_drawing_saved,
              DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(e.modified)), true);
-        fact(facts, R.string.saipen_drawing_size, Formatter.formatShortFileSize(activity, e.size), false);
+        fact(facts, R.string.saipen_drawing_size, Formatter.formatShortFileSize(activity, e.size), true);
+        fact(facts, R.string.saipen_drawing_format, "." + DrawingFormats.of(e.file), true);
+        /* time on it, counted from strokes while SAI showed it (CanvasTime) */
+        CanvasTime.Canvas spent = CanvasTime.load(new File(activity.getFilesDir(), CanvasTime.FILE))
+            .get(e.folder.isEmpty() ? e.file.getName() : e.folder + "/" + e.file.getName());
+        if (spent == null || spent.strokes == 0) {
+            fact(facts, R.string.saipen_drawing_time, activity.getString(R.string.saipen_drawing_time_none), false);
+        }
+        else {
+            fact(facts, R.string.saipen_drawing_time, minutes(spent.seconds) + " · "
+                 + activity.getResources().getQuantityString(R.plurals.saipen_strokes, spent.strokes, spent.strokes), true);
+            DateFormat day = DateFormat.getDateInstance(DateFormat.MEDIUM);
+            String firstDay = day.format(new Date(spent.first)), lastDay = day.format(new Date(spent.last));
+            fact(facts, R.string.saipen_drawing_when, firstDay.equals(lastDay) ? firstDay
+                 : activity.getString(R.string.saipen_date_range, firstDay, lastDay), false);
+        }
         info.addView(facts, lp(-1, -2, 0, 0, 0, 12));
 
         Drawing video = videoOf.get(e.file);
@@ -728,11 +873,14 @@ final class DrawingsDialog {
         sharePic.setOnClickListener(v -> share(e, true, shareFile, sharePic));
         shares.addView(shareFile, lpw(0, -2, 1f, 0, 0, 4, 0));
         shares.addView(sharePic, lpw(0, -2, 1f, 4, 0, 0, 0));
+        /* .sai and .tga have no picture Android can show */
+        String kind = DrawingFormats.of(e.file);
+        if (kind.equals("sai") || kind.equals("tga")) sharePic.setVisibility(View.GONE);
         info.addView(shares, lp(-1, -2, 0, 0, 0, 0));
     }
 
     /** The timelapse: its last frame, playing in place under a hovering
-     *  pen; a tap or Watch plays it in the device's player. */
+     *  pen; a tap or Watch plays it on the whole screen (VideoPlayerDialog). */
     private View timelapseBlock(Drawing video) {
         LinearLayout tl = column();
         tl.setBackground(round(SURFACE, 14));
@@ -790,6 +938,14 @@ final class DrawingsDialog {
         return BitmapFactory.decodeFile(f.getPath(), d);
     }
 
+    /** "1 h 5 min", "12 min", "under a minute". */
+    private String minutes(double seconds) {
+        int m = (int) Math.round(seconds / 60);
+        if (m < 1) return activity.getString(R.string.saipen_under_a_minute);
+        return m < 60 ? activity.getString(R.string.saipen_minutes_short, m)
+                      : activity.getString(R.string.saipen_hours_minutes_short, m / 60, m % 60);
+    }
+
     private void fact(LinearLayout into, int label, String value, boolean line) {
         LinearLayout row = new LinearLayout(activity);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -828,12 +984,22 @@ final class DrawingsDialog {
                 File dir = new File(activity.getFilesDir(), SHARE_DIR);
                 if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("no folder for sharing");
                 File out;
-                if (picture) {
+                String kind = DrawingFormats.of(e.file);
+                boolean isPicture = kind.equals("png") || kind.equals("jpg") || kind.equals("bmp");
+                String type = "application/octet-stream";
+                if (picture && isPicture) {
+                    /* already a picture: the file itself */
+                    out = new File(dir, e.file.getName());
+                    Files.copy(e.file.toPath(), out.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    type = kind.equals("png") ? "image/png" : kind.equals("bmp") ? "image/bmp" : "image/jpeg";
+                }
+                else if (picture) {
                     out = new File(dir, e.title + ".jpg");
-                    byte[] jpeg = Sai2Thumb.jpeg(e.file);
+                    byte[] jpeg = kind.equals("sai2") ? Sai2Thumb.jpeg(e.file) : PsdThumb.jpeg(e.file);
                     try (OutputStream o = new FileOutputStream(out)) {
                         o.write(jpeg);
                     }
+                    type = "image/jpeg";
                 }
                 else {
                     out = new File(dir, e.file.getName());
@@ -841,7 +1007,7 @@ final class DrawingsDialog {
                 }
                 Uri uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".FileProvider", out);
                 Intent send = new Intent(Intent.ACTION_SEND);
-                send.setType(picture ? "image/jpeg" : "application/octet-stream");
+                send.setType(type);
                 send.putExtra(Intent.EXTRA_STREAM, uri);
                 send.putExtra(Intent.EXTRA_TITLE, out.getName());
                 send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

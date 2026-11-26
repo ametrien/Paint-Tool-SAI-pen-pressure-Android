@@ -85,6 +85,8 @@ public final class SaiPenSetup {
          * in Windows "SAI Drawings", on the tablet Documents/SAI Drawings */
         File drawings = drawingsFolder();
         drawings.mkdirs();
+        /* a place for reference pictures, F:\References in SAI */
+        new File(drawings, RecentDrawings.REFERENCES).mkdirs();
         try {
             PrefixLinks.linkFolder(new File(driveC, "users/xuser/" + DRAWINGS), drawings);
         }

@@ -195,13 +195,19 @@ final class TimelapsesDialog {
         return card;
     }
 
-    /** Plays the drawing's joined video in the device's player; also from DrawingsDialog. */
+    /** Plays the drawing's joined video on the whole screen, inside the app
+     *  (VideoPlayerDialog); also from DrawingsDialog. */
     static void play(SaiLauncherActivity activity, Drawing d) {
         File video = TimelapseShelf.joined(d, 0);
         if (!video.isFile()) {
             Toast.makeText(activity, R.string.saipen_timelapse_missing, Toast.LENGTH_LONG).show();
             return;
         }
+        VideoPlayerDialog.show(activity, video, () -> playOutside(activity, video));
+    }
+
+    /** The video in the device's own player, from the in-app player's "Other app". */
+    static void playOutside(SaiLauncherActivity activity, File video) {
         android.media.MediaScannerConnection.scanFile(activity, new String[] {video.getPath()},
             new String[] {"video/mp4"}, (path, uri) -> activity.runOnUiThread(() -> {
                 if (uri == null) {

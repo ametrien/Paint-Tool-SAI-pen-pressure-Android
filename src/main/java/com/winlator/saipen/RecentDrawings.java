@@ -20,7 +20,12 @@ public final class RecentDrawings {
     /** Timelapse videos live under SAI Drawings; nothing to open in SAI there. */
     static final String SKIP = "Timelapses";
 
-    /** The newest .sai2 files under `folder`, newest first, at most `max`. */
+    /** Reference pictures the artist keeps under SAI Drawings: shown in All
+     *  drawings (under their folder), not in the start screen's row. */
+    public static final String REFERENCES = "References";
+
+    /** The newest drawings (every kind SAI opens, DrawingFormats) under
+     *  `folder`, newest first, at most `max`. */
     public static List<File> newest(File folder, int max) {
         List<File> all = new ArrayList<>();
         collect(folder, 0, all);
@@ -44,10 +49,16 @@ public final class RecentDrawings {
             if (f.isDirectory()) {
                 if (depth < DEPTH && !(depth == 0 && f.getName().equals(SKIP))) collect(f, depth + 1, out);
             }
-            else if (f.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".sai2") && f.length() > 0) {
+            else if (DrawingFormats.isDrawing(f) && f.length() > 0) {
                 out.add(f);
             }
         }
+    }
+
+    /** Whether `f` is in SAI Drawings/References (any depth below it). */
+    public static boolean isReference(File f, File drawingsFolder) {
+        String refs = new File(drawingsFolder, REFERENCES).getAbsolutePath() + "/";
+        return f.getAbsolutePath().regionMatches(true, 0, refs, 0, refs.length());
     }
 
     /**

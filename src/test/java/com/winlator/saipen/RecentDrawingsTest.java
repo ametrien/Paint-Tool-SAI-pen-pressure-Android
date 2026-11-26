@@ -49,16 +49,30 @@ public class RecentDrawingsTest {
     }
 
     @Test
-    public void onlySai2FilesAndNotTheTimelapses() throws Exception {
+    public void everyKindSaiOpensButNotTheTimelapses() throws Exception {
         File root = tmp.getRoot();
         drawing(root, "a.sai2");
         drawing(root, "B.SAI2");
         drawing(root, "picture.png");
         drawing(root, "old.sai");
+        drawing(root, "photo.JPEG");
+        drawing(root, "notes.txt");
+        drawing(root, "video.mp4");
         drawing(root, ".hidden.sai2");
         drawing(new File(root, "Timelapses"), "x.sai2");
+        drawing(new File(root, "Timelapses"), "y.png");
         Files.write(new File(root, "empty.sai2").toPath(), new byte[0]);
-        assertEquals(List.of("B.SAI2", "a.sai2"), names(RecentDrawings.newest(root, 12)));
+        assertEquals(List.of("photo.JPEG", "old.sai", "picture.png", "B.SAI2", "a.sai2"),
+                     names(RecentDrawings.newest(root, 12)));
+    }
+
+    @Test
+    public void referencesFolder() {
+        File root = new File("/sdcard/Documents/SAI Drawings");
+        assertEquals(true, RecentDrawings.isReference(new File(root, "References/face.jpg"), root));
+        assertEquals(true, RecentDrawings.isReference(new File(root, "references/hands/a.png"), root));
+        assertEquals(false, RecentDrawings.isReference(new File(root, "face.jpg"), root));
+        assertEquals(false, RecentDrawings.isReference(new File(root, "References old/face.jpg"), root));
     }
 
     @Test

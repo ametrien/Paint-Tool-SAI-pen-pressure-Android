@@ -1,0 +1,95 @@
+package com.winlator.saipen;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
+
+public class CanvasTimeTest {
+    private static final String SAI = "PaintTool SAI Ver.2 (64bit) Alpha.2026.11.20";
+
+    @Test
+    public void keyFromSaisTitle() {
+        assertEquals("NewCanvas2noga.sai2", CanvasTime.key(SAI + " - My Computer /  (F:) / NewCanvas2noga.sai2 (*)"));
+        assertEquals("NewCanvas2noga.sai2", CanvasTime.key(SAI + " - My Computer /  (F:) / NewCanvas2noga.sai2"));
+        assertEquals("comics/page 1/a b.sai2", CanvasTime.key(SAI + " - My Computer / (F:) / comics / page 1 / a b.sai2 (*)"));
+        assertEquals(":NewCanvas1", CanvasTime.key(SAI + " - NewCanvas1 (*)"));
+        assertNull(CanvasTime.key(SAI));
+        assertNull(CanvasTime.key(SAI + " - My Computer / (C:) / x.sai2"));
+        assertNull(CanvasTime.key("Open"));
+        assertNull(CanvasTime.key(null));
+    }
+
+    @Test
+    public void strokesAndShortPausesCount() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(100); t.penUp(102, "a.sai2", 1000);        // 2 s
+        t.penDown(110); t.penUp(111, "a.sai2", 2000);        // 1 s + 8 s pause
+        t.penDown(500); t.penUp(501, "a.sai2", 3000);        // 1 s, the long pause is not drawing
+        CanvasTime.Canvas c = t.get("a.sai2");
+        assertEquals(3, c.strokes);
+        assertEquals(12.0, c.seconds, 0.01);
+        assertEquals(1000, c.first);
+        assertEquals(3000, c.last);
+    }
+
+    @Test
+    public void aPauseBetweenTwoDrawingsCountsForNeither() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(1, "a.sai2", 1);
+        t.penDown(10); t.penUp(11, "b.sai2", 2);
+        assertEquals(1.0, t.get("b.sai2").seconds, 0.01);
+    }
+
+    @Test
+    public void noDrawingKnownCountsNothing() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(1, null, 1);
+        t.penDown(2); t.penUp(3, "a.sai2", 2);
+        assertEquals(1.0, t.get("a.sai2").seconds, 0.01);
+    }
+
+    @Test
+    public void unsavedCanvasMovesToTheFileItIsSavedAs() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(10, ":NewCanvas1", 1);
+        t.titleChanged(":NewCanvas1", "blanket.sai2", 50_000);
+        t.fileSaved("blanket.sai2", 52_000);
+        assertNull(t.get(":NewCanvas1"));
+        assertEquals(10.0, t.get("blanket.sai2").seconds, 0.01);
+        /* the next stroke continues the same drawing: its 10 s pause counts, 10 + 10 + 1 */
+        t.penDown(20); t.penUp(21, "blanket.sai2", 2);
+        assertEquals(21.0, t.get("blanket.sai2").seconds, 0.01);
+    }
+
+    @Test
+    public void fileWrittenFirstThenTitleMergesToo() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(5, ":NewCanvas1", 1);
+        t.fileSaved("x.sai2", 1_000);
+        t.titleChanged(":NewCanvas1", "x.sai2", 2_000);
+        assertEquals(5.0, t.get("x.sai2").seconds, 0.01);
+    }
+
+    @Test
+    public void aTabSwitchMovesNothing() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(5, ":NewCanvas1", 1);
+        t.titleChanged(":NewCanvas1", "old.sai2", 10_000);   // no file written
+        t.fileSaved("old.sai2", 100_000);                     // saved much later
+        assertEquals(5.0, t.get(":NewCanvas1").seconds, 0.01);
+        assertNull(t.get("old.sai2"));
+    }
+
+    @Test
+    public void fileRoundTrip() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(3, "comics/a b.sai2", 1700000000000L);
+        CanvasTime back = new CanvasTime();
+        back.parse(t.serialize());
+        CanvasTime.Canvas c = back.get("comics/a b.sai2");
+        assertEquals(1, c.strokes);
+        assertEquals(3.0, c.seconds, 0.01);
+        assertEquals(1700000000000L, c.first);
+    }
+}
