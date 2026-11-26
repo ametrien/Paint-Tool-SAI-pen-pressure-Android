@@ -87,8 +87,9 @@ public final class FloatingKeys {
      * title bar and menu */
     private static final float DEFAULT_EXIT_X = 1f, DEFAULT_EXIT_Y = 0.1f;
     /* SAI's own close button: #A00040 behind a white cross (from a tablet screenshot, 2026-11-26) */
-    private static final int EXIT_RED = Color.rgb(0xA0, 0x00, 0x40);
-    private static final int EXIT_RED_ASKING = Color.rgb(0xD8, 0x1B, 0x60);
+    /* as see-through as the keys' panel (COLORS_BACK, alpha 0xD8); the cross stays solid */
+    private static final int EXIT_RED = Color.argb(0xD8, 0xA0, 0x00, 0x40);
+    private static final int EXIT_RED_ASKING = Color.argb(0xD8, 0xD8, 0x1B, 0x60);
     /* where the dot is the first time: the right edge, a third down */
     private static final float DEFAULT_X = 1f, DEFAULT_Y = 0.35f;
     /* a press on the dot this long, without moving, hides it */
@@ -420,10 +421,10 @@ public final class FloatingKeys {
             final ExitTaps ownTaps = new ExitTaps();
             /* idle: SAI's cross, no words; asking: "Exit?" */
             android.graphics.drawable.Drawable idle = new android.graphics.drawable.LayerDrawable(
-                new android.graphics.drawable.Drawable[] {rounded(EXIT_RED, 10 * dp * exitScale), new Cross(2.5f * dp * exitScale)});
+                new android.graphics.drawable.Drawable[] {rounded(EXIT_RED, 8 * dp * exitScale), new Cross(2.2f * dp * exitScale)});
             exitOwn.setBackground(idle);
             Runnable tap = exitTap(ui, ownTaps, exitOwn, "", exitAsk,
-                idle, rounded(EXIT_RED_ASKING, 10 * dp * exitScale), closeSai);
+                idle, rounded(EXIT_RED_ASKING, 8 * dp * exitScale), closeSai);
             exitOwn.setOnTouchListener(dragger(activity, root, exitOwn, prefs, PREF_EXIT_X, PREF_EXIT_Y,
                 keepExitInside, tap, null));
             root.addView(exitOwn, new FrameLayout.LayoutParams(
@@ -471,14 +472,15 @@ public final class FloatingKeys {
         t.setText("");
         t.setContentDescription(label);
         t.setTextColor(Color.WHITE);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14 * scale);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12 * scale);
         t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         t.setGravity(Gravity.CENTER);
         t.setSingleLine(true);
-        int side = (int) (56 * dp * scale);
+        /* 42 dp: a quarter smaller than the first 56 (owner, 2026-11-26); no
+           shadow, like the keys' panel, so the see-through red stays clean */
+        int side = (int) (42 * dp * scale);
         t.setWidth(side);
         t.setHeight(side);
-        t.setElevation(4 * dp);
         return t;
     }
 

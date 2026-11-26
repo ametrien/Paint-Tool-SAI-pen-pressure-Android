@@ -11,7 +11,7 @@ public final class ExitButtonSize {
     public static final int SMALL = 0, MEDIUM = 1, LARGE = 2;
     public static final int BY_DEFAULT = MEDIUM;
 
-    /** The button's size against medium (56 x 56 dp). */
+    /** The button's size against medium (42 x 42 dp). */
     private static final float[] SCALES = {0.75f, 1f, 1.4f};
 
     private ExitButtonSize() {}
