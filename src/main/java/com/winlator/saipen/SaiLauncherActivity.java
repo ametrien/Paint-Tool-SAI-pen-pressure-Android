@@ -267,7 +267,6 @@ public class SaiLauncherActivity extends AppCompatActivity {
             catch (Exception ignored) {}
         }
 
-        capWidth();
         fold(R.id.SaiPenLanguageRow, R.id.SaiPenLanguageBody, R.id.SaiPenLanguageArrow);
         fold(R.id.SaiPenSharpnessRow, R.id.SaiPenSharpnessBody, R.id.SaiPenSharpnessArrow);
         fold(R.id.SaiPenCoresRow, R.id.SaiPenCoresBody, R.id.SaiPenCoresArrow);
@@ -284,19 +283,6 @@ public class SaiLauncherActivity extends AppCompatActivity {
             CheatSheetDialog.show(this, prefs);
 
         startup();
-    }
-
-    /** On a wide screen (a tablet held sideways) the cards keep a phone-like
-     *  width in the middle instead of stretching edge to edge. */
-    private void capWidth() {
-        View content = findViewById(R.id.SaiPenContent);
-        float dp = getResources().getDisplayMetrics().density;
-        int max = (int) (640 * dp);
-        if (getResources().getDisplayMetrics().widthPixels > max) {
-            android.widget.FrameLayout.LayoutParams lp = (android.widget.FrameLayout.LayoutParams) content.getLayoutParams();
-            lp.width = max;
-            content.setLayoutParams(lp);
-        }
     }
 
     /** A settings row that opens or closes what is under it; the arrow turns down when open. */

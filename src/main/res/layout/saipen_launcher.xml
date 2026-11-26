@@ -12,8 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-    <!-- width capped in code on a wide screen, so the cards don't stretch -->
-    <LinearLayout
+    <!-- at most 640 dp wide on a wide screen, so the cards don't stretch -->
+    <com.winlator.saipen.MaxWidthLinearLayout
         android:id="@+id/SaiPenContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -868,6 +868,6 @@
             style="@style/SaiPenNote"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="6dp" />
-    </LinearLayout>
+    </com.winlator.saipen.MaxWidthLinearLayout>
     </FrameLayout>
 </ScrollView>
