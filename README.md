@@ -285,7 +285,18 @@ every SAI on the device, newest first, with the one in use marked. Tap the one y
 <details>
 <summary><b>How do I get the dark interface?</b></summary>
 
-That's SAI's own setting, in builds since July 2026: **Window > Window Color > Dark Colors**.
+That's SAI's own setting, but only in the **Alpha** builds: **Window > Window Color > Dark Colors**.
+
+SYSTEMAX's [download page](https://www.systemax.jp/en/sai/devdept.html) has two SAI Ver.2 builds:
+
+- **Technical Preview Stable Version** (2026-07-02b), at the top: the last one before SAI's big
+  renovation. It has no dark colours. Its title bar says *Preview.2026.07.02b*.
+- **Technical Preview Major Renovated Version**, lower on the page: the newer line, with the dark
+  colours. Its file name and title bar say *Alpha*, like *Alpha.2026.10.19*. SYSTEMAX notes that
+  files and shortcut keys saved with it don't work in older builds.
+
+Both work with SAI Pen. Already using the stable one? Download the Alpha (**64bit**), unzip it,
+then tap **Change SAI…** on SAI Pen's screen (see the answer above).
 
 <img src="docs/images/sai-dark-colors.png" width="600" alt="SAI's Window menu: Window Color, with Dark Colors and Light Colors">
 
