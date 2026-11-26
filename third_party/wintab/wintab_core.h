@@ -517,6 +517,38 @@ static int wtc_press_file_due(int port_ours, uint32_t now, uint32_t last_datagra
     return (uint32_t)(now - last_read) >= WTC_POLL_PRESS_LIVE_MS;
 }
 
+/* PEN THREAD WAIT (2026-11-26). The producer blocks in recv() on the pen port
+ * with a receive timeout. A datagram wakes it AT ONCE, whatever the timeout,
+ * so the timeout never delays a pen sample, a zoom or a wake: it only sets how
+ * often the housekeeping runs while nothing arrives.
+ *
+ * It used to be 15 ms all the time: about 67 wake-ups a second with SAI open
+ * and the pen on the table. Each timeout is Wine socket code plus wineserver
+ * round trips; under Box64 on Android all of it is emulated, and with SAI open
+ * and nothing drawn SAI and wineserver used about 12 % of a core each.
+ *
+ * The quick tick is needed only around pen use: the last point delivered once
+ * SAI catches up (flush_pending, while `pending`), the stroke-start hold's time
+ * limit, the timelapse noticing a stroke ended (30 ms of zero pressure), the
+ * stroke-start trace. And while datagrams keep coming (a pen hovering still is
+ * re-sent every 50 ms), housekeeping runs only in the gaps between them, so a
+ * long wait there would starve it. Hence: the short wait while something is
+ * pending or for WTC_RECV_BUSY_FOR_MS after the last datagram, the long one
+ * otherwise. `have_activity` is 0 until the first datagram: a tick count is no
+ * "never" (it can be small just after the device booted).
+ *
+ * The long wait is the pace of the slowest-but-one housekeeping job (the sample
+ * file, four times a second), so that one and the once-a-second ones (status
+ * file, wake file, screens) keep their pace. */
+#define WTC_RECV_WAIT_BUSY_MS  15
+#define WTC_RECV_WAIT_IDLE_MS  250
+#define WTC_RECV_BUSY_FOR_MS   2000
+static uint32_t wtc_recv_wait_ms(int pending, int have_activity, uint32_t now, uint32_t last_activity) {
+    if (pending) return WTC_RECV_WAIT_BUSY_MS;
+    if (have_activity && (uint32_t)(now - last_activity) < WTC_RECV_BUSY_FOR_MS) return WTC_RECV_WAIT_BUSY_MS;
+    return WTC_RECV_WAIT_IDLE_MS;
+}
+
 /* PEN PORT RETRY. The producer binds 127.0.0.1:47800 to receive the helper's
  * samples. Until 2026-11-11 it tried once, at load: if anything else held the
  * port (a leftover probe did), SAI stayed in "file mode only" for the whole
