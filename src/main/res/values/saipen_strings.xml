@@ -216,6 +216,8 @@
     <string name="saipen_stat_streak">In a row</string>
     <string name="saipen_section_drawings">Drawings</string>
     <string name="saipen_drawings_short">In SAI, save to drive F:. On the tablet it is Documents/SAI Drawings.</string>
+    <string name="saipen_recent_open">Open %1$s in SAI</string>
+    <string name="saipen_recent_not_ready">SAI is not ready yet</string>
     <string name="saipen_section_brushes">Brushes and textures</string>
     <string name="saipen_section_licence">SAI licence</string>
     <string name="saipen_section_timelapse">Timelapse</string>

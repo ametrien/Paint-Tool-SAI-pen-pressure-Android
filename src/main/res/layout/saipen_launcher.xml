@@ -242,6 +242,22 @@
                 style="@style/SaiPenBody"
                 android:text="@string/saipen_drawings_short" />
 
+            <!-- the newest drawings, filled in by SaiLauncherActivity.showRecent -->
+            <HorizontalScrollView
+                android:id="@+id/SaiPenRecentScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/SaiPenRecent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
             <Button
                 android:id="@+id/SaiPenOpenDrawings"
                 style="@style/SaiPenButton"

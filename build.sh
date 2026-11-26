@@ -165,7 +165,7 @@ rsync -a "$HERE/src/main/java/" "$APP/main/java/"
 rsync -a --exclude values-ru/ "$HERE/src/main/res/" "$APP/main/res/"
 mkdir -p "$APP/test/java" "$APP/test/resources" "$APP/main/assets/saipen"
 rsync -a "$HERE/src/test/java/" "$APP/test/java/"
-cp "$HERE/tests/fixtures/android-pen-wire.txt" "$APP/test/resources/"
+cp "$HERE/tests/fixtures/android-pen-wire.txt" "$HERE/tests/fixtures/sai2-thumb.sai2" "$APP/test/resources/"
 cp "$HERE/src/test/resources/winlator-SystemLink.reg" "$APP/test/resources/"
 cp "$HERE/third_party/wintab/wintab32.dll" "$APP/main/assets/saipen/wintab32.dll"
 # our winhandler.exe, in place of Winlator's (whose source is not published)

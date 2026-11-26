@@ -105,6 +105,11 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler ui = new Handler(Looper.getMainLooper());
+    /** Reads the drawings' thumbnails; apart from `worker`, which may be busy unpacking Wine. */
+    private final ExecutorService thumbs = Executors.newSingleThreadExecutor();
+    private int recentRound;
+    /** A drawing tapped in the row of recent ones: SAI opens it (launchNow). */
+    private File drawingToOpen;
     private SharedPreferences prefs;
     private TextView tvStatus, tvSaiPath, tvLicenceHint;
     /** The licence line: its number behind a spoiler, so a screenshot of
@@ -221,7 +226,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
         btnDiscardFrames.setOnClickListener(v -> askDiscardFrames());
         findViewById(R.id.SaiPenOpenTimelapses).setOnClickListener(v -> openTimelapses());
 
-        btnStart.setOnClickListener(v -> launch());
+        btnStart.setOnClickListener(v -> {
+            drawingToOpen = null;
+            launch();
+        });
         btnUnzip.setOnClickListener(v -> unzip());
         /* one button for "another SAI": with SAI found it lists every SAI
          * on the device and "choose the folder myself"; without, it is the
@@ -301,6 +309,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         showVideoButton();
         showStats();
         showReadiness();
+        showRecent();
         /* back from SAI: go on making the browser's previews */
         File settings = SaiPenSetup.settingsFolder();
         if (container != null && BrushImport.hasSaiSettings(settings)) BrowseThumbs.get(this).start(settings, false);
@@ -715,6 +724,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         worker.shutdown();
+        thumbs.shutdownNow();
     }
 
     /* ---- first run: files permission, Wine, the container ---- */
@@ -1623,6 +1633,96 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
     private boolean packingBeforeStart;
 
+    /* ---- the newest drawings (RecentDrawings, Sai2Thumb) ---- */
+
+    private static final int RECENT_W_DP = 92, RECENT_H_DP = 120;
+
+    /** Fills the row of thumbnails in the Drawings card; tapping one opens it in SAI. */
+    private void showRecent() {
+        File folder = SaiPenSetup.drawingsFolder();
+        int round = ++recentRound;
+        int px = (int) (RECENT_H_DP * getResources().getDisplayMetrics().density);
+        thumbs.execute(() -> {
+            List<File> files = RecentDrawings.newest(folder, RecentDrawings.MAX);
+            List<android.graphics.Bitmap> pictures = new ArrayList<>();
+            for (File f : files) pictures.add(thumbnail(f, px));
+            ui.post(() -> {
+                if (round == recentRound && !isDestroyed()) fillRecent(files, pictures);
+            });
+        });
+    }
+
+    /** The picture SAI keeps in the file, or null if it cannot be read. */
+    private static android.graphics.Bitmap thumbnail(File drawing, int maxPx) {
+        try {
+            byte[] jpeg = Sai2Thumb.jpeg(drawing);
+            android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            android.graphics.BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length, o);
+            int sample = 1;
+            while (Math.max(o.outWidth, o.outHeight) / (sample * 2) >= maxPx) sample *= 2;
+            o = new android.graphics.BitmapFactory.Options();
+            o.inSampleSize = sample;
+            return android.graphics.BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length, o);
+        }
+        catch (IOException | RuntimeException e) {
+            Log.w(TAG, "no thumbnail for " + drawing.getName() + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void fillRecent(List<File> files, List<android.graphics.Bitmap> pictures) {
+        View scroll = findViewById(R.id.SaiPenRecentScroll);
+        android.widget.LinearLayout row = findViewById(R.id.SaiPenRecent);
+        row.removeAllViews();
+        scroll.setVisibility(files.isEmpty() ? View.GONE : View.VISIBLE);
+        float dp = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < files.size(); i++) {
+            File f = files.get(i);
+            String title = RecentDrawings.title(f);
+
+            android.widget.LinearLayout item = new android.widget.LinearLayout(this);
+            item.setOrientation(android.widget.LinearLayout.VERTICAL);
+            item.setBackgroundResource(R.drawable.saipen_row);
+            item.setPadding((int) (4 * dp), (int) (4 * dp), (int) (4 * dp), (int) (4 * dp));
+            item.setContentDescription(getString(R.string.saipen_recent_open, title));
+            item.setOnClickListener(v -> openDrawing(f));
+
+            android.widget.ImageView picture = new android.widget.ImageView(this);
+            picture.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            picture.setBackgroundResource(R.drawable.saipen_tile);
+            int pad = (int) (3 * dp);
+            picture.setPadding(pad, pad, pad, pad);
+            if (pictures.get(i) != null) picture.setImageBitmap(pictures.get(i));
+            item.addView(picture, new android.widget.LinearLayout.LayoutParams(
+                (int) (RECENT_W_DP * dp), (int) (RECENT_H_DP * dp)));
+
+            TextView name = new TextView(this);
+            name.setText(title);
+            name.setTextSize(12);
+            name.setTextColor(StatisticsDialog.TEXT2);
+            name.setSingleLine(true);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            name.setPadding(0, (int) (4 * dp), 0, 0);
+            item.addView(name, new android.widget.LinearLayout.LayoutParams(
+                (int) (RECENT_W_DP * dp), android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMarginEnd((int) (6 * dp));
+            row.addView(item, lp);
+        }
+    }
+
+    private void openDrawing(File drawing) {
+        if (container == null || saiDir == null) {
+            Toast.makeText(this, R.string.saipen_recent_not_ready, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        drawingToOpen = drawing;
+        launch();
+    }
+
     /** Frames left from an earlier SAI start are packed into their own
      *  folder first: the DLL numbers frames from 1 again and would write
      *  over them (2026-11-23). */
@@ -1699,6 +1799,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
         Intent intent = new Intent(this, XServerDisplayActivity.class);
         intent.putExtra("container_id", container.id);
         intent.putExtra("exec_path", f.exe().getPath());
+        String windowsPath = drawingToOpen != null
+            ? RecentDrawings.windowsPath(drawingToOpen, SaiPenSetup.drawingsFolder()) : null;
+        /* XServerDisplayActivity puts it after SAI's name on Wine's command line (winlator.patch) */
+        if (windowsPath != null) intent.putExtra("exec_args", "\"" + windowsPath + "\"");
         startActivity(intent);
         finish();
     }
