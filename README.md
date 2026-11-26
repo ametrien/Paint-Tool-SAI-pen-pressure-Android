@@ -621,6 +621,37 @@ you use, it needs a pen with pressure: [check a pen in a minute](#check-a-pen-in
 </details>
 
 <details>
+<summary><b>Why does SAI take so long to start?</b></summary>
+
+How long SAI takes to open depends mostly on the processor. Measured from tapping **Start SAI**
+until SAI is open:
+
+| Device | Processor | Fastest core | SAI starts in |
+|---|---|---|---|
+| Galaxy S24 Ultra | Snapdragon 8 Gen 3 | Cortex-X4, 3.4 GHz | about 5 s |
+| Galaxy Tab S6 Lite (2022) | Snapdragon 720G | Cortex-A76, 2.3 GHz (2 fast + 6 slow cores) | about 21 s |
+
+Why it takes so long (our best understanding, not measured step by step yet):
+
+- **Almost all of the start runs on one core at a time.** Wine (the layer that runs Windows
+  programs) starts its parts one after another, each waiting for the one before. That's why the
+  speed of one core matters, not how many cores there are.
+- **SAI's code is translated on every start.** SAI and Wine are made for PC processors (x86), and
+  Box64 translates their code for your phone's or tablet's processor (ARM) while they run. Nothing
+  is kept between starts, so this happens again every time, and it is heavy work for a slow core.
+- **Storage and RAM.** At the start Wine reads hundreds of megabytes of files. Cheaper tablets have
+  slower storage (eMMC instead of UFS) and less RAM, so this takes longer too.
+
+**To guess how fast SAI will start on your device**, look up its processor's single-core score,
+for example in Geekbench 6: the Snapdragon 8 Gen 3 scores about 2200, the Snapdragon 720G about 550,
+about 4 times less, close to 5 s vs 21 s. A processor with half the S24 Ultra's single-core score
+will likely start SAI in about 10 s. Only a rough guide: storage, RAM and what else is running
+change it a bit. The same single-core speed also decides how smoothly you draw: see
+[Which device should I use](#which-device-should-i-use-so-that-sai-doesnt-lag).
+
+</details>
+
+<details>
 <summary><b>The APK won't install</b></summary>
 
 Android only installs apps from outside the Play Store after you allow it: it asks once for your
