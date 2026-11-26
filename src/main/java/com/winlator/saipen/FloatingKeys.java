@@ -87,9 +87,9 @@ public final class FloatingKeys {
      * title bar and menu */
     private static final float DEFAULT_EXIT_X = 1f, DEFAULT_EXIT_Y = 0.1f;
     /* SAI's own close button: #A00040 behind a white cross (from a tablet screenshot, 2026-11-26) */
-    /* as see-through as the keys' panel (COLORS_BACK, alpha 0xD8); the cross stays solid */
-    private static final int EXIT_RED = Color.argb(0xD8, 0xA0, 0x00, 0x40);
-    private static final int EXIT_RED_ASKING = Color.argb(0xD8, 0xD8, 0x1B, 0x60);
+    /* as see-through as the keys' panel: both follow KeysOpacity; the cross stays solid */
+    private static final int EXIT_RED = Color.rgb(0xA0, 0x00, 0x40);
+    private static final int EXIT_RED_ASKING = Color.rgb(0xD8, 0x1B, 0x60);
     /* where the dot is the first time: the right edge, a third down */
     private static final float DEFAULT_X = 1f, DEFAULT_Y = 0.35f;
     /* a press on the dot this long, without moving, hides it */
@@ -178,7 +178,9 @@ public final class FloatingKeys {
 
         final LinearLayout panel = new LinearLayout(activity);
         panel.setOrientation(LinearLayout.HORIZONTAL);
-        panel.setBackground(rounded(COLORS_BACK[color], 12 * dp));
+        /* how solid the keys and the red Exit SAI are: one choice for both */
+        final int opacity = KeysOpacity.of(prefs.getInt(KeysOpacity.PREF, KeysOpacity.BY_DEFAULT));
+        panel.setBackground(rounded(KeysOpacity.apply(COLORS_BACK[color], opacity), 12 * dp));
         int pad = (int) (3 * dp);
         panel.setPadding(pad, pad, pad, pad);
 
@@ -421,10 +423,10 @@ public final class FloatingKeys {
             final ExitTaps ownTaps = new ExitTaps();
             /* idle: SAI's cross, no words; asking: "Exit?" */
             android.graphics.drawable.Drawable idle = new android.graphics.drawable.LayerDrawable(
-                new android.graphics.drawable.Drawable[] {rounded(EXIT_RED, 8 * dp * exitScale), new Cross(2.2f * dp * exitScale)});
+                new android.graphics.drawable.Drawable[] {rounded(KeysOpacity.apply(EXIT_RED, opacity), 8 * dp * exitScale), new Cross(2.2f * dp * exitScale)});
             exitOwn.setBackground(idle);
             Runnable tap = exitTap(ui, ownTaps, exitOwn, "", exitAsk,
-                idle, rounded(EXIT_RED_ASKING, 8 * dp * exitScale), closeSai);
+                idle, rounded(KeysOpacity.apply(EXIT_RED_ASKING, opacity), 8 * dp * exitScale), closeSai);
             exitOwn.setOnTouchListener(dragger(activity, root, exitOwn, prefs, PREF_EXIT_X, PREF_EXIT_Y,
                 keepExitInside, tap, null));
             root.addView(exitOwn, new FrameLayout.LayoutParams(

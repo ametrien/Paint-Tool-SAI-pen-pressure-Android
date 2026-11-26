@@ -13,6 +13,7 @@
     <string name="saipen_keys_remove">Remove</string>
     <string name="saipen_keys_add_title">A new button</string>
     <string name="saipen_keys_add_ok">Add</string>
+    <string name="saipen_keys_opacity_note">Opacity (the keys and the red Exit SAI):</string>
     <string name="saipen_keys_color_note">Colour:</string>
     <!-- the dot's label when Ctrl is not among the keys -->
     <string name="saipen_keys_dot">Keys</string>

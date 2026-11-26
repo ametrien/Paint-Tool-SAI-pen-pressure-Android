@@ -207,6 +207,28 @@ public final class FloatingKeysSettings {
             swatches.addView(s, lp);
         }
         paint[0].run();
+
+        /* how solid: the panel and the red Exit SAI together */
+        body.addView(note(a, R.string.saipen_keys_opacity_note));
+        final RadioGroup solid = new RadioGroup(a);
+        solid.setOrientation(RadioGroup.HORIZONTAL);
+        int chosenOpacity = KeysOpacity.of(prefs.getInt(KeysOpacity.PREF, KeysOpacity.BY_DEFAULT));
+        for (int percent : KeysOpacity.CHOICES) {
+            RadioButton r = new RadioButton(a);
+            r.setText(percent + "%");
+            r.setTextColor(textColor);
+            r.setId(View.generateViewId());
+            r.setMinHeight((int) (40 * dp));
+            r.setPadding(r.getPaddingLeft(), 0, (int) (12 * dp), 0);
+            solid.addView(r);
+            if (percent == chosenOpacity) solid.check(r.getId());
+            r.setOnCheckedChangeListener((b, on) -> {
+                if (!on) return;
+                prefs.edit().putInt(KeysOpacity.PREF, percent).apply();
+                changed.run();
+            });
+        }
+        body.addView(solid);
     }
 
     interface OnButton { void picked(Shortcut s); }
