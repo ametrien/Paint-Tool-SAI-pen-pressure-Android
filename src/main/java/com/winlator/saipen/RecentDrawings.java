@@ -56,6 +56,18 @@ public final class RecentDrawings {
         return "F:\\" + path.substring(root.length() + 1).replace('/', '\\');
     }
 
+    /**
+     * `windowsPath` as one argument on the command line Winlator starts Wine
+     * with (ProcessHelper.splitCommand): a backslash before each space, no
+     * quotes. Quotes stay part of the argument there and reached SAI as part
+     * of the name: "Cannot open the canvas ... This file extension is not
+     * supported" for "F:\x.sai2" (2026-11-26). The /dir folder is passed the
+     * same way (StringUtils.escapeDOSPath).
+     */
+    public static String commandLineArg(String windowsPath) {
+        return windowsPath.replace(" ", "\\ ");
+    }
+
     /** The name to show under a thumbnail: without ".sai2". */
     public static String title(File drawing) {
         String n = drawing.getName();

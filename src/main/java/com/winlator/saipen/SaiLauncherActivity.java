@@ -1802,7 +1802,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         String windowsPath = drawingToOpen != null
             ? RecentDrawings.windowsPath(drawingToOpen, SaiPenSetup.drawingsFolder()) : null;
         /* XServerDisplayActivity puts it after SAI's name on Wine's command line (winlator.patch) */
-        if (windowsPath != null) intent.putExtra("exec_args", "\"" + windowsPath + "\"");
+        if (windowsPath != null) intent.putExtra("exec_args", RecentDrawings.commandLineArg(windowsPath));
         startActivity(intent);
         finish();
     }

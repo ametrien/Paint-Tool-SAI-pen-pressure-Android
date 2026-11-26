@@ -83,6 +83,29 @@ public class RecentDrawingsTest {
         assertNull(RecentDrawings.windowsPath(new File("/storage/emulated/0/Documents/SAI Drawings2/x.sai2"), root));
     }
 
+    /** What SAI gets: the argument after Winlator's own splitting of the
+     *  command line (winhandler.exe then quotes it again for SAI). */
+    private static String lastArgument(String arg) {
+        String command = "box64 wine explorer /desktop=shell,1920x1080 C:\\windows\\winhandler.exe"
+            + " /dir S:\\ \"sai2.exe\" " + arg;
+        String[] parts = com.winlator.core.ProcessHelper.splitCommand(command);
+        return parts[parts.length - 1];
+    }
+
+    @Test
+    public void drawingReachesSaiAsOneArgumentWithoutQuotes() {
+        for (String path : new String[]{"F:\\x.sai2", "F:\\New Canvas.sai2", "F:\\fd trvr fxbfdvre.sai2",
+                                        "F:\\comics\\page  2\\a b.sai2", "F:\\ starts with a space.sai2"}) {
+            assertEquals(path, lastArgument(RecentDrawings.commandLineArg(path)));
+        }
+    }
+
+    /** The first version put the path in quotes: they stayed part of it. */
+    @Test
+    public void quotesWouldStayPartOfTheName() {
+        assertEquals("\"F:\\x.sai2\"", lastArgument("\"F:\\x.sai2\""));
+    }
+
     @Test
     public void titleWithoutExtension() {
         assertEquals("New Canvas", RecentDrawings.title(new File("New Canvas.sai2")));
