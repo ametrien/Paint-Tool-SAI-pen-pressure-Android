@@ -223,9 +223,7 @@
 
             <LinearLayout
                 android:id="@+id/SaiPenOpenStats"
-                style="@style/SaiPenRow"
-                android:clickable="true"
-                android:focusable="true">
+                style="@style/SaiPenActionRow">
                 <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_open_stats" />
                 <TextView style="@style/SaiPenArrow" />
             </LinearLayout>
@@ -258,10 +256,21 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
-            <Button
-                android:id="@+id/SaiPenOpenDrawings"
-                style="@style/SaiPenButton"
-                android:text="@string/saipen_open_drawings" />
+            <!-- every drawing, with search and sorting (DrawingsDialog) -->
+            <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
+            <LinearLayout android:id="@+id/SaiPenAllDrawings" style="@style/SaiPenActionRow">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_all_drawings" />
+                <TextView android:id="@+id/SaiPenAllDrawingsValue" style="@style/SaiPenRowValue" />
+                <TextView style="@style/SaiPenArrow" />
+            </LinearLayout>
+            <View style="@style/SaiPenDivider" />
+            <LinearLayout android:id="@+id/SaiPenOpenDrawings" style="@style/SaiPenActionRow">
+                <LinearLayout style="@style/SaiPenRowText">
+                    <TextView style="@style/SaiPenRowTitle" android:layout_width="match_parent" android:layout_weight="0" android:text="@string/saipen_open_folder" />
+                    <TextView style="@style/SaiPenRowSub" android:text="@string/saipen_drawings_folder_sub" />
+                </LinearLayout>
+                <TextView style="@style/SaiPenArrow" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- ===== brushes and textures: shown once SAI's settings are found =====
@@ -335,130 +344,63 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- everything in SAI's settings folder, like a shop (BrowseDialog) -->
-            <TextView
-                android:id="@+id/SaiPenBrowseAll"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/saipen_actions"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:minHeight="48dp"
-                android:text="@string/saipen_browse_all"
-                android:textColor="#FFFFFFFF"
-                android:textSize="15sp"
-                android:visibility="gone" />
-
+            <!-- one list of rows, like Statistics and My timelapses: Browse all
+                 (BrowseDialog), a PC's settings, add pictures, the folder -->
             <LinearLayout
                 android:id="@+id/SaiPenBrushesActions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/saipen_actions"
                 android:orientation="vertical"
                 android:visibility="gone">
 
                 <LinearLayout
-                    android:id="@+id/SaiPenPcSettings"
-                    style="@style/SaiPenRow"
-                    android:minHeight="56dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="8dp"
-                    android:paddingTop="10dp"
-                    android:paddingBottom="10dp"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:importantForAccessibility="no"
-                        android:src="@drawable/ic_saipen_pc" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            style="@style/SaiPenRowTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_weight="0"
-                            android:fontFamily="sans-serif-medium"
-                            android:text="@string/saipen_pc_settings" />
-
-                        <TextView
-                            style="@style/SaiPenNote"
-                            android:layout_marginTop="2dp"
-                            android:text="@string/saipen_pc_settings_short" />
+                    android:id="@+id/SaiPenBrowseAll"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <View style="@style/SaiPenDivider" />
+                    <LinearLayout android:id="@+id/SaiPenBrowseAllRow" style="@style/SaiPenActionRow">
+                        <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_browse_all" />
+                        <TextView style="@style/SaiPenArrow" />
                     </LinearLayout>
+                </LinearLayout>
 
+                <View style="@style/SaiPenDivider" />
+                <LinearLayout android:id="@+id/SaiPenPcSettings" style="@style/SaiPenActionRow">
+                    <LinearLayout style="@style/SaiPenRowText">
+                        <TextView style="@style/SaiPenRowTitle" android:layout_width="match_parent" android:layout_weight="0" android:text="@string/saipen_pc_settings" />
+                        <TextView style="@style/SaiPenRowSub" android:text="@string/saipen_pc_settings_short" />
+                    </LinearLayout>
                     <TextView style="@style/SaiPenArrow" />
                 </LinearLayout>
 
                 <View style="@style/SaiPenDivider" />
-
-                <LinearLayout
-                    android:id="@+id/SaiPenAddBrushes"
-                    style="@style/SaiPenRow"
-                    android:minHeight="56dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="8dp"
-                    android:paddingTop="10dp"
-                    android:paddingBottom="10dp"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:importantForAccessibility="no"
-                        android:src="@drawable/ic_saipen_brush" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            style="@style/SaiPenRowTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_weight="0"
-                            android:fontFamily="sans-serif-medium"
-                            android:text="@string/saipen_add_pack" />
-
-                        <TextView
-                            style="@style/SaiPenNote"
-                            android:layout_marginTop="2dp"
-                            android:text="@string/saipen_add_pack_short" />
+                <LinearLayout android:id="@+id/SaiPenAddBrushes" style="@style/SaiPenActionRow">
+                    <LinearLayout style="@style/SaiPenRowText">
+                        <TextView style="@style/SaiPenRowTitle" android:layout_width="match_parent" android:layout_weight="0" android:text="@string/saipen_add_pack" />
+                        <TextView style="@style/SaiPenRowSub" android:text="@string/saipen_add_pack_short" />
                     </LinearLayout>
-
                     <TextView style="@style/SaiPenArrow" />
                 </LinearLayout>
-            </LinearLayout>
 
-            <TextView
-                android:id="@+id/SaiPenOpenBrushes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:minHeight="40dp"
-                android:gravity="center_vertical"
-                android:paddingStart="2dp"
-                android:paddingEnd="8dp"
-                android:background="@drawable/saipen_row"
-                android:clickable="true"
-                android:focusable="true"
-                android:textSize="14sp"
-                android:textColor="#4fc3f7"
-                android:text="@string/saipen_open_brushes"
-                android:visibility="gone" />
+                <LinearLayout
+                    android:id="@+id/SaiPenOpenBrushes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <View style="@style/SaiPenDivider" />
+                    <LinearLayout android:id="@+id/SaiPenOpenBrushesRow" style="@style/SaiPenActionRow">
+                        <LinearLayout style="@style/SaiPenRowText">
+                            <TextView style="@style/SaiPenRowTitle" android:layout_width="match_parent" android:layout_weight="0" android:text="@string/saipen_open_folder" />
+                            <TextView style="@style/SaiPenRowSub" android:text="@string/saipen_brushes_folder_sub" />
+                        </LinearLayout>
+                        <TextView style="@style/SaiPenArrow" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <!-- ===== licence and timelapse ===== -->
@@ -508,13 +450,13 @@
                     android:text="@string/saipen_licence_hint"
                     android:visibility="gone" />
 
-                <Button
-                    android:id="@+id/SaiPenAddLicence"
-                    style="@style/SaiPenButton"
-                    android:text="@string/saipen_add_licence"
-                    android:visibility="gone" />
+                <View style="@style/SaiPenDivider" android:layout_marginTop="10dp" />
+                <LinearLayout android:id="@+id/SaiPenAddLicence" style="@style/SaiPenActionRow" android:visibility="gone">
+                    <TextView android:id="@+id/SaiPenAddLicenceTitle" style="@style/SaiPenRowTitle" android:text="@string/saipen_add_licence" />
+                    <TextView style="@style/SaiPenArrow" />
+                </LinearLayout>
 
-                <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
+                <View style="@style/SaiPenDivider" />
             </LinearLayout>
 
             <TextView
@@ -568,9 +510,7 @@
 
             <LinearLayout
                 android:id="@+id/SaiPenOpenTimelapses"
-                style="@style/SaiPenRow"
-                android:clickable="true"
-                android:focusable="true">
+                style="@style/SaiPenActionRow">
                 <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_my_timelapses" />
                 <TextView style="@style/SaiPenArrow" />
             </LinearLayout>

@@ -187,7 +187,7 @@ final class TimelapsesDialog {
             card.addView(ask, lp(-1, -2, 0, 6, 0, 0));
         }
 
-        card.setOnClickListener(v -> play(d));
+        card.setOnClickListener(v -> play(activity, d));
         card.setOnLongClickListener(v -> {
             askDelete(d);
             return true;
@@ -195,7 +195,8 @@ final class TimelapsesDialog {
         return card;
     }
 
-    private void play(Drawing d) {
+    /** Plays the drawing's joined video in the device's player; also from DrawingsDialog. */
+    static void play(SaiLauncherActivity activity, Drawing d) {
         File video = TimelapseShelf.joined(d, 0);
         if (!video.isFile()) {
             Toast.makeText(activity, R.string.saipen_timelapse_missing, Toast.LENGTH_LONG).show();

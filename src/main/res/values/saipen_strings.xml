@@ -85,7 +85,7 @@
     <string name="saipen_buffer_drawing_what">The front buffer while the pen is near the screen or drawing, and Standard for menus, zooming and scrolling. Ink comes as soon as with the front buffer; everything else is as smooth as Standard. Takes effect the next time SAI starts.</string>
     <string name="saipen_buffer_front_what">SAI\'s picture goes straight onto the screen, without waiting in Android\'s queue, so the ink comes sooner. If the picture flickers or tears, choose Standard. Devices that can\'t do it use Standard by themselves. Takes effect the next time SAI starts.</string>
     <string name="saipen_buffer_standard_what">Every picture waits in Android\'s queue before it is shown, as in other apps: a little more lag, but never a half-drawn picture. Takes effect the next time SAI starts.</string>
-    <string name="saipen_cores">Fast processor cores</string>
+    <string name="saipen_cores">Fast cores</string>
     <string name="saipen_cores_drawing">Drawing</string>
     <string name="saipen_cores_all">All of SAI</string>
     <string name="saipen_cores_off">Off</string>
@@ -97,22 +97,22 @@
     <string name="saipen_cores_sessions">sessions: %1$d</string>
     <string name="saipen_cores_few">too few strokes yet</string>
     <string name="saipen_cores_none">This device has no slow cores: nothing to choose.</string>
-    <string name="saipen_processors">Processors SAI sees</string>
+    <string name="saipen_processors">Cores SAI sees</string>
     <string name="saipen_processors_value_all">All</string>
     <string name="saipen_processors_fast">%1$d, this device\'s fast cores (recommended)</string>
     <string name="saipen_processors_all">All %1$d, SAI\'s own default</string>
     <string name="saipen_processors_all_recommended">All %1$d (recommended: this device has no slow cores)</string>
-    <string name="saipen_processors_what">SAI splits each stroke into one piece per processor it sees. When it sees only the fast cores, every piece can run on a fast one. A change takes effect the next time SAI starts.</string>
+    <string name="saipen_processors_what">SAI splits each stroke into one piece per core it sees. When it sees only the fast cores, every piece can run on a fast one. A change takes effect the next time SAI starts.</string>
     <string name="saipen_processors_cores">This device\'s %1$d cores by strength: %2$d fast (green), %3$d slower (yellow).</string>
     <string name="saipen_processors_cores_alike">This device\'s %1$d cores by strength: none is much slower.</string>
     <string name="saipen_processors_cores_pct">This device\'s %1$d cores by strength (the fastest is 100%%): %2$d fast (green), %3$d slower (yellow).</string>
     <string name="saipen_processors_cores_alike_pct">This device\'s %1$d cores by strength (the fastest is 100%%): none is much slower.</string>
     <string name="saipen_processors_ghz">%1$.1f GHz</string>
     <string name="saipen_processors_percent">%1$d%%</string>
-    <string name="saipen_processors_info_title">Processors SAI sees</string>
+    <string name="saipen_processors_info_title">Cores SAI sees</string>
     <string name="saipen_processors_info_device">This device has %1$d fast cores and %2$d slower ones.</string>
     <string name="saipen_processors_info_device_none">SAI Pen finds no slower cores on this device, so SAI can see all of them.</string>
-    <string name="saipen_processors_info_text">SAI splits every stroke into one piece per processor it sees, and the stroke is done only when its slowest piece is. %1$s If SAI sees every core, some pieces run on the slow ones and the ink waits for them. If it sees only as many as the fast cores, Fast processor cores: Drawing puts every piece on a fast one.\n\nIn a test on a Galaxy Tab S6 Lite, SAI then needed about 30%% less of the processor for the same strokes, and the ink caught up with the pen sooner. Nothing changes in how SAI looks or draws.\n\nSAI has the same setting itself: in SAI, Other > Options > Environment, CPU Cores Assignment C and Number of CPU Cores Used. SAI Pen does it here so you don\'t have to. Use one or the other, not both: while a number is chosen here, leave SAI\'s own setting on A, its default. To use SAI\'s own setting instead, choose All here.\n\nA change takes effect the next time SAI starts.</string>
+    <string name="saipen_processors_info_text">SAI splits every stroke into one piece per core it sees, and the stroke is done only when its slowest piece is. %1$s If SAI sees every core, some pieces run on the slow ones and the ink waits for them. If it sees only as many as the fast cores, Fast cores: Drawing puts every piece on a fast one.\n\nIn a test on a Galaxy Tab S6 Lite, SAI then needed about 30%% less of the processor for the same strokes, and the ink caught up with the pen sooner. Nothing changes in how SAI looks or draws.\n\nSAI has the same setting itself: in SAI, Other > Options > Environment, CPU Cores Assignment C and Number of CPU Cores Used. SAI Pen does it here so you don\'t have to. Use one or the other, not both: while a number is chosen here, leave SAI\'s own setting on A, its default. To use SAI\'s own setting instead, choose All here.\n\nA change takes effect the next time SAI starts.</string>
 
     <!-- brushes and textures: SAI's settings folder on the device -->
     <string name="saipen_brushes_unknown">SAI\'s brushes and textures are counted here after SAI\'s first start.</string>
@@ -129,7 +129,6 @@
     <string name="saipen_pc_none">No SAI settings were found on the device: no zip or folder with settings2.ssd in it, up to four folders deep. Put the zip in Downloads, or choose it yourself.</string>
     <string name="saipen_pc_which">Which settings?</string>
     <string name="saipen_pc_not_settings">This is not a SAI settings folder: there is no settings2.ssd in it.\n\nOn the PC zip the whole settings folder from Documents > SYSTEMAX Software Development > SAIv2.</string>
-    <string name="saipen_open_drawings">Open Documents/SAI Drawings</string>
     <string name="saipen_drawings_where_toast">Your drawings: Documents/SAI Drawings</string>
     <string name="saipen_open_brushes">Open the folder</string>
     <string name="saipen_brushes_reading">Reading what you picked…</string>
@@ -311,4 +310,34 @@
     <string name="saipen_air_actions">SAI Pen</string>
     <string name="saipen_air_undo">Undo</string>
     <string name="saipen_air_redo">Redo</string>
+    <!-- the Drawings card and the Drawings window (DrawingsDialog) -->
+    <string name="saipen_all_drawings">All drawings</string>
+    <string name="saipen_open_folder">Open the folder</string>
+    <string name="saipen_drawings_folder_sub">Documents/SAI Drawings</string>
+    <string name="saipen_brushes_folder_sub">Documents/SYSTEMAX Software Development/SAIv2/settings</string>
+    <string name="saipen_back">Back</string>
+    <string name="saipen_drawings_reading">Looking for your drawings…</string>
+    <string name="saipen_drawings_search">Search by name</string>
+    <string name="saipen_sort_newest">Newest</string>
+    <string name="saipen_sort_name">Name</string>
+    <string name="saipen_sort_size">Size</string>
+    <string name="saipen_folder_all">All folders</string>
+    <string name="saipen_folder_root">SAI Drawings</string>
+    <plurals name="saipen_n_drawings">
+        <item quantity="one">%d drawing</item>
+        <item quantity="other">%d drawings</item>
+    </plurals>
+    <string name="saipen_drawings_none">No drawings yet. In SAI, save to drive F: and they show up here.</string>
+    <string name="saipen_drawings_none_found">No drawing has this in its name.</string>
+    <string name="saipen_drawing_preview_note">This is the small preview SAI keeps inside the file. Open the drawing in SAI to see it in full.</string>
+    <string name="saipen_drawing_folder">Folder</string>
+    <string name="saipen_drawing_saved">Saved</string>
+    <string name="saipen_drawing_size">Size</string>
+    <string name="saipen_drawing_timelapse">Timelapse</string>
+    <string name="saipen_drawing_timelapse_hint">Hover the pen over it to play it here.</string>
+    <string name="saipen_drawing_watch">Watch</string>
+    <string name="saipen_drawing_open">Open in SAI</string>
+    <string name="saipen_drawing_share">Share the drawing</string>
+    <string name="saipen_drawing_share_picture">Share the preview</string>
+    <string name="saipen_drawing_share_failed">Could not share it: %1$s</string>
 </resources>

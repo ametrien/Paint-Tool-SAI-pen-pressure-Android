@@ -54,6 +54,25 @@
         <item name="android:gravity">center_vertical</item>
         <item name="android:background">@drawable/saipen_row</item>
     </style>
+    <!-- a row that opens a window or a folder: the one way to do that on
+         the start screen (Statistics, All drawings, My timelapses...) -->
+    <style name="SaiPenActionRow" parent="SaiPenRow">
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
+    <!-- the title and a grey line under it, in an action row -->
+    <style name="SaiPenRowText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+    <style name="SaiPenRowSub" parent="SaiPenNote">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_marginTop">2dp</item>
+    </style>
     <style name="SaiPenRowTitle">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>

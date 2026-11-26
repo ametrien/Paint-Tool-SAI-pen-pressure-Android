@@ -88,7 +88,7 @@
     <string name="saipen_buffer_drawing_what">Передний буфер, пока перо рядом с экраном или рисует, и обычный для меню, зума и прокрутки. Краска появляется так же быстро, как с передним буфером, а всё остальное так же плавно, как с обычным. Действует со следующего запуска SAI.</string>
     <string name="saipen_buffer_front_what">Картинка SAI идёт прямо на экран, без очереди Android, поэтому краска появляется раньше. Если картинка мигает или рвётся, выберите «Обычный». Устройства, которые так не умеют, сами используют обычный. Действует со следующего запуска SAI.</string>
     <string name="saipen_buffer_standard_what">Каждая картинка ждёт в очереди Android, как в других приложениях: задержка чуть больше, зато картинка никогда не бывает недорисованной. Действует со следующего запуска SAI.</string>
-    <string name="saipen_cores">Быстрые ядра процессора</string>
+    <string name="saipen_cores">Быстрые ядра</string>
     <string name="saipen_cores_drawing">Рисование</string>
     <string name="saipen_cores_all">Весь SAI</string>
     <string name="saipen_cores_off">Выключено</string>
@@ -116,7 +116,6 @@
     <string name="saipen_pc_none">Настройки SAI на устройстве не найдены: нет zip или папки с settings2.ssd внутри, не глубже четырёх папок. Положите zip в «Загрузки» или выберите его вручную.</string>
     <string name="saipen_pc_which">Какие настройки?</string>
     <string name="saipen_pc_not_settings">Это не папка настроек SAI: в ней нет settings2.ssd.\n\nНа компьютере сожмите в zip всю папку settings из «Документы» > SYSTEMAX Software Development > SAIv2.</string>
-    <string name="saipen_open_drawings">Открыть Документы/SAI Drawings</string>
     <string name="saipen_drawings_where_toast">Твои рисунки: Документы/SAI Drawings</string>
     <string name="saipen_open_brushes">Открыть папку</string>
     <string name="saipen_brushes_reading">Читаю выбранное…</string>
@@ -283,4 +282,36 @@
     <string name="saipen_air_actions">SAI Pen</string>
     <string name="saipen_air_undo">Отменить</string>
     <string name="saipen_air_redo">Повторить</string>
+    <!-- карточка «Рисунки» и окно рисунков (DrawingsDialog) -->
+    <string name="saipen_all_drawings">Все рисунки</string>
+    <string name="saipen_open_folder">Открыть папку</string>
+    <string name="saipen_drawings_folder_sub">Документы/SAI Drawings</string>
+    <string name="saipen_brushes_folder_sub">Документы/SYSTEMAX Software Development/SAIv2/settings</string>
+    <string name="saipen_back">Назад</string>
+    <string name="saipen_drawings_reading">Ищу ваши рисунки…</string>
+    <string name="saipen_drawings_search">Поиск по названию</string>
+    <string name="saipen_sort_newest">Новые</string>
+    <string name="saipen_sort_name">Название</string>
+    <string name="saipen_sort_size">Размер</string>
+    <string name="saipen_folder_all">Все папки</string>
+    <string name="saipen_folder_root">SAI Drawings</string>
+    <plurals name="saipen_n_drawings">
+        <item quantity="one">%d рисунок</item>
+        <item quantity="few">%d рисунка</item>
+        <item quantity="many">%d рисунков</item>
+        <item quantity="other">%d рисунка</item>
+    </plurals>
+    <string name="saipen_drawings_none">Рисунков пока нет. Сохраняйте в SAI на диск F:, и они появятся здесь.</string>
+    <string name="saipen_drawings_none_found">Нет рисунка с таким названием.</string>
+    <string name="saipen_drawing_preview_note">Это маленькое превью, которое SAI хранит в файле. Чтобы увидеть рисунок целиком, откройте его в SAI.</string>
+    <string name="saipen_drawing_folder">Папка</string>
+    <string name="saipen_drawing_saved">Сохранён</string>
+    <string name="saipen_drawing_size">Размер</string>
+    <string name="saipen_drawing_timelapse">Таймлапс</string>
+    <string name="saipen_drawing_timelapse_hint">Наведите перо, чтобы он заиграл прямо здесь.</string>
+    <string name="saipen_drawing_watch">Смотреть</string>
+    <string name="saipen_drawing_open">Открыть в SAI</string>
+    <string name="saipen_drawing_share">Поделиться рисунком</string>
+    <string name="saipen_drawing_share_picture">Поделиться превью</string>
+    <string name="saipen_drawing_share_failed">Не получилось поделиться: %1$s</string>
 </resources>

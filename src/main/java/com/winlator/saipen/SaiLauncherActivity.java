@@ -115,7 +115,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
     /** The licence line: its number behind a spoiler, so a screenshot of
      *  the screen does not give it away (the owner, 2026-11-20). */
     private TextView tvLicence;
-    private Button btnLicence;
+    private View btnLicence;
+    private TextView btnLicenceTitle;
     private ProgressBar progress;
     private Button btnVideo;
     private Button btnDiscardFrames;
@@ -152,7 +153,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private File zip;             /* a SAI zip to offer unpacking, or null */
     private boolean autoLaunch;
     private AlertDialog licenceDialog;
-    private TextView tvBrushes, btnOpenBrushes;
+    private TextView tvBrushes;
+    private View btnOpenBrushes;
     private View brushesActions;
     private View btnStats;
     private String statsCsv;
@@ -192,6 +194,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         tvLicence = findViewById(R.id.SaiPenLicenceStatus);
         tvLicenceHint = findViewById(R.id.SaiPenLicenceHint);
         btnLicence = findViewById(R.id.SaiPenAddLicence);
+        btnLicenceTitle = findViewById(R.id.SaiPenAddLicenceTitle);
         btnLicence.setOnClickListener(v -> askAboutLicence());
         tvBrushes = findViewById(R.id.SaiPenBrushes);
         btnStats = findViewById(R.id.SaiPenOpenStats);
@@ -203,12 +206,13 @@ public class SaiLauncherActivity extends AppCompatActivity {
             final int kind = k;
             findViewById(KIND_TILES[k]).setOnClickListener(v -> openInSai(kind));
         }
-        findViewById(R.id.SaiPenBrowseAll).setOnClickListener(v -> openBrowser(BrowseDialog.ALL));
+        findViewById(R.id.SaiPenBrowseAllRow).setOnClickListener(v -> openBrowser(BrowseDialog.ALL));
         findViewById(R.id.SaiPenPcSettings).setOnClickListener(v -> askForPcSettings());
         findViewById(R.id.SaiPenAddBrushes).setOnClickListener(v -> pickBrushes());
         btnOpenBrushes = findViewById(R.id.SaiPenOpenBrushes);
-        btnOpenBrushes.setOnClickListener(v -> openBrushesFolder());
+        findViewById(R.id.SaiPenOpenBrushesRow).setOnClickListener(v -> openBrushesFolder());
         findViewById(R.id.SaiPenOpenDrawings).setOnClickListener(v -> openDrawingsFolder());
+        findViewById(R.id.SaiPenAllDrawings).setOnClickListener(v -> openAllDrawings());
         android.widget.CompoundButton autostart = findViewById(R.id.SaiPenAutostart);
         autostart.setChecked(prefs.getBoolean(PREF_AUTOSTART, FirstRun.AUTOSTART));
         autostart.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(PREF_AUTOSTART, on).apply());
@@ -900,7 +904,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         });
     }
 
-    /** "Fast processor cores: Drawing / All of SAI / Off" (SaiCores), one
+    /** "Fast cores: Drawing / All of SAI / Off" (SaiCores), one
      *  line like the sharpness, what the choice does under it, and a small
      *  table of each choice's pen-to-screen time so far (CoresCompare).
      *  The choice lives in SaiCores' file, so adb can still change it. */
@@ -999,7 +1003,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
                                      cpuCores().fast.length, totalCores());
     }
 
-    /** "Processors SAI sees": the device's fast cores (at least 2) by
+    /** "Cores SAI sees": the device's fast cores (at least 2) by
      *  default, any number up to all of them, with (i) on SAI's own
      *  setting. Saved here, put into the container at Start SAI. */
     private void setUpProcessors() {
@@ -1127,7 +1131,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
     }
 
-    /** (i) beside "Processors SAI sees": why, and that SAI has the same
+    /** (i) beside "Cores SAI sees": why, and that SAI has the same
      *  setting itself: one or the other, not both. */
     private void processorsInfo() {
         int fast = cpuCores().fast.length, total = totalCores();
@@ -1643,17 +1647,26 @@ public class SaiLauncherActivity extends AppCompatActivity {
         int round = ++recentRound;
         int px = (int) (RECENT_H_DP * getResources().getDisplayMetrics().density);
         thumbs.execute(() -> {
-            List<File> files = RecentDrawings.newest(folder, RecentDrawings.MAX);
+            List<File> every = RecentDrawings.newest(folder, Integer.MAX_VALUE);
+            List<File> files = new ArrayList<>(every.subList(0, Math.min(every.size(), RecentDrawings.MAX)));
             List<android.graphics.Bitmap> pictures = new ArrayList<>();
             for (File f : files) pictures.add(thumbnail(f, px));
             ui.post(() -> {
-                if (round == recentRound && !isDestroyed()) fillRecent(files, pictures);
+                if (round != recentRound || isDestroyed()) return;
+                fillRecent(files, pictures);
+                ((TextView) findViewById(R.id.SaiPenAllDrawingsValue))
+                    .setText(every.isEmpty() ? "" : String.valueOf(every.size()));
             });
         });
     }
 
+    /** "All drawings": every drawing, searched and sorted (DrawingsDialog). */
+    private void openAllDrawings() {
+        DrawingsDialog.show(this, thumbs);
+    }
+
     /** The picture SAI keeps in the file, or null if it cannot be read. */
-    private static android.graphics.Bitmap thumbnail(File drawing, int maxPx) {
+    static android.graphics.Bitmap thumbnail(File drawing, int maxPx) {
         try {
             byte[] jpeg = Sai2Thumb.jpeg(drawing);
             android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
@@ -1714,13 +1727,15 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
     }
 
-    private void openDrawing(File drawing) {
+    /** False (with a toast) while SAI cannot start yet. */
+    boolean openDrawing(File drawing) {
         if (container == null || saiDir == null) {
             Toast.makeText(this, R.string.saipen_recent_not_ready, Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
         drawingToOpen = drawing;
         launch();
+        return true;
     }
 
     /** Frames left from an earlier SAI start are packed into their own
@@ -1850,7 +1865,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         findViewById(R.id.SaiPenLicenceCard).setVisibility(View.VISIBLE);
         tvLicence.setVisibility(View.VISIBLE);
         tvLicenceHint.setVisibility(installed.isEmpty() ? View.VISIBLE : View.GONE);
-        btnLicence.setText(installed.isEmpty() ? R.string.saipen_add_licence : R.string.saipen_change_licence);
+        btnLicenceTitle.setText(installed.isEmpty() ? R.string.saipen_add_licence : R.string.saipen_change_licence);
         btnLicence.setVisibility(View.VISIBLE);
         refreshBrushes();
     }

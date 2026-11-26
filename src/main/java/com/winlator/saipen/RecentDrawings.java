@@ -24,8 +24,13 @@ public final class RecentDrawings {
     public static List<File> newest(File folder, int max) {
         List<File> all = new ArrayList<>();
         collect(folder, 0, all);
+        /* each file's time read once: a file SAI saves while this sorts
+           must not change under the sort ("Comparison method violates its
+           general contract") */
+        java.util.Map<File, Long> time = new java.util.HashMap<>();
+        for (File f : all) time.put(f, f.lastModified());
         all.sort((a, b) -> {
-            int byTime = Long.compare(b.lastModified(), a.lastModified());
+            int byTime = Long.compare(time.get(b), time.get(a));
             return byTime != 0 ? byTime : a.getPath().compareTo(b.getPath());
         });
         return all.size() > max ? new ArrayList<>(all.subList(0, max)) : all;
