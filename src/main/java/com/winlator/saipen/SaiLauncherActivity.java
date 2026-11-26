@@ -121,6 +121,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private Button btnVideo;
     private Button btnDiscardFrames;
     private boolean makingVideo;
+    /** Run once SAI is really about to start (launchNow): the Drawings
+     *  window stays up, saying "Starting SAI…", until then. */
+    private Runnable onSaiStarting;
     private Button btnStart, btnUnzip, btnChoose, btnSite, btnSearch;
     /** How SAI is found: "auto" (search the device) or "manual" (the person
      *  picks the folder). Unset until the first start asks. */
@@ -1709,7 +1712,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
             item.setBackgroundResource(R.drawable.saipen_row);
             item.setPadding((int) (4 * dp), (int) (4 * dp), (int) (4 * dp), (int) (4 * dp));
             item.setContentDescription(getString(R.string.saipen_recent_open, title));
-            item.setOnClickListener(v -> openDrawing(f));
+            item.setOnClickListener(v -> openDrawing(f, null));
 
             android.widget.ImageView picture = new android.widget.ImageView(this);
             picture.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
@@ -1737,13 +1740,20 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
     }
 
-    /** False (with a toast) while SAI cannot start yet. */
-    boolean openDrawing(File drawing) {
+    /** False (with a toast) while SAI cannot start yet. `onStarting`, if
+     *  any, runs when SAI is about to start, after the leftover timelapse
+     *  frames are packed (that can take seconds). */
+    boolean openDrawing(File drawing, Runnable onStarting) {
         if (container == null || saiDir == null) {
             Toast.makeText(this, R.string.saipen_recent_not_ready, Toast.LENGTH_SHORT).show();
             return false;
         }
+        if (makingVideo) {
+            Toast.makeText(this, R.string.saipen_wait_for_video, Toast.LENGTH_LONG).show();
+            return false;
+        }
         drawingToOpen = drawing;
+        onSaiStarting = onStarting;
         launch();
         return true;
     }
@@ -1752,7 +1762,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
      *  folder first: the DLL numbers frames from 1 again and would write
      *  over them (2026-11-23). */
     private void launch() {
-        if (container == null || saiDir == null || packingBeforeStart || makingVideo) return;
+        if (container == null || saiDir == null || packingBeforeStart) return;
+        if (makingVideo) {
+            /* a tap that did nothing looked broken */
+            Toast.makeText(this, R.string.saipen_wait_for_video, Toast.LENGTH_LONG).show();
+            return;
+        }
         File root = container.getRootDir();
         if (TimelapseVideo.countFrames(TimelapseVideo.framesDir(root)) == 0) {
             launchNow();
@@ -1760,6 +1775,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
         packingBeforeStart = true;
         btnStart.setEnabled(false);
+        /* packing can take seconds: say that SAI is on its way */
+        CharSequence startLabel = btnStart.getText();
+        btnStart.setText(R.string.saipen_starting);
         worker.execute(() -> {
             try {
                 TimelapseVideo.packLeftovers(root);
@@ -1770,12 +1788,16 @@ public class SaiLauncherActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 packingBeforeStart = false;
                 btnStart.setEnabled(true);
+                btnStart.setText(startLabel);
                 launchNow();
             });
         });
     }
 
     private void launchNow() {
+        Runnable starting = onSaiStarting;
+        onSaiStarting = null;
+        if (starting != null) starting.run();
         if (container == null || saiDir == null) return;
         SaiLocator.Found f = SaiLocator.best(SaiLocator.scan(saiDir, 0));
         if (f == null) {

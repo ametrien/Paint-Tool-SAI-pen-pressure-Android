@@ -20,7 +20,9 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.util.LruCache;
 import android.view.Gravity;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -71,7 +73,8 @@ import java.util.concurrent.RejectedExecutionException;
  * its timelapse if it has one, and Open in SAI and Share. The timelapse
  * shows as its last frame and plays in place while the pen hovers over it
  * (HoverVideo); a tap plays it in the device's player. A card whose drawing
- * has a timelapse carries a small ▶.
+ * has a timelapse carries a small ▶. On a page, ‹ › or a sideways swipe
+ * goes to the previous or next drawing of the cards, as in BrowseDialog.
  *
  * Holding a card selects it; then a tap adds or takes away more, and
  * Delete removes them for good, after asking (DeviceDrawings.delete: a copy
@@ -130,6 +133,8 @@ final class DrawingsDialog {
     /** The first card on the screen when a page opened: Back returns there. */
     private int cardsAt;
     private boolean sharing;
+    /** Open in SAI was tapped: SAI is on its way. */
+    private boolean starting;
 
     private List<Entry> list = Collections.emptyList();
     private GridView grid;
@@ -184,7 +189,7 @@ final class DrawingsDialog {
             int width = r - l, before = or - ol;
             if (before == 0 || width == before) return;
             if (grid != null) grid.setNumColumns(columns(width));
-            if (shown != null) v.post(() -> { if (shown != null && !closed) showDrawing(shown); });
+            if (shown != null) v.post(() -> { if (shown != null && !closed) showDrawing(shown, 0); });
         });
         loading();
         dialog.show();
@@ -422,7 +427,7 @@ final class DrawingsDialog {
             view.addView(where);
             view.setOnClickListener(v -> {
                 if (entry == null) return;
-                if (selected.isEmpty()) showDrawing(entry);
+                if (selected.isEmpty()) showDrawing(entry, 0);
                 else toggle(entry);
             });
             view.setOnLongClickListener(v -> {
@@ -597,7 +602,17 @@ final class DrawingsDialog {
 
     private ImageView pagePicture;
 
-    private void showDrawing(Entry e) {
+    /** The next (+1) or previous (-1) drawing of the cards, in place of this
+     *  one; Back still goes to the cards, scrolled to where it ended. */
+    private void step(int dir) {
+        int i = list.indexOf(shown), to = i + dir;
+        if (i < 0 || to < 0 || to >= list.size()) return;
+        cardsAt = to;
+        showDrawing(list.get(to), dir);
+    }
+
+    /** A drawing's page; from: -1/+1 when it came by ‹ › or a swipe (it slides in), 0 otherwise. */
+    private void showDrawing(Entry e, int from) {
         if (shown == null && grid != null) cardsAt = grid.getFirstVisiblePosition();
         shown = e;
         /* the search's keyboard, if it was up, goes with the cards */
@@ -608,9 +623,51 @@ final class DrawingsDialog {
         LinearLayout col = column();
         col.setPadding(dp(20), dp(16), dp(20), dp(24));
         scroll.addView(col);
-        page.addView(scroll, new LinearLayout.LayoutParams(-1, -1));
+        /* a sideways swipe anywhere on the page: the next or previous drawing */
+        GestureDetector swipe = new GestureDetector(activity, new GestureDetector.SimpleOnGestureListener() {
+            @Override public boolean onFling(MotionEvent e1, MotionEvent e2, float vx, float vy) {
+                if (e1 == null) return false;
+                float dx = e2.getX() - e1.getX(), dy = e2.getY() - e1.getY();
+                if (Math.abs(dx) < dp(60) || Math.abs(dx) < Math.abs(dy) * 1.5f) return false;
+                step(dx < 0 ? 1 : -1);
+                return true;
+            }
+        });
+        FrameLayout swipes = new FrameLayout(activity) {
+            @Override public boolean dispatchTouchEvent(MotionEvent ev) {
+                swipe.onTouchEvent(ev);
+                return super.dispatchTouchEvent(ev);
+            }
+        };
+        swipes.addView(scroll);
+        page.addView(swipes, new LinearLayout.LayoutParams(-1, -1));
+        if (from != 0) {
+            swipes.setTranslationX(from * dp(80));
+            swipes.setAlpha(0f);
+            swipes.animate().translationX(0).alpha(1f).setDuration(160).start();
+        }
 
         col.addView(head(e), lp(-1, -2, 0, 0, 0, 12));
+
+        int at = list.indexOf(e);
+        if (at >= 0 && list.size() > 1) {
+            LinearLayout nav = new LinearLayout(activity);
+            nav.setGravity(Gravity.CENTER_VERTICAL);
+            TextView prev = pill("‹", SURFACE, TEXT), next = pill("›", SURFACE, TEXT);
+            prev.setAlpha(at > 0 ? 1f : 0.3f);
+            next.setAlpha(at < list.size() - 1 ? 1f : 0.3f);
+            prev.setContentDescription(activity.getString(R.string.saipen_drawing_previous));
+            next.setContentDescription(activity.getString(R.string.saipen_drawing_next));
+            prev.setOnClickListener(v -> step(-1));
+            next.setOnClickListener(v -> step(1));
+            TextView where = text(13, false, TEXT2);
+            where.setText(activity.getString(R.string.saipen_drawing_n_of, at + 1, list.size()));
+            where.setGravity(Gravity.CENTER);
+            nav.addView(prev);
+            nav.addView(where, new LinearLayout.LayoutParams(0, -2, 1f));
+            nav.addView(next);
+            col.addView(nav, lp(-1, -2, 0, 0, 0, 12));
+        }
 
         int screenW = page.getWidth() > 0 ? page.getWidth() : activity.getResources().getDisplayMetrics().widthPixels;
         int screenH = activity.getResources().getDisplayMetrics().heightPixels;
@@ -651,8 +708,16 @@ final class DrawingsDialog {
         if (video != null) info.addView(timelapseBlock(video), lp(-1, -2, 0, 0, 0, 12));
 
         TextView openIt = pill(activity.getString(R.string.saipen_drawing_open), ACCENT, Color.WHITE);
+        /* the window stays, saying so, until SAI is really on its way: the
+           leftover timelapse frames are packed first, and that can take
+           seconds of nothing happening on the start screen */
         openIt.setOnClickListener(v -> {
-            if (activity.openDrawing(e.file)) dialog.dismiss();
+            if (starting) return;
+            if (activity.openDrawing(e.file, () -> { if (dialog.isShowing()) dialog.dismiss(); })) {
+                starting = true;
+                openIt.setText(R.string.saipen_starting);
+                openIt.setAlpha(0.7f);
+            }
         });
         info.addView(openIt, lp(-1, -2, 0, 0, 0, 8));
 

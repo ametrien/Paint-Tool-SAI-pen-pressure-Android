@@ -82,8 +82,8 @@
     <string name="saipen_buffer_front">Front buffer</string>
     <string name="saipen_buffer_standard">Standard</string>
     <string name="saipen_buffer_drawing">Front buffer while drawing</string>
-    <string name="saipen_buffer_drawing_what">The front buffer while the pen is near the screen or drawing, and Standard for menus, zooming and scrolling. Ink comes as soon as with the front buffer; everything else is as smooth as Standard. Takes effect the next time SAI starts.</string>
-    <string name="saipen_buffer_front_what">SAI\'s picture goes straight onto the screen, without waiting in Android\'s queue, so the ink comes sooner. If the picture flickers or tears, choose Standard. Devices that can\'t do it use Standard by themselves. Takes effect the next time SAI starts.</string>
+    <string name="saipen_buffer_drawing_what">The front buffer while the pen is near the screen or drawing, and Standard for menus, zooming and scrolling. Ink comes as soon as with the front buffer; everything else is as smooth as Standard. How the front buffer looks depends on the device: if bits of the brush circle stay on the screen while the pen hovers, choose Standard. Takes effect the next time SAI starts.</string>
+    <string name="saipen_buffer_front_what">SAI\'s picture goes straight onto the screen, without waiting in Android\'s queue, so the ink comes sooner. How it looks depends on the device: if the picture flickers or tears, or bits of the brush circle stay on the screen while the pen hovers, choose Standard. Devices that can\'t do it use Standard by themselves. Takes effect the next time SAI starts.</string>
     <string name="saipen_buffer_standard_what">Every picture waits in Android\'s queue before it is shown, as in other apps: a little more lag, but never a half-drawn picture. Takes effect the next time SAI starts.</string>
     <string name="saipen_cores">Fast cores</string>
     <string name="saipen_cores_drawing">Drawing</string>
@@ -357,4 +357,8 @@
         <item quantity="other">%d drawings deleted</item>
     </plurals>
     <string name="saipen_drawings_not_deleted">%1$d could not be deleted</string>
+    <string name="saipen_drawing_n_of">%1$d of %2$d · swipe for the next</string>
+    <string name="saipen_drawing_previous">Previous drawing</string>
+    <string name="saipen_drawing_next">Next drawing</string>
+    <string name="saipen_wait_for_video">The timelapse video is being made. Start SAI when it is done.</string>
 </resources>
