@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The brush browser (BrowseDialog): "Try it" for pictures, colours, scratch pad. -->
+<resources>
+    <string name="saipen_try_it">Try it</string>
+    <string name="saipen_try_clear">Clear</string>
+    <string name="saipen_try_small">Small</string>
+    <string name="saipen_try_medium">Medium</string>
+    <string name="saipen_try_large">Large</string>
+    <string name="saipen_try_brush_texture">Draw with the pen: a round brush painted through this texture. As in SAI, the texture stays put on the paper and strokes over each other fill it in slowly. Pressure changes the size. Close to SAI, not exact.</string>
+    <string name="saipen_try_paper_texture">Draw with the pen: paint on a layer that has this paper texture, at 100% scale. As in SAI, the grain shows only in the paint, not on empty paper, and painting over it again does not fill it in. The patch on the left is painted to start with. Close to SAI, not exact.</string>
+    <string name="saipen_try_brshape">Draw with the pen: this shape stamped along your stroke with its starting values (spacing, size and angle jitter, scattering, density). Pressure changes the size. SAI\'s brush engine blends the stamps its own way: close, not exact.</string>
+    <string name="saipen_try_bristle">Draw with the pen: these bristles dragged along your stroke, turning with it. Pressure changes the size. In SAI the bristles are part of a brush tool, mixed with its other settings: close, not exact.</string>
+    <string name="saipen_try_blotmap">Draw with the pen: a round tip with these blots inside it, turning with your stroke. Pressure changes the size. In SAI the blots are part of a brush tool, mixed with its other settings: close, not exact.</string>
+    <string name="saipen_try_scatter">Draw with the pen: these shapes scattered along your stroke with their starting values (spacing, scattering, count, size, angle and colour jitter). \"Pen direction\" follows the stroke here, as the pen\'s tilt isn\'t read. Close to SAI, not exact.</string>
+    <string name="saipen_sample_paper_texture">The paper\'s grain over a whole sheet. In SAI it shows in the paint on a layer with this texture: try it below.</string>
+
+    <string name="saipen_colours_intro">These are SAI\'s own colour files, from SAI\'s settings folder. SAI writes them itself while you paint and reads them when it starts. SAI Pen only shows them: nothing on this page is put into SAI, and nothing here changes them.</string>
+    <string name="saipen_colours_recent_about">The colours you painted with last, newest first: the history strip in SAI\'s colour panel. SAI adds to it by itself (file colhis.saichis).</string>
+    <string name="saipen_colours_swatches_about">The colours you keep in SAI\'s Swatches panel (folder swatch). You save them in SAI, and they come along when you bring your settings from a PC.</string>
+    <string name="saipen_colours_swatch_empty">%1$s · empty: SAI made this set, but no colour was saved in it yet.</string>
+    <string name="saipen_colours_swatch_n">%1$s · %2$d colours</string>
+    <string name="saipen_colours_no_edit">Making or changing swatches here isn\'t possible yet. Only empty sets have been seen so far, so how SAI writes a saved colour isn\'t known, and a guessed file could spoil SAI\'s Swatches panel. Save a few colours in SAI\'s Swatches panel and this page will show them.</string>
+    <string name="saipen_colours_swatch_guess">How the colours of a set are read is a guess (no full set has been seen yet). If they look wrong, SAI\'s own panel is right.</string>
+
+    <string name="saipen_scratch_title">Scratch pad</string>
+    <string name="saipen_scratch_about">SAI\'s scratch pad is a small sheet in SAI\'s Scratch Pad panel, for trying colours and brushes next to your drawing. What you scribble there is kept in this file, also after SAI closes. Tap to see what can be shown of it.</string>
+    <string name="saipen_scratch_none">None yet: SAI makes it the first time it starts.</string>
+    <string name="saipen_scratch_empty">Nothing on it yet. When you scribble on SAI\'s scratch pad, it is kept here.</string>
+    <string name="saipen_scratch_drawn">Something is drawn on it, but it can\'t be shown here. Unlike your drawings, the scratch pad has no small picture inside, and its layer is kept in SAI\'s own format, which isn\'t known. Open SAI to see it.</string>
+    <string name="saipen_scratch_unreadable">This file isn\'t laid out the way SAI Pen knows, so nothing can be shown of it. SAI itself still reads it.</string>
+    <string name="saipen_scratch_layers">Layers</string>
+    <string name="saipen_scratch_file">File</string>
+    <string name="saipen_scratch_changed">Changed</string>
+    <string name="saipen_scratch_state">On it</string>
+    <string name="saipen_scratch_state_empty">Nothing</string>
+    <string name="saipen_scratch_state_drawn">A drawing</string>
+    <string name="saipen_scratch_state_unknown">Unknown</string>
+</resources>

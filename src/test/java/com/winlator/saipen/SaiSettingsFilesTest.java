@@ -83,20 +83,22 @@ public class SaiSettingsFilesTest {
     @Test
     public void colourHistoryAsFoundOnADevice() throws Exception {
         byte[] head = "SAI-COLHIS-TYPE0".getBytes(StandardCharsets.US_ASCII);
-        byte[] b = new byte[16 + 8 + 30 + 4];
+        /* as on the PC (2026-11-26): the newest colour right after the
+         * header (it used to be skipped), black is a colour too */
+        byte[] b = new byte[16 + 40 + 2];
         System.arraycopy(head, 0, b, 0, 16);
-        b[16] = 1;
-        int[][] colours = {{0xffff, 0xffff, 0xffff}, {0x2828, 0x4f4c, 0x4f4c}, {0xffff, 0xc3bf, 0x0504}};
+        int[][] colours = {{0xd4d3, 0xb2af, 0xcbc7}, {0, 0, 0}, {0xffff, 0xffff, 0xffff}, {0xffff, 0xc3bf, 0x0504}};
         for (int i = 0; i < colours.length; i++) {
-            int o = 24 + i * 10;
-            b[o + 2] = 1;
-            for (int c = 0; c < 3; c++) { b[o + 4 + c * 2] = (byte) colours[i][c]; b[o + 5 + c * 2] = (byte) (colours[i][c] >> 8); }
+            int o = 16 + i * 10;
+            b[o] = 1;
+            for (int c = 0; c < 3; c++) { b[o + 2 + c * 2] = (byte) colours[i][c]; b[o + 3 + c * 2] = (byte) (colours[i][c] >> 8); }
         }
         List<Integer> got = SaiSettingsFiles.colours(write("colhis.saichis", b));
-        assertEquals(3, got.size());
-        assertEquals(0xffffffff, (int) got.get(0));
-        assertEquals(0xff284f4f, (int) got.get(1));
-        assertEquals(0xffffc305, (int) got.get(2));
+        assertEquals(4, got.size());
+        assertEquals(0xffd4b2cb, (int) got.get(0));
+        assertEquals(0xff000000, (int) got.get(1));
+        assertEquals(0xffffffff, (int) got.get(2));
+        assertEquals(0xffffc305, (int) got.get(3));
     }
 
     @Test

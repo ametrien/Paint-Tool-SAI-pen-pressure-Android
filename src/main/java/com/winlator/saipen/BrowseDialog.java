@@ -45,8 +45,11 @@ import java.util.Map;
  * "Brushes and textures": everything in SAI's settings folder, browsed like
  * a shop. All shows a shelf per kind; the chips go to one kind; a tap on
  * anything shows how it looks (a sample stroke, the paper, the shapes
- * stamped along a curve) and what SAI keeps about it. Settings lists the
- * rest of the folder in plain words, down to every file.
+ * stamped along a curve) and what SAI keeps about it, with paper to try it
+ * on with the pen (TryPad for tools, PicturePad for the pictures). Colours
+ * says in plain words which of SAI's colour files these are and that SAI
+ * Pen only reads them; the scratch pad says what can be told of it
+ * (SaiScratchPad). Settings lists the rest of the folder, down to every file.
  *
  * Nothing is deleted here (SAI keeps its own lists of these, so deleting
  * behind its back could break them). The one change: on a picture kind's
@@ -655,25 +658,62 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         LinearLayout list = column();
         list.setPadding(0, 0, 0, dp(24));
         scroll.addView(list);
+        TextView intro = text(13, false, TEXT2);
+        intro.setText(a.getString(R.string.saipen_colours_intro));
+        list.addView(intro, lp(-1, -2, 0, 0, 0, 4));
 
-        heading(list, "Recent colours", "The colours you used last, newest first, as SAI's colour history keeps them.");
+        heading(list, "Recent colours", a.getString(R.string.saipen_colours_recent_about));
         if (idx.recentColours.isEmpty()) list.addView(nothing("None yet."));
         else list.addView(swatchGrid(idx.recentColours));
 
-        heading(list, "Swatches", "Colours you saved in SAI's Swatches panel.");
+        heading(list, "Swatches", a.getString(R.string.saipen_colours_swatches_about));
         if (idx.swatches.isEmpty()) list.addView(nothing("None yet."));
+        boolean anyColours = false;
         for (BrowseIndex.Swatch s : idx.swatches) {
-            TextView n = text(14, true, TEXT);
-            n.setText(s.name + (s.colours.isEmpty() ? " · empty" : " · " + s.colours.size()));
+            TextView n = text(14, !s.colours.isEmpty(), s.colours.isEmpty() ? TEXT2 : TEXT);
+            n.setText(s.colours.isEmpty() ? a.getString(R.string.saipen_colours_swatch_empty, s.name)
+                : a.getString(R.string.saipen_colours_swatch_n, s.name, s.colours.size()));
             list.addView(n, lp(-1, -2, 0, 4, 0, 6));
-            if (!s.colours.isEmpty()) list.addView(swatchGrid(s.colours));
+            if (!s.colours.isEmpty()) { list.addView(swatchGrid(s.colours)); anyColours = true; }
         }
+        TextView edit = text(12, false, TEXT3);
+        edit.setText(a.getString(anyColours ? R.string.saipen_colours_swatch_guess : R.string.saipen_colours_no_edit));
+        list.addView(edit, lp(-1, -2, 0, 6, 0, 0));
 
-        heading(list, "Scratch pad", "SAI's little paper for trying colours. It is kept in SAI's own drawing format: open SAI to see it.");
+        heading(list, a.getString(R.string.saipen_scratch_title), a.getString(R.string.saipen_scratch_about));
         LinearLayout box = box();
-        if (idx.scratchPads.isEmpty()) settingRow(box, "None yet", null, null, null);
-        for (File f : idx.scratchPads) settingRow(box, SettingsContents.bareName(f), size(f.length()), null, null);
+        if (idx.scratchPads.isEmpty()) settingRow(box, a.getString(R.string.saipen_scratch_none), null, null, null);
+        for (File f : idx.scratchPads) {
+            settingRow(box, SettingsContents.bareName(f), size(f.length()) + " · " + date(f.lastModified()), "›",
+                       v -> sub(() -> scratchPage(f)));
+        }
         list.addView(box);
+        body.addView(scroll);
+    }
+
+    /** One scratch pad: what can be told of it, and why it can't be shown. */
+    private void scratchPage(File f) {
+        frame(a.getString(R.string.saipen_scratch_title) + " · " + SettingsContents.bareName(f), -1, false);
+        ScrollView scroll = new ScrollView(a);
+        LinearLayout col = column();
+        col.setPadding(0, 0, 0, dp(24));
+        scroll.addView(col);
+        SaiScratchPad.Info info = SaiScratchPad.read(f);
+        TextView t = text(14, false, TEXT);
+        t.setText(a.getString(info.state == SaiScratchPad.EMPTY ? R.string.saipen_scratch_empty
+            : info.state == SaiScratchPad.DRAWN ? R.string.saipen_scratch_drawn : R.string.saipen_scratch_unreadable));
+        col.addView(t, lp(-1, -2, 0, 0, 0, 12));
+        List<String[]> facts = new ArrayList<>();
+        facts.add(new String[] {a.getString(R.string.saipen_scratch_state), a.getString(
+            info.state == SaiScratchPad.EMPTY ? R.string.saipen_scratch_state_empty
+            : info.state == SaiScratchPad.DRAWN ? R.string.saipen_scratch_state_drawn : R.string.saipen_scratch_state_unknown)});
+        if (!info.layers.isEmpty()) {
+            facts.add(new String[] {a.getString(R.string.saipen_scratch_layers),
+                info.layers.size() + " · " + TextUtils.join(", ", info.layers)});
+        }
+        facts.add(new String[] {a.getString(R.string.saipen_scratch_file), relative(f) + " · " + size(f.length())});
+        facts.add(new String[] {a.getString(R.string.saipen_scratch_changed), date(f.lastModified())});
+        col.addView(facts(facts));
         body.addView(scroll);
     }
 
@@ -730,7 +770,8 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         for (BrowseIndex.Swatch s : idx.swatches) swatchColours += s.colours.size();
         settingRow(box, "Swatches", idx.swatches.isEmpty() ? "None" : idx.swatches.size() + " · "
             + (swatchColours == 0 ? "empty" : swatchColours + " colours"), "›", v -> top(COLOURS));
-        settingRow(box, "Scratch pad", idx.scratchPads.isEmpty() ? "None" : idx.scratchPads.size() + "", "›", v -> top(COLOURS));
+        settingRow(box, a.getString(R.string.saipen_scratch_title), idx.scratchPads.isEmpty() ? "None" : idx.scratchPads.size() + "", "›",
+            idx.scratchPads.size() == 1 ? v -> sub(() -> scratchPage(idx.scratchPads.get(0))) : v -> top(COLOURS));
         list.addView(box);
 
         section(list, "How SAI works and looks");
@@ -913,9 +954,10 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         File f = it.file;
         kind.setText(KIND_ONE[it.kind] + (it.hidden ? " · hidden from SAI" : ""));
         thumbs.make(() -> BrowseThumbs.sample(it.kind, f, w, h), big);
-        sampleNote.setText(it.kind == SettingsContents.PAPER_TEXTURES ? "The paper's grain over a whole sheet."
+        sampleNote.setText(it.kind == SettingsContents.PAPER_TEXTURES ? a.getString(R.string.saipen_sample_paper_texture)
             : it.kind == SettingsContents.BRUSH_TEXTURES ? "A stroke painted through this texture: close to SAI, not exact."
             : "Stamped along a stroke with its starting values: close to SAI, not exact.");
+        picturePad(col, it, w);
 
         LinearLayout pic = row();
         ImageView raw = new ImageView(a);
@@ -999,6 +1041,57 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         TextView note = text(11, false, TEXT3);
         note.setText("Draw with the pen: its pressure works as in this tool's settings, at the tool's size. Close to SAI, not exact.");
         col.addView(note, lp(-1, -2, 0, 4, 0, 14));
+    }
+
+    /** "Try it" for a picture: paper to draw on with the pen the way SAI
+     *  would use it (PicturePad), Small, Medium, Large and Clear. */
+    private void picturePad(LinearLayout col, Item it, int w) {
+        String folder = folderOf(it);
+        PicturePad pad = new PicturePad(a, it.kind, it.file, SaiSettingsFiles.ini(SaiSettingsFiles.iniOf(it.file)), folder);
+        LinearLayout head = row();
+        TextView title = text(15, true, TEXT); title.setText(a.getString(R.string.saipen_try_it));
+        head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+        int[] labels = {R.string.saipen_try_small, R.string.saipen_try_medium, R.string.saipen_try_large};
+        TextView[] chips = new TextView[labels.length];
+        for (int s = 0; s < labels.length; s++) {
+            final int size = s;
+            TextView chip = text(13, false, TEXT2);
+            chip.setText(a.getString(labels[s]));
+            chip.setPadding(dp(12), dp(7), dp(12), dp(7));
+            chip.setOnClickListener(v -> {
+                pad.size(size);
+                for (int k = 0; k < chips.length; k++) shapeChip(chips[k], k == size);
+            });
+            chips[s] = chip;
+            shapeChip(chip, s == PicturePad.MEDIUM);
+            head.addView(chip, lp(-2, -2, 0, 0, 6, 0));
+        }
+        TextView clear = text(13, false, TEXT2); clear.setText(a.getString(R.string.saipen_try_clear));
+        clear.setBackground(round(SURFACE, 16));
+        clear.setPadding(dp(14), dp(7), dp(14), dp(7));
+        clear.setOnClickListener(v -> pad.clear());
+        head.addView(clear, lp(-2, -2, 6, 0, 0, 0));
+        col.addView(head, lp(-1, -2, 0, 2, 0, 6));
+        pad.setBackground(round(SamplePreview.PAPER, 14));
+        pad.setClipToOutline(true);
+        col.addView(pad, new LinearLayout.LayoutParams(w, Math.min(dp(320), Math.round(w * 0.6f))));
+        TextView note = text(11, false, TEXT3);
+        note.setText(a.getString(padNote(it.kind, folder)));
+        col.addView(note, lp(-1, -2, 0, 4, 0, 14));
+    }
+
+    private static String folderOf(Item it) { return SettingsContents.folderOf(it.kind, it.file); }
+
+    static int padNote(int kind, String folder) {
+        switch (kind) {
+            case SettingsContents.BRUSH_TEXTURES: return R.string.saipen_try_brush_texture;
+            case SettingsContents.PAPER_TEXTURES: return R.string.saipen_try_paper_texture;
+            case SettingsContents.SCATTER:        return R.string.saipen_try_scatter;
+            default:
+                if (folder.endsWith("bristle")) return R.string.saipen_try_bristle;
+                if (folder.endsWith("blotmap")) return R.string.saipen_try_blotmap;
+                return R.string.saipen_try_brshape;
+        }
     }
 
     /** Line · S-curve · Heart: the tools' sample shape, here and in the

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Обозреватель кистей (BrowseDialog): «Попробовать» для картинок, цвета, черновик. -->
+<resources>
+    <string name="saipen_try_it">Попробовать</string>
+    <string name="saipen_try_clear">Стереть</string>
+    <string name="saipen_try_small">Мелкая</string>
+    <string name="saipen_try_medium">Средняя</string>
+    <string name="saipen_try_large">Крупная</string>
+    <string name="saipen_try_brush_texture">Рисуйте пером: круглая кисть, проходящая через эту текстуру. Как в SAI, текстура стоит на месте на бумаге, а штрихи поверх друг друга понемногу её заполняют. Нажим меняет размер. Близко к SAI, но не точно.</string>
+    <string name="saipen_try_paper_texture">Рисуйте пером: краска на слое с этой текстурой бумаги, масштаб 100%. Как в SAI, зерно видно только в краске, а не на пустой бумаге, и если закрашивать поверх, оно не заполняется. Пятно слева нарисовано для начала. Близко к SAI, но не точно.</string>
+    <string name="saipen_try_brshape">Рисуйте пером: эта форма отпечатывается вдоль штриха с её начальными значениями (шаг, разброс размера и угла, рассеивание, плотность). Нажим меняет размер. Движок кистей SAI смешивает отпечатки по-своему: близко, но не точно.</string>
+    <string name="saipen_try_bristle">Рисуйте пером: эта щетина тянется вдоль штриха и поворачивается вместе с ним. Нажим меняет размер. В SAI щетина входит в инструмент-кисть и смешивается с его другими настройками: близко, но не точно.</string>
+    <string name="saipen_try_blotmap">Рисуйте пером: круглый кончик с этими пятнами внутри, поворачивается вместе со штрихом. Нажим меняет размер. В SAI пятна входят в инструмент-кисть и смешиваются с его другими настройками: близко, но не точно.</string>
+    <string name="saipen_try_scatter">Рисуйте пером: эти фигурки рассыпаются вдоль штриха с их начальными значениями (шаг, рассеивание, количество, разброс размера, угла и цвета). «Направление пера» здесь идёт по штриху, потому что наклон пера не читается. Близко к SAI, но не точно.</string>
+    <string name="saipen_sample_paper_texture">Зерно бумаги на целом листе. В SAI оно видно в краске на слое с этой текстурой: попробуйте ниже.</string>
+
+    <string name="saipen_colours_intro">Это собственные файлы цветов SAI из папки настроек SAI. SAI сама записывает их, пока вы рисуете, и читает при запуске. SAI Pen их только показывает: ничего с этой страницы не попадает в SAI, и ничего здесь их не меняет.</string>
+    <string name="saipen_colours_recent_about">Цвета, которыми вы рисовали последними, новые первыми: полоска истории в панели цвета SAI. SAI пополняет её сама (файл colhis.saichis).</string>
+    <string name="saipen_colours_swatches_about">Цвета, которые вы храните в панели палитры SAI (Swatches, папка swatch). Вы сохраняете их в SAI, и они переезжают вместе с настройками с компьютера.</string>
+    <string name="saipen_colours_swatch_empty">%1$s · пусто: SAI создала этот набор, но в нём пока не сохранено ни одного цвета.</string>
+    <string name="saipen_colours_swatch_n">%1$s · цветов: %2$d</string>
+    <string name="saipen_colours_no_edit">Создавать или менять палитру здесь пока нельзя. До сих пор попадались только пустые наборы, поэтому неизвестно, как SAI записывает сохранённый цвет, а файл наугад может испортить панель палитры в SAI. Сохраните несколько цветов в панели палитры SAI, и эта страница их покажет.</string>
+    <string name="saipen_colours_swatch_guess">Как читаются цвета набора, пока догадка (полный набор ещё не попадался). Если они выглядят не так, права панель самой SAI.</string>
+
+    <string name="saipen_scratch_title">Черновик</string>
+    <string name="saipen_scratch_about">Черновик SAI: маленький лист в панели Scratch Pad в SAI, чтобы пробовать цвета и кисти рядом с рисунком. То, что вы там чиркаете, хранится в этом файле, и после закрытия SAI тоже. Нажмите, чтобы увидеть, что из него можно показать.</string>
+    <string name="saipen_scratch_none">Пока нет: SAI создаёт его при первом запуске.</string>
+    <string name="saipen_scratch_empty">На нём пока ничего нет. Когда вы порисуете на черновике в SAI, это сохранится здесь.</string>
+    <string name="saipen_scratch_drawn">На нём что-то нарисовано, но показать это здесь нельзя. В отличие от ваших рисунков, у черновика нет маленькой картинки внутри, а его слой хранится в собственном формате SAI, который неизвестен. Откройте SAI, чтобы его увидеть.</string>
+    <string name="saipen_scratch_unreadable">Этот файл устроен не так, как знает SAI Pen, поэтому показать из него ничего нельзя. Сама SAI его по-прежнему читает.</string>
+    <string name="saipen_scratch_layers">Слои</string>
+    <string name="saipen_scratch_file">Файл</string>
+    <string name="saipen_scratch_changed">Изменён</string>
+    <string name="saipen_scratch_state">На нём</string>
+    <string name="saipen_scratch_state_empty">Ничего</string>
+    <string name="saipen_scratch_state_drawn">Рисунок</string>
+    <string name="saipen_scratch_state_unknown">Неизвестно</string>
+</resources>

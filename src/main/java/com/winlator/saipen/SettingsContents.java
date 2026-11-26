@@ -31,6 +31,21 @@ public final class SettingsContents {
         }
     }
 
+    /** SAI's folder of one picture, as StampTrail wants it: "scatter",
+     *  "brushfom/bristle"...; a hidden picture (BrushVisibility) keeps its
+     *  folder's name, so it is told by that. */
+    public static String folderOf(int kind, File picture) {
+        switch (kind) {
+            case BRUSH_TEXTURES: return "brushtex";
+            case PAPER_TEXTURES: return "papertex";
+            case SCATTER:        return "scatter";
+            default:
+                File parent = picture.getParentFile();
+                String p = parent != null ? parent.getName().toLowerCase(Locale.ROOT) : "";
+                return "brushfom/" + (p.equals("bristle") || p.equals("blotmap") ? p : "brshape");
+        }
+    }
+
     /** The .bmp pictures of one kind, sorted by name (any letter case). */
     public static List<File> pictures(File settings, int kind) {
         List<File> out = new ArrayList<>();
@@ -46,8 +61,9 @@ public final class SettingsContents {
     }
 
     /** SAI's own files of one sort in one folder (swatch/*.saiswat,
-     *  scratchpad/*.saispad), sorted by name; what is in them is SAI's own
-     *  format, described nowhere, so only their names are shown. */
+     *  scratchpad/*.saispad), sorted by name. What is in them is SAI's own
+     *  format, described nowhere: SaiSettingsFiles and SaiScratchPad read
+     *  what has been worked out. */
     public static List<File> files(File settings, String folder, String ext) {
         List<File> out = new ArrayList<>();
         File[] files = new File(settings, folder).listFiles();

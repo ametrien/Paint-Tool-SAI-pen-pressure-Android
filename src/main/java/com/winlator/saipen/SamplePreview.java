@@ -152,7 +152,9 @@ final class SamplePreview {
         return out;
     }
 
-    private static float[] tile(float[] into, Bitmap m, int w, int h) {
+    /** m's alpha (0..1) tiled over w×h from the top left, times what is in
+     *  `into` already (null: a fresh one); m is recycled. */
+    static float[] tile(float[] into, Bitmap m, int w, int h) {
         if (m == null) return into;
         int mw = m.getWidth(), mh = m.getHeight();
         int[] px = new int[mw * mh];

@@ -27,12 +27,17 @@ import java.util.Map;
  *    lines "slot=tool number". _0.saitset: the sets' order, "place=set".
  *  - brushtex/…, brushfom/…, scatter/… NAME.ini next to NAME.bmp: SAI's
  *    starting values for that picture ("Density = 50"), ";" comments.
- *  - colhis.saichis: "SAI-COLHIS-TYPE0", 8 bytes, then 10 bytes a colour:
- *    2 bytes 0, 2 bytes 1 (in use), red, green, blue as 16-bit little-endian.
- *    The order red-green-blue is a guess from the colours found (warm paper
- *    whites, an amber); not yet checked against SAI's own panel.
- *  - swatch/*.saiswat: "SAI-SWATCH-TYPE0" and 8 bytes; an empty one ends
- *    there. Colours after that are read as in colhis, which is unchecked.
+ *  - colhis.saichis: "SAI-COLHIS-TYPE0", then 10 bytes a colour, newest
+ *    first: u16 1 (in use), red, green, blue as 16-bit little-endian, u16 0;
+ *    two zero bytes at the end. SAI writes it itself as you paint (it is its
+ *    colour panel's history); seen keeping 11 to 12. Checked 2026-11-26
+ *    against an older copy in bak/: two new colours in front, the oldest
+ *    gone. The order red-green-blue is a guess from the colours found (warm
+ *    paper whites, an amber); not yet checked against SAI's own panel.
+ *  - swatch/*.saiswat: "SAI-SWATCH-TYPE0", u32 2, u32 2, 12 zero bytes: an
+ *    empty set, the only kind seen so far (PC and tablet). What a saved
+ *    colour looks like in it is not known; colours are read as in colhis,
+ *    which is a guess.
  *  - skin/skin.ini: [Skin] colsel=0/1, SAI's Window Color Scheme (white or
  *    dark based); which number is which is unchecked.
  *  - settings2.ssd: scrambled (no readable text in 16 KB): only its date.
@@ -216,10 +221,10 @@ public final class SaiSettingsFiles {
         if (b.length < 24) return out;
         String magic = new String(b, 0, 16, StandardCharsets.US_ASCII);
         if (!magic.startsWith("SAI-COLHIS-") && !magic.startsWith("SAI-SWATCH-")) return out;
-        for (int i = 24; i + 10 <= b.length; i += 10) {
-            int used = (b[i + 2] & 0xff) | (b[i + 3] & 0xff) << 8;
+        for (int i = 16; i + 10 <= b.length; i += 10) {
+            int used = (b[i] & 0xff) | (b[i + 1] & 0xff) << 8;
             if (used != 1) continue;
-            int r = b[i + 5] & 0xff, g = b[i + 7] & 0xff, bl = b[i + 9] & 0xff;
+            int r = b[i + 3] & 0xff, g = b[i + 5] & 0xff, bl = b[i + 7] & 0xff;
             out.add(0xff000000 | r << 16 | g << 8 | bl);
         }
         return out;
