@@ -549,7 +549,7 @@ faster processor and more RAM lag less.
   queue, so the ink comes sooner. If the picture flickers, jumps or tears on your device, go back to
   **Standard** (the default since 0.4.30). The same if bits of the brush circle stay on the screen
   while the pen hovers (with a big brush, pieces of the old circles are left around the new one):
-  on a Galaxy Tab S6 Lite that came from the front buffer, and **Standard** made it go away.
+  on a Galaxy Tab S6 Lite this showed only with the front buffer, and **Standard** made it go away.
 - Open **Ready to draw** above **Start SAI**: it shows what may slow SAI down right now (memory,
   battery saver, heat, storage) and what helps.
 - Lower **SAI's screen sharpness** on SAI Pen's screen before you tap **Start SAI**. Fewer pixels
