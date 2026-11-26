@@ -50,6 +50,8 @@ public final class SaiSession {
         final Runnable showCover = () -> {
             if (cover[0] != null) return;
             cover[0] = closingCover(activity);
+            /* above the floating keys and the red Exit SAI, which have a raised elevation */
+            cover[0].setElevation(64 * activity.getResources().getDisplayMetrics().density);
             root.addView(cover[0], new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         };

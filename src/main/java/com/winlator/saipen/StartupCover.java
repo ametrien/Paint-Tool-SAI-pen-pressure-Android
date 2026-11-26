@@ -51,6 +51,8 @@ public final class StartupCover {
         final View cover = build(activity);
         final TextView stageText = cover.findViewWithTag("stage");
         final ProgressBar bar = cover.findViewWithTag("bar");
+        /* above the floating keys and the red Exit SAI, which have a raised elevation */
+        cover.setElevation(64 * activity.getResources().getDisplayMetrics().density);
         root.addView(cover, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                          ViewGroup.LayoutParams.MATCH_PARENT));
 

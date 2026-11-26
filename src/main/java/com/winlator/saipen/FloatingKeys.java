@@ -86,8 +86,9 @@ public final class FloatingKeys {
     /* where the red Exit SAI is the first time: top right, under SAI's own
      * title bar and menu */
     private static final float DEFAULT_EXIT_X = 1f, DEFAULT_EXIT_Y = 0.1f;
-    private static final int EXIT_RED = Color.rgb(0xC6, 0x28, 0x28);
-    private static final int EXIT_RED_ASKING = Color.rgb(0xFF, 0x52, 0x52);
+    /* SAI's own close button: #A00040 behind a white cross (from a tablet screenshot, 2026-11-26) */
+    private static final int EXIT_RED = Color.rgb(0xA0, 0x00, 0x40);
+    private static final int EXIT_RED_ASKING = Color.rgb(0xD8, 0x1B, 0x60);
     /* where the dot is the first time: the right edge, a third down */
     private static final float DEFAULT_X = 1f, DEFAULT_Y = 0.35f;
     /* a press on the dot this long, without moving, hides it */
@@ -283,7 +284,7 @@ public final class FloatingKeys {
         };
         /* the red Exit SAI of its own, if switched on */
         final float exitScale = ExitButtonSize.scale(prefs.getInt(PREF_EXIT_SIZE, ExitButtonSize.BY_DEFAULT));
-        final TextView exitOwn = ownExit ? exitButton(activity, dp, exitScale, exitLabel, paintText) : null;
+        final TextView exitOwn = ownExit ? exitButton(activity, dp, exitScale, exitLabel) : null;
         final Runnable keepExitInside = () -> {
             if (exitOwn != null) keepInside(root, exitOwn);
         };
@@ -417,8 +418,12 @@ public final class FloatingKeys {
         if (exitOwn != null) {
             /* its own two taps, its own place; a drag moves it, a long press does nothing */
             final ExitTaps ownTaps = new ExitTaps();
-            Runnable tap = exitTap(ui, ownTaps, exitOwn, exitLabel, exitAsk,
-                rounded(EXIT_RED, 14 * dp * exitScale), rounded(EXIT_RED_ASKING, 14 * dp * exitScale), closeSai);
+            /* idle: SAI's cross, no words; asking: "Exit?" */
+            android.graphics.drawable.Drawable idle = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[] {rounded(EXIT_RED, 10 * dp * exitScale), new Cross(2.5f * dp * exitScale)});
+            exitOwn.setBackground(idle);
+            Runnable tap = exitTap(ui, ownTaps, exitOwn, "", exitAsk,
+                idle, rounded(EXIT_RED_ASKING, 10 * dp * exitScale), closeSai);
             exitOwn.setOnTouchListener(dragger(activity, root, exitOwn, prefs, PREF_EXIT_X, PREF_EXIT_Y,
                 keepExitInside, tap, null));
             root.addView(exitOwn, new FrameLayout.LayoutParams(
@@ -458,21 +463,46 @@ public final class FloatingKeys {
         };
     }
 
-    /** The red Exit SAI of its own: bigger than a key, so easy to hit; the
-     *  same width asking or not. `scale`: ExitButtonSize, 1 for medium. */
-    private static TextView exitButton(Activity activity, float dp, float scale, String label, TextPaint paintText) {
+    /** The red Exit SAI of its own: a rounded square like SAI's close
+     *  button, a white cross on it (its background, set by the caller) and no
+     *  words until it asks "Exit?". `scale`: ExitButtonSize, 1 for medium. */
+    private static TextView exitButton(Activity activity, float dp, float scale, String label) {
         TextView t = new TextView(activity);
-        t.setText(label);
+        t.setText("");
+        t.setContentDescription(label);
         t.setTextColor(Color.WHITE);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16 * scale);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14 * scale);
         t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         t.setGravity(Gravity.CENTER);
         t.setSingleLine(true);
-        t.setWidth((int) (scale * Math.max(80 * dp, paintText.measureText(label) * 16 / TEXT_SP + 28 * dp)));
-        t.setHeight((int) (56 * dp * scale));
-        t.setBackground(rounded(EXIT_RED, 14 * dp * scale));
+        int side = (int) (56 * dp * scale);
+        t.setWidth(side);
+        t.setHeight(side);
         t.setElevation(4 * dp);
         return t;
+    }
+
+    /** A white cross with round ends, a third of the way in from each side. */
+    private static final class Cross extends android.graphics.drawable.Drawable {
+        private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+        Cross(float stroke) {
+            p.setColor(Color.WHITE);
+            p.setStrokeWidth(stroke);
+            p.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+        }
+
+        @Override public void draw(android.graphics.Canvas c) {
+            android.graphics.Rect b = getBounds();
+            float in = Math.min(b.width(), b.height()) / 3f;
+            float l = b.left + in, t = b.top + in, r = b.right - in, bo = b.bottom - in;
+            c.drawLine(l, t, r, bo, p);
+            c.drawLine(r, t, l, bo, p);
+        }
+
+        @Override public void setAlpha(int a) { p.setAlpha(a); }
+        @Override public void setColorFilter(android.graphics.ColorFilter f) { p.setColorFilter(f); }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 
     /** Keeps `v` inside `root`. */
