@@ -452,6 +452,26 @@ scrolls the canvas). Or press the pen's side button. The right click goes where 
 </details>
 
 <details>
+<summary><b>Zooming with two fingers works badly or not at all</b></summary>
+
+Check [palm rejection](#palm-rejection) on SAI Pen's screen: turn off **Ignore fingers while the
+pen is near, and 1.5 s after**. While the pen hovers over the glass, and for 1.5 s after a stroke,
+it ignores every finger, so a pinch right after drawing, with the pen still in your hand, often
+doesn't zoom at all.
+
+What works best for me is the other two on and this one off:
+
+- **Ignore touches Android marks as a palm**: on
+- **Ignore large touches, like the side of a hand**: on
+- **Ignore fingers while the pen is near, and 1.5 s after**: off
+
+I don't recommend that third one: it's an extra check that makes zooming, scrolling and turning
+the canvas harder. Turn it on only if your palm still clicks or moves the cursor with the other
+two on.
+
+</details>
+
+<details>
 <summary><b>What's in the menu that opens with four fingers?</b></summary>
 
 **Tap the screen with four fingers at once** and a menu slides in from the left:
@@ -755,7 +775,8 @@ If your palm moves the cursor or clicks while the pen is **not** drawing, turn o
 on SAI Pen's screen under **Palm rejection**, before starting SAI. Each works on its own:
 
 - **Ignore touches Android marks as a palm.** Uses the device's own palm detection.
-- **Ignore fingers while the pen is near, and 1.5 s after.** Gestures still work once the pen is away.
+- **Ignore fingers while the pen is near, and 1.5 s after.** Gestures still work once the pen is away,
+  but zooming right after a stroke gets harder: I keep this one off (see the [FAQ](#faq)).
 - **Ignore large touches, like the side of a hand.**
 
 <details>
