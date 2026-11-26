@@ -41,9 +41,14 @@ public final class DrawingIndex {
     }
 
     /** Every drawing under `root`, newest first. */
+    /** Every drawing under `root`, newest first. Reference pictures (the
+     *  References folder) are the artist's, not drawings: they stay out,
+     *  like the Timelapses folder (owner, 2026-11-26). */
     public static List<Entry> all(File root) {
         List<Entry> out = new ArrayList<>();
-        for (File f : RecentDrawings.newest(root, Integer.MAX_VALUE)) out.add(entry(f, root));
+        for (File f : RecentDrawings.newest(root, Integer.MAX_VALUE)) {
+            if (!RecentDrawings.isReference(f, root)) out.add(entry(f, root));
+        }
         return out;
     }
 

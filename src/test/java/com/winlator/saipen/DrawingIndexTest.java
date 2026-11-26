@@ -71,6 +71,16 @@ public class DrawingIndexTest {
     }
 
     @Test
+    public void referencesAreNotDrawings() throws Exception {
+        drawing("a.sai2", 1);
+        drawing("References/face.jpg", 1);
+        drawing("References/hands/b.png", 1);
+        List<Entry> all = DrawingIndex.all(tmp.getRoot());
+        assertEquals(Arrays.asList("a"), titles(all));
+        assertEquals(Arrays.asList(""), DrawingIndex.folders(all));
+    }
+
+    @Test
     public void hiddenKindsLeftOut() throws Exception {
         drawing("a.sai2", 1);
         drawing("b.png", 1);

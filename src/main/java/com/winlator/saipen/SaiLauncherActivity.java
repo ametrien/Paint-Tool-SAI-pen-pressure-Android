@@ -1865,7 +1865,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
                         R.string.saipen_recent_open);
                 fillRow(R.id.SaiPenTlScroll, R.id.SaiPenTl, R.id.SaiPenTlLabel, videoTitles, stills, videoTaps, 0);
                 ((TextView) findViewById(R.id.SaiPenAllDrawingsValue))
-                    .setText(every.isEmpty() ? "" : String.valueOf(every.size()));
+                    .setText(own.isEmpty() ? "" : String.valueOf(own.size()));
             });
         });
     }
