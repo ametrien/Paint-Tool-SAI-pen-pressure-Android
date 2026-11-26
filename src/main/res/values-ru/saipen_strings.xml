@@ -58,7 +58,8 @@
     <string name="saipen_sharpness_native">%1$d, как у экрана</string>
     <string name="saipen_tip_keyboard">Совет: короткое касание тремя пальцами открывает клавиатуру, ещё одно закрывает её.</string>
     <string name="saipen_tip_keys">Совет: задержите три пальца на экране, чтобы показать или спрятать кнопки на экране.</string>
-    <string name="saipen_starting_wine">SAI запускается, %1$d с. Первый запуск дольше.</string>
+    <string name="saipen_starting_wine">SAI запускается, %1$d с</string>
+    <string name="saipen_starting_wine_first">SAI запускается, %1$d с. Первый запуск дольше.</string>
     <string name="saipen_starting_drawing">SAI рисует окно, %1$d с</string>
     <string name="saipen_drawings_where">Сохраняй рисунки в папку «SAI Drawings» в окне сохранения SAI: на планшете это «Документы/SAI Drawings». Рисунки, сохранённые прямо в папку пользователя SAI, переносятся туда, когда SAI закрывается.</string>
     <string name="saipen_find_title">Где SAI?</string>

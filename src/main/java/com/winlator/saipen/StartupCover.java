@@ -45,7 +45,22 @@ public final class StartupCover {
 
     private StartupCover() {}
 
+    /** Which SAI this start is (set by SaiLauncherActivity before it starts
+     *  SAI); remembered once SAI has come up, so the next start of the same
+     *  SAI does not say "The first start takes longer". */
+    static volatile String saiIdentity = "";
+    private static final String PREF_STARTED_SAI = "saipen_started_sai";
+
+    /** A SAI file as its path, size and date: another SAI, or the same one
+     *  changed, reads as not started yet. */
+    static String identity(java.io.File exe) {
+        return exe.getAbsolutePath() + "|" + exe.length() + "|" + exe.lastModified();
+    }
+
     public static void show(Activity activity, FrameLayout root, XServer xServer, String exeName) {
+        final SharedPreferences startPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        final String thisSai = saiIdentity;
+        final boolean firstStart = thisSai.isEmpty() || !thisSai.equals(startPrefs.getString(PREF_STARTED_SAI, ""));
         SpeedSession.start(activity, xServer, exeName);
         final SaiStartup startup = new SaiStartup(SystemClock.uptimeMillis());
         final View cover = build(activity);
@@ -92,13 +107,15 @@ public final class StartupCover {
                 bar.setProgress(startup.progress(now));
                 if (!startup.ready(now)) {
                     stageText.setText(activity.getString(
-                        startup.stage() == 0 ? R.string.saipen_starting_wine : R.string.saipen_starting_drawing,
+                        startup.stage() != 0 ? R.string.saipen_starting_drawing
+                            : firstStart ? R.string.saipen_starting_wine_first : R.string.saipen_starting_wine,
                         startup.secondsSince(now)));
                     ui.postDelayed(this, 150);
                     return;
                 }
                 Log.i(TAG, "cover lifted; SAI's window came " + startup.saiWindowAfterMs() + " ms after the start");
                 SpeedSession.coverLifted();
+                if (firstStart && !thisSai.isEmpty()) startPrefs.edit().putString(PREF_STARTED_SAI, thisSai).apply();
                 cpu.shutdown();
                 cover.animate().alpha(0f).setDuration(250).withEndAction(() -> root.removeView(cover)).start();
                 showMenuHint(activity);

@@ -1952,6 +1952,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
         Intent intent = new Intent(this, XServerDisplayActivity.class);
         intent.putExtra("container_id", container.id);
         intent.putExtra("exec_path", f.exe().getPath());
+        /* "The first start takes longer" only for a SAI not started here yet:
+           a new install, another SAI, or its file changed (StartupCover) */
+        StartupCover.saiIdentity = StartupCover.identity(f.exe());
         String windowsPath = drawingToOpen != null
             ? RecentDrawings.windowsPath(drawingToOpen, SaiPenSetup.drawingsFolder()) : null;
         /* XServerDisplayActivity puts it after SAI's name on Wine's command line (winlator.patch) */

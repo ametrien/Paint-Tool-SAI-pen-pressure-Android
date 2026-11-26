@@ -95,10 +95,47 @@ public final class FloatingKeysSettings {
             });
         }
         body.addView(exitSize);
+        /* darker, towards black, and its own opacity or the keys' (ExitLook) */
+        final LinearLayout exitLook = new LinearLayout(a);
+        exitLook.setOrientation(LinearLayout.VERTICAL);
+        exitLook.addView(note(a, R.string.saipen_keys_exit_dark));
+        android.widget.SeekBar dark = new android.widget.SeekBar(a);
+        dark.setMax(ExitLook.MAX_DARK);
+        dark.setProgress(ExitLook.dark(prefs.getInt(ExitLook.PREF_DARK, 0)));
+        dark.setOnSeekBarChangeListener(saveOnRelease(v -> {
+            prefs.edit().putInt(ExitLook.PREF_DARK, v).apply();
+            changed.run();
+        }));
+        exitLook.addView(dark, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (40 * dp)));
+        int savedOwn = prefs.getInt(ExitLook.PREF_OPACITY, ExitLook.SAME_AS_KEYS);
+        final android.widget.SeekBar own = new android.widget.SeekBar(a);
+        own.setMax(100 - ExitLook.MIN_OPACITY);
+        own.setProgress(ExitLook.opacity(savedOwn, KeysOpacity.BY_DEFAULT) - ExitLook.MIN_OPACITY);
+        own.setOnSeekBarChangeListener(saveOnRelease(v -> {
+            prefs.edit().putInt(ExitLook.PREF_OPACITY, v + ExitLook.MIN_OPACITY).apply();
+            changed.run();
+        }));
+        Switch same = new Switch(a);
+        same.setText(R.string.saipen_keys_exit_same_opacity);
+        same.setTextColor(textColor);
+        same.setMinHeight((int) (44 * dp));
+        same.setChecked(savedOwn == ExitLook.SAME_AS_KEYS);
+        own.setVisibility(same.isChecked() ? View.GONE : View.VISIBLE);
+        same.setOnCheckedChangeListener((CompoundButton b, boolean on) -> {
+            prefs.edit().putInt(ExitLook.PREF_OPACITY,
+                on ? ExitLook.SAME_AS_KEYS : own.getProgress() + ExitLook.MIN_OPACITY).apply();
+            own.setVisibility(on ? View.GONE : View.VISIBLE);
+            changed.run();
+        });
+        exitLook.addView(same);
+        exitLook.addView(own, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (40 * dp)));
+        body.addView(exitLook);
         exitSize.setVisibility(exitOwn.isChecked() ? View.VISIBLE : View.GONE);
+        exitLook.setVisibility(exitOwn.isChecked() ? View.VISIBLE : View.GONE);
         exitOwn.setOnCheckedChangeListener((CompoundButton b, boolean on) -> {
             prefs.edit().putBoolean(FloatingKeys.PREF_EXIT_OWN, on).apply();
             exitSize.setVisibility(on ? View.VISIBLE : View.GONE);
+            exitLook.setVisibility(on ? View.VISIBLE : View.GONE);
             changed.run();
         });
 
@@ -232,6 +269,15 @@ public final class FloatingKeysSettings {
     }
 
     interface OnButton { void picked(Shortcut s); }
+
+    /** A slider that saves once the finger lets go, not on every step. */
+    private static android.widget.SeekBar.OnSeekBarChangeListener saveOnRelease(java.util.function.IntConsumer save) {
+        return new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar s, int v, boolean user) {}
+            @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar s) { save.accept(s.getProgress()); }
+        };
+    }
 
     /**
      * Ctrl, Alt, Shift, a key (or none) and once / held: a new button, or a

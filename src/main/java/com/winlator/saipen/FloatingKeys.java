@@ -422,11 +422,15 @@ public final class FloatingKeys {
             /* its own two taps, its own place; a drag moves it, a long press does nothing */
             final ExitTaps ownTaps = new ExitTaps();
             /* idle: SAI's cross, no words; asking: "Exit?" */
+            /* the artist's darker and see-through choices (ExitLook) */
+            int exitDark = ExitLook.dark(prefs.getInt(ExitLook.PREF_DARK, 0));
+            int exitOpacity = ExitLook.opacity(prefs.getInt(ExitLook.PREF_OPACITY, ExitLook.SAME_AS_KEYS), opacity);
             android.graphics.drawable.Drawable idle = new android.graphics.drawable.LayerDrawable(
-                new android.graphics.drawable.Drawable[] {rounded(KeysOpacity.apply(EXIT_RED, opacity), 8 * dp * exitScale), new Cross(2.2f * dp * exitScale)});
+                new android.graphics.drawable.Drawable[] {rounded(ExitLook.color(EXIT_RED, exitDark, exitOpacity), 8 * dp * exitScale),
+                    new Cross(2.2f * dp * exitScale)});
             exitOwn.setBackground(idle);
             Runnable tap = exitTap(ui, ownTaps, exitOwn, "", exitAsk,
-                idle, rounded(KeysOpacity.apply(EXIT_RED_ASKING, opacity), 8 * dp * exitScale), closeSai);
+                idle, rounded(ExitLook.color(EXIT_RED_ASKING, exitDark / 2, Math.max(exitOpacity, 70)), 8 * dp * exitScale), closeSai);
             exitOwn.setOnTouchListener(dragger(activity, root, exitOwn, prefs, PREF_EXIT_X, PREF_EXIT_Y,
                 keepExitInside, tap, null));
             root.addView(exitOwn, new FrameLayout.LayoutParams(

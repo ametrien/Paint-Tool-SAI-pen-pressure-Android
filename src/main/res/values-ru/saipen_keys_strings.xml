@@ -13,6 +13,8 @@
     <string name="saipen_keys_add_title">Новая кнопка</string>
     <string name="saipen_keys_add_ok">Добавить</string>
     <string name="saipen_keys_opacity_note">Непрозрачность (кнопки и красный Exit SAI):</string>
+    <string name="saipen_keys_exit_dark">Темнее (от красного SAI к чёрному):</string>
+    <string name="saipen_keys_exit_same_opacity">Прозрачность как у кнопок</string>
     <string name="saipen_keys_color_note">Цвет:</string>
     <string name="saipen_keys_dot">Клавиши</string>
     <string name="saipen_keys_hidden">Клавиши скрыты до следующего запуска SAI.</string>
