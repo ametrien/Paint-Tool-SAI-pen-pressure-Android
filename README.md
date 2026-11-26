@@ -292,8 +292,11 @@ SYSTEMAX's [download page](https://www.systemax.jp/en/sai/devdept.html) has two 
 - **Technical Preview Stable Version** (2026-07-02b), at the top: the last one before SAI's big
   renovation. It has no dark colours. Its title bar says *Preview.2026.07.02b*.
 - **Technical Preview Major Renovated Version**, lower on the page: the newer line, with the dark
-  colours. Its file name and title bar say *Alpha*, like *Alpha.2026.10.19*. SYSTEMAX notes that
-  files and shortcut keys saved with it don't work in older builds.
+  colours. Its file name and title bar say *Alpha*: **Alpha.2026.10.19** and every newer Alpha
+  have them. SYSTEMAX notes that files and shortcut keys saved with it don't work in older builds.
+
+<img src="docs/images/sai-title-alpha.png" width="466" alt="SAI's title bar in dark colours: PaintTool SAI Ver.2 (64bit) Alpha.2026.10.19, with the File, Edit, Canvas, Layer, Selection and Ruler menus">
+
 
 Both work with SAI Pen. Already using the stable one? Download the Alpha (**64bit**), unzip it,
 then tap **Change SAI…** on SAI Pen's screen (see the answer above).
