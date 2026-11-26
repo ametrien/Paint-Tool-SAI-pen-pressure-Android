@@ -65,17 +65,19 @@ public class ShortcutTest {
     @Test
     public void theDefaults() {
         List<Shortcut> d = Shortcut.parseList(Shortcut.DEFAULTS);
-        assertEquals("[hold Ctrl, Ctrl+Z, Ctrl+Y, Ctrl+T, Ctrl+A, Ctrl+D, Ctrl+U, Enter]", d.toString());
+        assertEquals("[hold Ctrl, Ctrl+Z, Ctrl+Y, Ctrl+T, Ctrl+A, Ctrl+D, Ctrl+U, Enter, Exit SAI]", d.toString());
         assertTrue(d.get(0).held);
-        assertTrue(d.size() <= Shortcut.MAX);
+        assertTrue(d.get(8).exitSai);
+        assertEquals("room for one of one's own", Shortcut.MAX - 1, d.size());
     }
 
     @Test
     public void theListSkipsJunkAndRepeatedKeysAndStopsAtMax() {
         List<Shortcut> l = Shortcut.parseList(
-            "hold Ctrl\nnonsense\nctrl\nCtrl+A\nhold ctrl+a\n\nCtrl+B\nCtrl+C\nCtrl+D\nCtrl+E\nCtrl+F\nCtrl+G\nCtrl+H");
+            "hold Ctrl\nnonsense\nctrl\nCtrl+A\nhold ctrl+a\n\nCtrl+B\nCtrl+C\nCtrl+D\nCtrl+E\nCtrl+F\nCtrl+G\nCtrl+H\nCtrl+I\nCtrl+J");
+        assertEquals(10, Shortcut.MAX);
         assertEquals(Shortcut.MAX, l.size());
-        assertEquals("[hold Ctrl, Ctrl+A, Ctrl+B, Ctrl+C, Ctrl+D, Ctrl+E, Ctrl+F, Ctrl+G]", l.toString());
+        assertEquals("[hold Ctrl, Ctrl+A, Ctrl+B, Ctrl+C, Ctrl+D, Ctrl+E, Ctrl+F, Ctrl+G, Ctrl+H, Ctrl+I]", l.toString());
         assertEquals(l, Shortcut.parseList(Shortcut.joinList(l)));
         assertTrue(Shortcut.parseList(null).isEmpty());
     }
@@ -99,6 +101,5 @@ public class ShortcutTest {
     @Test
     public void exitSaiIsNoGesturesKey() {
         assertNull("parse() alone, as gestures read their key", Shortcut.parse("Exit SAI"));
-        assertFalse("not in the first buttons", Shortcut.DEFAULTS.contains(Shortcut.EXIT_SAI));
     }
 }

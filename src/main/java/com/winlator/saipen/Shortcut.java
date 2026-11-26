@@ -16,7 +16,8 @@ import java.util.Locale;
  *   for a perspective ruler's handles, which move with Ctrl and the pen.
  *
  * - EXIT_SAI: no keys; closes SAI the way its red cross does (FloatingKeys,
- *   ExitTaps), kept in the list as the line "Exit SAI". Only the floating
+ *   ExitTaps), kept in the list as the line "Exit SAI", last of the first
+ *   buttons. Only the floating
  *   keys' list knows it (parseList): parse() never gives it, so a gesture's
  *   key stays a key.
  *
@@ -30,17 +31,20 @@ import java.util.Locale;
 public final class Shortcut {
     public static final int CTRL = 1, ALT = 2, SHIFT = 4;
 
-    /** Buttons at most: one row on a tablet, two on a phone. */
-    public static final int MAX = 8;
+    /** Buttons at most: one or two rows on a tablet (Shortcut.columns),
+     *  more on a phone. */
+    public static final int MAX = 10;
 
-    /** The first time: Ctrl to hold, undo and redo next to it, transform,
-     *  select all and deselect, Hue and Saturation, and Enter to finish a
-     *  transform. */
-    public static final String DEFAULTS = "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter";
-
-    private static final String HOLD = "hold ";
     /** The Exit SAI button, as kept in the list and as its label. */
     public static final String EXIT_SAI = "Exit SAI";
+
+    /** The first time: Ctrl to hold, undo and redo next to it, transform,
+     *  select all and deselect, Hue and Saturation, Enter to finish a
+     *  transform, and Exit SAI. One under MAX, so a button of one's own can
+     *  be added straight away. */
+    public static final String DEFAULTS = "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+
+    private static final String HOLD = "hold ";
 
     /** The keys a combination can end in, in the picker's order, and the X
      *  key (com.winlator.xserver.XKeycode) each one is. */

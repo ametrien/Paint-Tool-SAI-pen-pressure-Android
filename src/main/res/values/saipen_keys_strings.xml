@@ -4,7 +4,7 @@
     <string name="saipen_keys_title">On-screen keys</string>
     <string name="saipen_keys_value_on">On</string>
     <string name="saipen_keys_value_off">Off</string>
-    <string name="saipen_keys_note">For SAI without a keyboard: a small dot over SAI that you can drag anywhere. Tap it to open your buttons; drag them by ⋮, close them with ×.</string>
+    <string name="saipen_keys_note">A dot over SAI: tap it for your buttons, ⋮ drags them, × closes them.</string>
     <string name="saipen_keys_switch">Show the keys when SAI starts</string>
     <string name="saipen_keys_gesture">Hold three fingers still for a moment to show or hide them</string>
     <string name="saipen_keys_none">No buttons.</string>
@@ -19,7 +19,7 @@
     <!-- a long press on the dot hides it -->
     <string name="saipen_keys_hidden">The keys are hidden until SAI starts again.</string>
     <string name="saipen_keys_hidden_gesture">The keys are hidden. Hold three fingers still for a moment to bring them back.</string>
-    <string name="saipen_keys_buttons_note">Buttons (up to %d). Tap Once / Held to switch: Once presses the keys once per tap, Held keeps them down for the pen until you tap again.</string>
+    <string name="saipen_keys_buttons_note">Buttons, up to %d:</string>
     <string name="saipen_keys_kind_once">Once</string>
     <string name="saipen_keys_kind_held">Held</string>
     <string name="saipen_keys_kind_once_long">A tap presses it once (like Ctrl+Z)</string>
@@ -27,8 +27,7 @@
     <!-- the Exit SAI button (Shortcut.EXIT_SAI, ExitTaps) -->
     <string name="saipen_keys_exit">Exit SAI</string>
     <string name="saipen_keys_exit_ask">Exit?</string>
-    <string name="saipen_keys_add_exit">+ Add an Exit SAI button</string>
-    <string name="saipen_keys_exit_note">Exit SAI closes SAI like its red cross: tap it, then tap again within 3 seconds. SAI asks about unsaved drawings, and Cancel keeps it open.</string>
+    <string name="saipen_keys_add_exit">+ Exit SAI (two taps)</string>
     <string name="saipen_keys_no_key">(no key, only Ctrl / Alt / Shift)</string>
     <!-- SaiLocator.exeBits: a 32-bit sai2.exe -->
     <string name="saipen_32bit">SAI Pen needs the 64bit SAI. Download it from SYSTEMAX (its file name ends in 64bit-en.zip), unzip it, then tap Change SAI…</string>
