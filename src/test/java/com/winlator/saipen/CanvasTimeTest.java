@@ -99,6 +99,38 @@ public class CanvasTimeTest {
     }
 
     @Test
+    public void sessionsSplitOnLongBreaksAndSaiRestarts() {
+        CanvasTime t = new CanvasTime();
+        long min = 60_000;
+        t.penDown(0); t.penUp(2, "a.sai2", 1_000 * min);
+        t.penDown(10); t.penUp(11, "a.sai2", 1_005 * min);          // 5 min later: same sitting
+        t.penDown(2000); t.penUp(2001, "a.sai2", 1_030 * min);      // 25 min later: a new one
+        t.cancel();                                                 // SAI closed
+        t.penDown(3000); t.penUp(3001, "a.sai2", 1_032 * min);      // 2 min later, after a restart
+        CanvasTime.Canvas c = t.get("a.sai2");
+        assertEquals(3, c.sessions.size());
+        assertEquals(2, c.sessions.get(0).strokes);
+        assertEquals(1_000 * min, c.sessions.get(0).start);
+        assertEquals(1_005 * min, c.sessions.get(0).end);
+        assertEquals(1, c.sessions.get(2).strokes);
+        CanvasTime back = new CanvasTime();
+        back.parse(t.serialize());
+        CanvasTime.Canvas b = back.get("a.sai2");
+        assertEquals(3, b.sessions.size());
+        assertEquals(4, b.strokes);
+        assertEquals(1_030 * min, b.sessions.get(1).start);
+    }
+
+    @Test
+    public void aSavedNewCanvasTakesItsSessionsAlong() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(5, ":NewCanvas1", 1_000);
+        t.titleChanged(":NewCanvas1", "x.sai2", 50_000);
+        t.fileSaved("x.sai2", 51_000);
+        assertEquals(1, t.get("x.sai2").sessions.size());
+    }
+
+    @Test
     public void fileRoundTrip() {
         CanvasTime t = new CanvasTime();
         t.penDown(0); t.penUp(3, "comics/a b.sai2", 1700000000000L);

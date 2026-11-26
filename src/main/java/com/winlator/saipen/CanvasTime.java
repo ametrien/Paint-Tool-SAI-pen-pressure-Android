@@ -34,12 +34,36 @@ public final class CanvasTime {
         public double seconds;
         /** Wall clock, milliseconds; 0 when unknown. */
         public long first, last;
+        /** Each sitting on this drawing, oldest first: for statistics per
+         *  drawing (by day, time, strokes) later. Empty for time counted
+         *  before sessions were kept. */
+        public final java.util.List<Session> sessions = new java.util.ArrayList<>();
 
         void add(Canvas o) {
             strokes += o.strokes;
             seconds += o.seconds;
             if (o.first > 0) first = first == 0 ? o.first : Math.min(first, o.first);
             last = Math.max(last, o.last);
+            for (Session s : o.sessions) sessions.add(s.copy());
+            sessions.sort((a, b) -> Long.compare(a.start, b.start));
+        }
+    }
+
+    /** One sitting on a drawing: from its first to its last stroke, with no
+     *  break over DrawingStats.SESSION_GAP and no SAI restart between. */
+    public static final class Session {
+        /** Wall clock, milliseconds. */
+        public long start, end;
+        public int strokes;
+        public double seconds;
+
+        Session copy() {
+            Session s = new Session();
+            s.start = start;
+            s.end = end;
+            s.strokes = strokes;
+            s.seconds = seconds;
+            return s;
         }
     }
 
@@ -63,6 +87,8 @@ public final class CanvasTime {
     static final int KEEP_RENAMES = 200;
     private double downAt = -1, lastUpAt = -1;
     private String lastKey;
+    /** SAI was closed (cancel): the next stroke on any drawing opens a session. */
+    private boolean freshStart = true;
     private boolean dirty;
     /* the last title change from an unsaved canvas to a file, and the last file written */
     private String switchFrom, switchTo, savedName;
@@ -116,6 +142,16 @@ public final class CanvasTime {
         c.seconds += added;
         if (c.first == 0) c.first = wallMs;
         c.last = Math.max(c.last, wallMs);
+        Session s = c.sessions.isEmpty() ? null : c.sessions.get(c.sessions.size() - 1);
+        if (s == null || freshStart || wallMs - s.end > DrawingStats.SESSION_GAP * 1000) {
+            s = new Session();
+            s.start = wallMs;
+            c.sessions.add(s);
+        }
+        s.end = Math.max(s.end, wallMs);
+        s.strokes++;
+        s.seconds += added;
+        freshStart = false;
         lastUpAt = t;
         lastKey = key;
         dirty = true;
@@ -125,6 +161,7 @@ public final class CanvasTime {
     public synchronized void cancel() {
         downAt = -1;
         lastUpAt = -1;
+        freshStart = true;
     }
 
     /** SAI's title went from naming `from` to naming `to` (keys, may be null). */
@@ -196,6 +233,21 @@ public final class CanvasTime {
         for (String line : text.split("\n")) {
             if (line.isEmpty() || line.startsWith("#")) continue;
             String[] f = line.split("\t");
+            if (f[0].equals("@session")) {
+                if (f.length >= 6) {
+                    try {
+                        Session s = new Session();
+                        s.start = Long.parseLong(f[2]);
+                        s.end = Long.parseLong(f[3]);
+                        s.strokes = Integer.parseInt(f[4]);
+                        s.seconds = Double.parseDouble(f[5]);
+                        canvases.computeIfAbsent(f[1], k -> new Canvas()).sessions.add(s);
+                    }
+                    catch (NumberFormatException ignored) {
+                    }
+                }
+                continue;
+            }
             if (f[0].equals("@rename")) {
                 if (f.length >= 4) {
                     try {
@@ -208,12 +260,11 @@ public final class CanvasTime {
             }
             if (f.length < 5) continue;
             try {
-                Canvas c = new Canvas();
+                Canvas c = canvases.computeIfAbsent(f[0], k -> new Canvas());
                 c.strokes = Integer.parseInt(f[1]);
                 c.seconds = Double.parseDouble(f[2]);
                 c.first = Long.parseLong(f[3]);
                 c.last = Long.parseLong(f[4]);
-                canvases.put(f[0], c);
             }
             catch (NumberFormatException ignored) {
             }
@@ -227,6 +278,14 @@ public final class CanvasTime {
             out.append(e.getKey().replace('\t', ' ').replace('\n', ' ')).append('\t').append(c.strokes)
                .append('\t').append(String.format(Locale.ROOT, "%.0f", c.seconds))
                .append('\t').append(c.first).append('\t').append(c.last).append('\n');
+        }
+        for (Map.Entry<String, Canvas> e : canvases.entrySet()) {
+            String k = e.getKey().replace('\t', ' ').replace('\n', ' ');
+            for (Session s : e.getValue().sessions) {
+                out.append("@session\t").append(k).append('\t').append(s.start).append('\t').append(s.end)
+                   .append('\t').append(s.strokes).append('\t').append(String.format(Locale.ROOT, "%.0f", s.seconds))
+                   .append('\n');
+            }
         }
         for (Rename r : renames) {
             out.append("@rename\t").append(r.from.replace('\t', ' ')).append('\t')
