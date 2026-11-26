@@ -192,6 +192,23 @@ static void test_maximize(void)
     CHECK(!wh_maximize_step(&m, 43, 0, 0, 1000000 + WH_MAXIMIZE_MS + 1), "the same process after SAI's window came back: not again");
 }
 
+static void test_close_sai(void)
+{
+    /* SaiPenRequests.closeSai: the code alone, the rest of the 256 bytes as left */
+    struct req q; r_start(&q, WH_CLOSE_SAI);
+    CHECK(q.d[0] == 100, "CLOSE_SAI: byte 0 is 100");
+    int clash = 0;
+    for (int c = 0; c <= 22; c++) clash |= c == WH_CLOSE_SAI;   /* RequestCodes.java's codes */
+    CHECK(!clash, "CLOSE_SAI: none of Winlator's codes");
+
+    CHECK(wh_close_step(0, 1, 0) == WH_CLOSE_NOTHING, "no SAI window: nothing");
+    CHECK(wh_close_step(0, 0, 1) == WH_CLOSE_NOTHING, "no SAI window, whatever else: nothing");
+    CHECK(wh_close_step(1, 1, 0) == WH_CLOSE_POST, "SAI's window: the red cross's close");
+    CHECK(wh_close_step(1, 1, 1) == WH_CLOSE_POST, "SAI's window enabled: the close, even with a tool window about");
+    CHECK(wh_close_step(1, 0, 1) == WH_CLOSE_SHOW_DIALOG, "a SAI dialog open: show it, close nothing");
+    CHECK(wh_close_step(1, 0, 0) == WH_CLOSE_NOTHING, "disabled with no dialog to show: nothing");
+}
+
 int main(void)
 {
     test_exec();
@@ -203,6 +220,7 @@ int main(void)
     test_answers();
     test_copy_string();
     test_maximize();
+    test_close_sai();
     printf("%d winhandler protocol case(s), %d failure(s)\n", cases, failures);
     return failures ? 1 : 0;
 }

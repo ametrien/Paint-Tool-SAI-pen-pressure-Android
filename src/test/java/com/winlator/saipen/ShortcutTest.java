@@ -79,4 +79,26 @@ public class ShortcutTest {
         assertEquals(l, Shortcut.parseList(Shortcut.joinList(l)));
         assertTrue(Shortcut.parseList(null).isEmpty());
     }
+
+    @Test
+    public void exitSaiInTheList() {
+        List<Shortcut> l = Shortcut.parseList("Ctrl+Z\nexit sai\nExit SAI\nEnter");
+        assertEquals(3, l.size());
+        Shortcut e = l.get(1);
+        assertTrue(e.exitSai);
+        assertFalse("never held", e.held);
+        assertTrue("no keys", e.xKeys().isEmpty());
+        assertEquals("Exit SAI", e.label());
+        assertEquals("Ctrl+Z\nExit SAI\nEnter", Shortcut.joinList(l));
+        assertEquals(Shortcut.exitSai(), e);
+        assertFalse(e.sameKeys(Shortcut.parse("Ctrl+Z")));
+        assertFalse(Shortcut.parse("Ctrl+Z").sameKeys(e));
+        assertFalse("not Ctrl held either", e.sameKeys(Shortcut.parse("hold Ctrl")));
+    }
+
+    @Test
+    public void exitSaiIsNoGesturesKey() {
+        assertNull("parse() alone, as gestures read their key", Shortcut.parse("Exit SAI"));
+        assertFalse("not in the first buttons", Shortcut.DEFAULTS.contains(Shortcut.EXIT_SAI));
+    }
 }

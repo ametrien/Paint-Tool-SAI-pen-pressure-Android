@@ -66,6 +66,10 @@ public final class FloatingKeysSettings {
         actions.addView(add);
         actions.addView(reset);
         body.addView(actions);
+        /* Exit SAI: a button of its own kind, so a link of its own */
+        final TextView addExit = link(a, dp, R.string.saipen_keys_add_exit);
+        body.addView(addExit);
+        body.addView(note(a, R.string.saipen_keys_exit_note));
 
         final Runnable[] fill = new Runnable[1];
         fill[0] = () -> {
@@ -79,13 +83,14 @@ public final class FloatingKeysSettings {
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setMinimumHeight((int) (40 * dp));
                 TextView name = new TextView(a);
-                name.setText(s.label());
+                name.setText(s.exitSai ? a.getString(R.string.saipen_keys_exit) : s.label());
                 name.setTextColor(textColor);
                 name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                 row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
                 /* once / held: a tap switches, unless it can only be held */
                 TextView kind = link(a, dp, s.held ? R.string.saipen_keys_kind_held : R.string.saipen_keys_kind_once);
-                if (s.key == null) kind.setTextColor(dimColor);
+                if (s.exitSai) kind.setVisibility(View.INVISIBLE);   /* two taps, neither once nor held */
+                else if (s.key == null) kind.setTextColor(dimColor);
                 else kind.setOnClickListener(v -> {
                     List<Shortcut> l = FloatingKeys.buttons(prefs);
                     if (index < l.size()) l.set(index, new Shortcut(s.modifiers, s.key, !s.held));
@@ -109,6 +114,11 @@ public final class FloatingKeysSettings {
             boolean room = now.size() < Shortcut.MAX;
             add.setEnabled(room);
             add.setAlpha(room ? 1f : 0.4f);
+            boolean hasExit = false;
+            for (Shortcut s : now) hasExit |= s.exitSai;
+            addExit.setVisibility(hasExit ? View.GONE : View.VISIBLE);
+            addExit.setEnabled(room);
+            addExit.setAlpha(room ? 1f : 0.4f);
         };
         fill[0].run();
 
@@ -122,6 +132,15 @@ public final class FloatingKeysSettings {
             fill[0].run();
             changed.run();
         }));
+        addExit.setOnClickListener(v -> {
+            List<Shortcut> l = FloatingKeys.buttons(prefs);
+            boolean repeat = false;
+            for (Shortcut o : l) repeat |= o.exitSai;
+            if (!repeat && l.size() < Shortcut.MAX) l.add(Shortcut.exitSai());
+            save(prefs, l);
+            fill[0].run();
+            changed.run();
+        });
         reset.setOnClickListener(v -> {
             prefs.edit().remove(FloatingKeys.PREF_BUTTONS).apply();
             fill[0].run();

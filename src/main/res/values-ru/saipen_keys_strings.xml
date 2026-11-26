@@ -21,6 +21,11 @@
     <string name="saipen_keys_kind_held">Держать</string>
     <string name="saipen_keys_kind_once_long">Тап нажимает один раз (как Ctrl+Z)</string>
     <string name="saipen_keys_kind_held_long">Тап держит нажатой до следующего тапа (как Ctrl для линейки перспективы)</string>
+    <!-- кнопка Exit SAI (Shortcut.EXIT_SAI, ExitTaps) -->
+    <string name="saipen_keys_exit">Выйти</string>
+    <string name="saipen_keys_exit_ask">Выйти?</string>
+    <string name="saipen_keys_add_exit">+ Добавить кнопку выхода из SAI</string>
+    <string name="saipen_keys_exit_note">Кнопка выхода закрывает SAI как его красный крестик: нажмите её и ещё раз в течение 3 секунд. SAI сам спросит про несохранённые рисунки, а Отмена оставит его открытым.</string>
     <string name="saipen_keys_no_key">(без клавиши, только Ctrl / Alt / Shift)</string>
     <!-- SaiLocator.exeBits: a 32-bit sai2.exe -->
     <string name="saipen_32bit">SAI Pen нужна 64bit SAI. Скачайте её с сайта SYSTEMAX (имя файла кончается на 64bit-en.zip), распакуйте и нажмите «Сменить SAI…»</string>

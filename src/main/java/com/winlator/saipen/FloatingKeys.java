@@ -24,6 +24,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.winlator.R;
+import com.winlator.XServerDisplayActivity;
+import com.winlator.winhandler.SaiPenRequests;
 import com.winlator.xserver.XKeycode;
 import com.winlator.xserver.XServer;
 
@@ -42,6 +44,8 @@ import java.util.List;
  * - held: a tap keeps the keys down (the button lit) for the pen until the
  *   next tap, or they stay down while a finger is on the button
  *   (ModifierKeys). Ctrl held moves a perspective ruler's handles.
+ * An Exit SAI button may be among them (Shortcut.EXIT_SAI): two taps
+ * (ExitTaps) close SAI the way its red cross does (SaiPenRequests.closeSai).
  * Open, the grip on the left drags the buttons and × in the top corner
  * closes them back into the dot; a key still down keeps the dot lit. A long
  * press on the dot hides it, and three fingers held still for a moment
@@ -179,8 +183,10 @@ public final class FloatingKeys {
 
         TextPaint paintText = new TextPaint();
         paintText.setTextSize(TEXT_SP * activity.getResources().getDisplayMetrics().scaledDensity);
+        final String exitLabel = activity.getString(R.string.saipen_keys_exit);
+        final String exitAsk = activity.getString(R.string.saipen_keys_exit_ask);
         float widest = 0;
-        for (Shortcut s : buttons) widest = Math.max(widest, paintText.measureText(s.label()));
+        for (Shortcut s : buttons) widest = Math.max(widest, paintText.measureText(s.exitSai ? exitLabel : s.label()));
         final int cellWidth = (int) Math.max(44 * dp, widest + 16 * dp);
         /* the buttons may take half the screen's width */
         int screenW = activity.getResources().getDisplayMetrics().widthPixels;
@@ -196,7 +202,8 @@ public final class FloatingKeys {
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 grid.addView(row);
             }
-            TextView t = button(activity, dp, buttons.get(i).label(), cellWidth);
+            Shortcut s = buttons.get(i);
+            TextView t = button(activity, dp, s.exitSai ? exitLabel : s.label(), cellWidth);
             row.addView(t, new LinearLayout.LayoutParams(cellWidth, (int) (40 * dp)));
             views.add(t);
         }
@@ -207,8 +214,14 @@ public final class FloatingKeys {
         close.setGravity(Gravity.CENTER);
         open.addView(close, new LinearLayout.LayoutParams((int) (32 * dp), (int) (40 * dp)));
 
+        final ExitTaps exitTaps = new ExitTaps();
         final Runnable paint = () -> {
             for (int i = 0; i < views.size(); i++) {
+                if (buttons.get(i).exitSai) {
+                    boolean asking = exitTaps.asking(SystemClock.uptimeMillis());
+                    views.get(i).setBackground(rounded(asking ? lit : Color.TRANSPARENT, 9 * dp));
+                    continue;
+                }
                 int c = !held.isDown(i) ? Color.TRANSPARENT : held.isLatched(i) ? lit : pressed;
                 views.get(i).setBackground(rounded(c, 9 * dp));
             }
@@ -221,7 +234,17 @@ public final class FloatingKeys {
             panel.setY(Math.max(0, Math.min(panel.getY(), maxY)));
         };
         final boolean[] isOpen = {false};
+        final Runnable unaskExit = () -> {
+            exitTaps.reset();
+            for (int i = 0; i < views.size(); i++) {
+                if (buttons.get(i).exitSai) {
+                    views.get(i).setText(exitLabel);
+                    views.get(i).setBackground(rounded(Color.TRANSPARENT, 9 * dp));
+                }
+            }
+        };
         final Runnable closeButtons = () -> {
+            unaskExit.run();
             /* the dot appears where the × was, so it stays under the finger */
             float right = panel.getX() + panel.getWidth();
             isOpen[0] = false;
@@ -266,7 +289,29 @@ public final class FloatingKeys {
         for (int i = 0; i < buttons.size(); i++) {
             final int index = i;
             final TextView t = views.get(i);
-            if (buttons.get(i).held) {
+            if (buttons.get(i).exitSai) {
+                /* the first tap asks, the second closes SAI (ExitTaps) */
+                t.setOnClickListener(v -> {
+                    long now = SystemClock.uptimeMillis();
+                    if (!exitTaps.tap(now)) {
+                        t.setText(exitAsk);
+                        t.setBackground(rounded(lit, 9 * dp));
+                        ui.postDelayed(() -> {
+                            if (!exitTaps.asking(SystemClock.uptimeMillis())) {
+                                t.setText(exitLabel);
+                                t.setBackground(rounded(Color.TRANSPARENT, 9 * dp));
+                            }
+                        }, ExitTaps.CONFIRM_MS + 50);
+                        return;
+                    }
+                    /* no key left down under SAI's own Save dialog; the
+                     * buttons out of its way */
+                    held.releaseAll();
+                    closeButtons.run();
+                    if (activity instanceof XServerDisplayActivity)
+                        SaiPenRequests.closeSai(((XServerDisplayActivity) activity).getWinHandler());
+                });
+            } else if (buttons.get(i).held) {
                 /* down on touch, then a tap latches and a hold lets go */
                 t.setOnTouchListener((v, e) -> {
                     switch (e.getActionMasked()) {

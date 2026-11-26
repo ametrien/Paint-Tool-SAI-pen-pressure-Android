@@ -37,6 +37,8 @@
  *     SHOW_DESKTOP 18        int 0
  *     SHOW_WINDOW 20         long HWND, int nCmdShow
  *     GET_EXECUTABLE_PATH 21 int pid               -> GET_EXECUTABLE_PATH back
+ *     CLOSE_SAI 100          nothing more: SAI Pen's own, closes SAI the way
+ *                            its red cross does (close_sai below)
  *
  *   us -> app
  *     INIT 1                 nothing more; until it comes the app sends nothing
@@ -275,6 +277,8 @@ static void run(const wchar_t *file, const wchar_t *args, const wchar_t *dir)
 
 /* ---- requests --------------------------------------------------------- */
 
+static void close_sai(void);
+
 static void handle(const unsigned char *d, int n)
 {
     struct wh_reader r = { d, n, 1 };
@@ -373,6 +377,9 @@ static void handle(const unsigned char *d, int n)
         send_executable_path((DWORD)pid);
         break;
     }
+    case WH_CLOSE_SAI:
+        close_sai();
+        break;
     default:
         break;
     }
@@ -449,6 +456,31 @@ static BOOL CALLBACK find_sai_main(HWND w, LPARAM p)
         return FALSE;
     }
     return TRUE;
+}
+
+/*
+ * Exit SAI on the on-screen keys (wh_close_step, protocol.h): the message
+ * SAI's red cross sends, posted to SAI's main window. SAI then does what it
+ * always does on its red cross: asks about unsaved drawings, and stays open
+ * on Cancel. Never TerminateProcess. Posted, not sent: we do not wait on SAI's
+ * dialog.
+ */
+static void close_sai(void)
+{
+    struct sai_main m = { NULL, 0 };
+    EnumWindows(find_sai_main, (LPARAM)&m);
+    HWND dialog = m.w ? GetLastActivePopup(m.w) : NULL;
+    if (dialog == m.w) dialog = NULL;
+    switch (wh_close_step(m.w != NULL, m.w && IsWindowEnabled(m.w), dialog != NULL)) {
+    case WH_CLOSE_POST:
+        PostMessageW(m.w, WM_SYSCOMMAND, SC_CLOSE, 0);
+        break;
+    case WH_CLOSE_SHOW_DIALOG:
+        SetForegroundWindow(dialog);
+        break;
+    default:
+        break;
+    }
 }
 
 static DWORD WINAPI maximize_sai(LPVOID unused)

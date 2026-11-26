@@ -27,6 +27,12 @@ enum {
     WH_GET_EXECUTABLE_PATH = 21
 };
 
+/* SAI Pen's own requests, far from Winlator's codes (0 to 22) so a new one
+ * of theirs cannot mean the same byte. SaiPenRequests.java sends them. */
+enum {
+    WH_CLOSE_SAI = 100
+};
+
 /* ---- reading a request -------------------------------------------------- */
 
 struct wh_reader {
@@ -217,6 +223,26 @@ static inline int wh_maximize_next_ms(const struct wh_maximize *m, int64_t now_m
 {
     if (m->pid == 0 || now_ms - m->first_seen_ms <= WH_MAXIMIZE_MS) return WH_LOOK_FAST_MS;
     return WH_LOOK_SLOW_MS;
+}
+
+/*
+ * CLOSE_SAI (the on-screen keys' Exit SAI): what SAI's red cross does, a
+ * normal close and never a kill, so SAI asks itself about unsaved drawings
+ * and its Cancel leaves it open. What winhandler.exe does with SAI's main
+ * window (found by its title, as for the maximize):
+ * - none: nothing;
+ * - enabled: post it WM_SYSCOMMAND SC_CLOSE, the red cross's message;
+ * - disabled: one of SAI's own dialogs is open over it, and the red cross
+ *   does nothing then either; that dialog is brought to the front so the
+ *   artist sees why (if there is one), and nothing closes.
+ */
+enum { WH_CLOSE_NOTHING = 0, WH_CLOSE_POST = 1, WH_CLOSE_SHOW_DIALOG = 2 };
+
+static inline int wh_close_step(int found, int enabled, int has_dialog)
+{
+    if (!found) return WH_CLOSE_NOTHING;
+    if (enabled) return WH_CLOSE_POST;
+    return has_dialog ? WH_CLOSE_SHOW_DIALOG : WH_CLOSE_NOTHING;
 }
 
 #endif
