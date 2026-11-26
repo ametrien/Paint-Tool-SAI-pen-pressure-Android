@@ -1,7 +1,10 @@
 wintab32.dll and wintab_core.h come from the macOS project:
 https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix
-commit 8fd62dbc6abfa5969a5e5376511c68c4582380c7 (2026-11-26), folder wintab-src/
-(branch idle-wait: the pen thread's idle wait, on top of c1c5e36).
+commit 47f4438cc539c30db1e309d23751b37c370068f6 (2026-11-26), folder wintab-src/
+(branch timelapse-thinning-fixes: timelapse thinning stays even over the whole
+drawing and in frame order, and a capture waits for SAI to finish painting;
+on top of 9714e99, which also takes SAI's window-property lookup and the
+DLL's message filter off wineserver).
 
 The DLL is an x86-64 Windows DLL. It runs inside Wine in the app and reads pen
 samples on UDP 127.0.0.1:47800.

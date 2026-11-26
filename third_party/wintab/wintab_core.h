@@ -549,6 +549,78 @@ static uint32_t wtc_recv_wait_ms(int pending, int have_activity, uint32_t now, u
     return WTC_RECV_WAIT_IDLE_MS;
 }
 
+/* SAI'S WINDOW-PROPERTY LOOKUP, ANSWERED IN-PROCESS. SAI keeps its own object
+ * for each of its windows in a window property named "SYSTEMAX-WININFO" and
+ * asks for it with GetPropW on (nearly) every message. Wine answers every
+ * GetPropW with a wineserver round trip: measured on a Galaxy Tab S6 Lite
+ * (2026-11-26, WINEDEBUG=+server), 6.2 of the 16.4 requests SAI's UI thread
+ * made per pen packet, for an answer that never changes while the window
+ * lives. The DLL patches SAI's imports of GetPropW/SetPropW (wintab32.c) and
+ * keeps the answers here.
+ *
+ * Rules, all of them about never handing SAI a stale pointer:
+ *   - only that one property name is cached, nothing else;
+ *   - a NULL answer is never cached (the window may not have set it yet);
+ *   - SetPropW for that name, through SAI's imports, replaces or drops the
+ *     entry (SAI imports no RemovePropW);
+ *   - wintab32.c checks IsWindow() on every hit (in-process in Wine for a
+ *     window of this process) and drops the entry of a window that is gone;
+ *   - a lookup that raced a SetPropW does not store its answer (`gen`). */
+#define WTC_PROPC_N 32
+typedef struct { const void *hwnd; void *val; } WTC_PROPC_ENT;
+typedef struct { WTC_PROPC_ENT e[WTC_PROPC_N]; unsigned next; unsigned gen; } WTC_PROPC;
+
+static int wtc_propc_get(const WTC_PROPC *c, const void *hwnd, void **val) {
+    if (!hwnd) return 0;
+    for (int i = 0; i < WTC_PROPC_N; i++)
+        if (c->e[i].hwnd == hwnd) { *val = c->e[i].val; return 1; }
+    return 0;
+}
+
+/* val NULL drops the window's entry */
+static void wtc_propc_put(WTC_PROPC *c, const void *hwnd, void *val) {
+    if (!hwnd) return;
+    int empty = -1;
+    for (int i = 0; i < WTC_PROPC_N; i++) {
+        if (c->e[i].hwnd == hwnd) {
+            if (val) c->e[i].val = val;
+            else { c->e[i].hwnd = NULL; c->e[i].val = NULL; }
+            return;
+        }
+        if (!c->e[i].hwnd && empty < 0) empty = i;
+    }
+    if (!val) return;
+    if (empty < 0) { empty = (int)(c->next % WTC_PROPC_N); c->next++; }   /* full: each slot in turn */
+    c->e[empty].hwnd = hwnd;
+    c->e[empty].val = val;
+}
+
+/* The one name cached. UTF-16 code units, as WCHAR is on Windows; a name that
+ * is an atom (MAKEINTATOM, below 0x10000) is never passed in here. */
+static int wtc_is_wininfo_name(const uint16_t *name) {
+    static const char want[] = "SYSTEMAX-WININFO";
+    if (!name) return 0;
+    for (int i = 0; ; i++) {
+        if (name[i] != (uint16_t)(unsigned char)want[i]) return 0;
+        if (!want[i]) return 1;
+    }
+}
+
+/* THE MESSAGE FILTER WITHOUT A HOOK. The DLL's click/scroll/hold code looks at
+ * every message SAI's UI thread takes off its queue. As a WH_GETMESSAGE hook
+ * that cost three wineserver round trips per message (start_hook_chain,
+ * get_hook_info, finish_hook_chain): 4.6 per pen packet on the Tab S6 Lite.
+ * Run from SAI's own GetMessageW/PeekMessageW imports instead it costs none.
+ * The hook stays as the fallback: when the imports could not be patched, or
+ * when WT_MSG_HOOK=1 asks for it. */
+static int wtc_msg_filter_by_imports(int imports_patched, int force_hook) {
+    return imports_patched && !force_hook;
+}
+
+/* PeekMessage's flags to the hook's wParam: PM_REMOVE (1) or PM_NOREMOVE (0).
+ * The other bits (PM_NOYIELD, the QS_ masks) are not the hook's business. */
+static unsigned wtc_peek_removed(unsigned flags) { return flags & 1u; }
+
 /* PEN PORT RETRY. The producer binds 127.0.0.1:47800 to receive the helper's
  * samples. Until 2026-11-11 it tried once, at load: if anything else held the
  * port (a leftover probe did), SAI stayed in "file mode only" for the whole
