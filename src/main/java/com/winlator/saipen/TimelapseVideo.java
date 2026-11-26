@@ -108,6 +108,12 @@ public final class TimelapseVideo {
     /** Encodes every video; returns the files made. Frames of a video that
      *  failed stay for the next try. */
     public static Made makeAll(File containerRoot, Progress progress) throws IOException {
+        return makeAll(containerRoot, progress, null);
+    }
+
+    /** As above; `names` (may be null) knows what a new canvas was saved as,
+     *  for a session whose frames all still say "NewCanvas1" (CanvasTime). */
+    public static Made makeAll(File containerRoot, Progress progress, CanvasTime names) throws IOException {
         packLeftovers(containerRoot);
         File packedRoot = TimelapsePack.packedDir(containerRoot);
         List<TimelapseFrames.Segment> segments = TimelapseFrames.segments(TimelapsePack.list(packedRoot));
@@ -147,7 +153,8 @@ public final class TimelapseVideo {
             TimelapsePack.readPixels(last, b);
             DrawingLibrary.Signature closing = DrawingLibrary.Signature.of(b, last.header.width, last.header.height, last.header.stride);
 
-            DrawingLibrary.Drawing d = TimelapseShelf.add(lib, out, s.name, startOf(s), s.frames.size(), s.width, s.height,
+            String title = titleOf(s.name, startOf(s), names);
+            DrawingLibrary.Drawing d = TimelapseShelf.add(lib, out, title, startOf(s), s.frames.size(), s.width, s.height,
                                                           opening, closing, b, last.header.stride);
             made.filed.add(d.pieces.get(d.pieces.size() - 1).file);
             for (int i = 0; i < 8; i++) {
@@ -164,6 +171,15 @@ public final class TimelapseVideo {
     }
 
     /** When the SAI start began, from its folder name; now if unreadable. */
+    /** The session's title: the frames' canvas name, or, for a new canvas
+     *  saved under a name after the session began (so no frame saw it), that
+     *  name (CanvasTime.savedAs). */
+    static String titleOf(String name, long startedAt, CanvasTime names) {
+        if (names == null || !DrawingLibrary.isDefaultTitle(name)) return name;
+        String saved = names.savedAs(name, startedAt);
+        return saved != null ? saved : name;
+    }
+
     static long startOf(TimelapseFrames.Segment s) {
         try {
             return new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.ROOT).parse(s.session.substring(0, 19)).getTime();

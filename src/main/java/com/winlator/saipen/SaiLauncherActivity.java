@@ -130,8 +130,6 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private static final String PREF_SEARCH = "saipen_search";
     /** Record a timelapse of the canvas (our DLL inside SAI does it). */
     private static final String PREF_TIMELAPSE = "saipen_timelapse";
-    /** Frames on the device before the DLL thins out old ones. */
-    private static final String TIMELAPSE_BUDGET_MB = "512";
     private static final int[] FAST_CORES_NAMES = {
         R.string.saipen_cores_drawing, R.string.saipen_cores_all, R.string.saipen_cores_off};
     private static final int[] FAST_CORES_WHAT = {
@@ -631,7 +629,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
             DrawingLibrary library = null;
             try {
                 TimelapseVideo.Made result = TimelapseVideo.makeAll(root, (done, total) -> runOnUiThread(
-                    () -> btnVideo.setText(getString(R.string.saipen_making_video, done, total))));
+                    () -> btnVideo.setText(getString(R.string.saipen_making_video, done, total))),
+                    CanvasTime.load(new File(getFilesDir(), CanvasTime.FILE)));
                 List<File> made = result.videos;
                 String[] paths = new String[made.size()];
                 StringBuilder names = new StringBuilder();
@@ -1932,7 +1931,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
         container.setWinComponents(com.winlator.container.Container.FALLBACK_WINCOMPONENTS);
         boolean record = prefs.getBoolean(PREF_TIMELAPSE, FirstRun.TIMELAPSE);
         String env = EnvVarsEdit.set(container.getEnvVars(), "WT_TIMELAPSE", record ? "1" : null);
-        env = EnvVarsEdit.set(env, "WT_TIMELAPSE_BUDGET_MB", record ? TIMELAPSE_BUDGET_MB : null);
+        /* room for frames before the DLL thins them: a quarter of the free space (TimelapseBudget) */
+        long budgetMb = TimelapseBudget.megabytes(getFilesDir().getUsableSpace());
+        env = EnvVarsEdit.set(env, "WT_TIMELAPSE_BUDGET_MB", record ? String.valueOf(budgetMb) : null);
+        if (record) Log.i(TAG, "timelapse budget: " + budgetMb + " MB");
         env = EnvVarsEdit.set(env, "WT_TIMELAPSE_QUIET_MS",
                               record ? String.valueOf(prefs.getInt(PREF_TIMELAPSE_PAUSE, TIMELAPSE_PAUSES_MS[0])) : null);
         env = EnvVarsEdit.set(env, "WT_TIMELAPSE_MAX_WAIT_MS", record ? TIMELAPSE_MAX_WAIT_MS : null);

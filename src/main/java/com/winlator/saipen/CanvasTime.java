@@ -44,6 +44,23 @@ public final class CanvasTime {
     }
 
     private final Map<String, Canvas> canvases = new TreeMap<>();
+
+    /** A new canvas SAI saved under a name: "NewCanvas1" became "hand.sai2"
+     *  at `atMs`. The timelapse packer (TimelapseVideo) files a session of
+     *  "NewCanvas1" under the name it got, when the DLL's frames never saw it. */
+    public static final class Rename {
+        public final String from, to;
+        public final long atMs;
+
+        Rename(String from, String to, long atMs) {
+            this.from = from;
+            this.to = to;
+            this.atMs = atMs;
+        }
+    }
+
+    private final java.util.List<Rename> renames = new java.util.ArrayList<>();
+    static final int KEEP_RENAMES = 200;
     private double downAt = -1, lastUpAt = -1;
     private String lastKey;
     private boolean dirty;
@@ -131,12 +148,26 @@ public final class CanvasTime {
         if (switchAt < 0 || savedAt < 0 || switchTo == null || !switchTo.equals(savedName)) return;
         if (Math.abs(switchAt - savedAt) > MERGE_MS) return;
         Canvas from = canvases.remove(switchFrom);
-        if (from != null) {
-            canvases.computeIfAbsent(switchTo, k -> new Canvas()).add(from);
-            dirty = true;
-        }
+        if (from != null) canvases.computeIfAbsent(switchTo, k -> new Canvas()).add(from);
+        renames.add(new Rename(switchFrom.substring(1), switchTo, savedAt));
+        while (renames.size() > KEEP_RENAMES) renames.remove(0);
+        dirty = true;
         if (switchFrom.equals(lastKey)) lastKey = switchTo;
         switchAt = savedAt = -1;
+    }
+
+    /** The name a new canvas called `unsaved` ("NewCanvas1") was saved
+     *  under, the last time it happened at or after `sinceMs`; null if none.
+     *  The file's name only, its folder left out, as SAI's canvas title. */
+    public synchronized String savedAs(String unsaved, long sinceMs) {
+        Rename best = null;
+        for (Rename r : renames) {
+            if (!r.from.equals(unsaved) || r.atMs < sinceMs) continue;
+            if (best == null || r.atMs > best.atMs) best = r;
+        }
+        if (best == null) return null;
+        int slash = best.to.lastIndexOf('/');
+        return slash < 0 ? best.to : best.to.substring(slash + 1);
     }
 
     /** The time on the drawing at `path` (relative to SAI Drawings), or null. */
@@ -165,6 +196,16 @@ public final class CanvasTime {
         for (String line : text.split("\n")) {
             if (line.isEmpty() || line.startsWith("#")) continue;
             String[] f = line.split("\t");
+            if (f[0].equals("@rename")) {
+                if (f.length >= 4) {
+                    try {
+                        renames.add(new Rename(f[1], f[2], Long.parseLong(f[3])));
+                    }
+                    catch (NumberFormatException ignored) {
+                    }
+                }
+                continue;
+            }
             if (f.length < 5) continue;
             try {
                 Canvas c = new Canvas();
@@ -186,6 +227,10 @@ public final class CanvasTime {
             out.append(e.getKey().replace('\t', ' ').replace('\n', ' ')).append('\t').append(c.strokes)
                .append('\t').append(String.format(Locale.ROOT, "%.0f", c.seconds))
                .append('\t').append(c.first).append('\t').append(c.last).append('\n');
+        }
+        for (Rename r : renames) {
+            out.append("@rename\t").append(r.from.replace('\t', ' ')).append('\t')
+               .append(r.to.replace('\t', ' ')).append('\t').append(r.atMs).append('\n');
         }
         return out.toString();
     }

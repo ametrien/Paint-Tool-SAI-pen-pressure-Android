@@ -82,6 +82,23 @@ public class CanvasTimeTest {
     }
 
     @Test
+    public void aSavedNewCanvasIsRememberedForTheTimelapse() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(5, ":NewCanvas1", 1);
+        t.titleChanged(":NewCanvas1", "hands/hand.sai2", 50_000);
+        t.fileSaved("hands/hand.sai2", 51_000);
+        assertEquals("hand.sai2", t.savedAs("NewCanvas1", 40_000));
+        assertNull(t.savedAs("NewCanvas1", 60_000));      // saved before that session began
+        assertNull(t.savedAs("NewCanvas2", 0));
+        CanvasTime back = new CanvasTime();
+        back.parse(t.serialize());
+        assertEquals("hand.sai2", back.savedAs("NewCanvas1", 40_000));
+        assertEquals("hand.sai2", TimelapseVideo.titleOf("NewCanvas1", 40_000, back));
+        assertEquals("furisode.sai2", TimelapseVideo.titleOf("furisode.sai2", 40_000, back));
+        assertEquals("NewCanvas1", TimelapseVideo.titleOf("NewCanvas1", 40_000, null));
+    }
+
+    @Test
     public void fileRoundTrip() {
         CanvasTime t = new CanvasTime();
         t.penDown(0); t.penUp(3, "comics/a b.sai2", 1700000000000L);
