@@ -108,6 +108,9 @@ public final class StartupCover {
         }, 150);
     }
 
+    /** The loading screen's tip: the keyboard, or the on-screen keys. */
+    static final int[] TIPS = {R.string.saipen_tip_keyboard, R.string.saipen_tip_keys};
+
     private static View build(Activity activity) {
         float dp = activity.getResources().getDisplayMetrics().density;
         LinearLayout box = new LinearLayout(activity);
@@ -153,6 +156,18 @@ public final class StartupCover {
                                                                      ViewGroup.LayoutParams.WRAP_CONTENT);
         sp.topMargin = (int) (12 * dp);
         box.addView(stage, sp);
+
+        /* one of the two three-finger gestures, picked at random each start */
+        TextView tip = new TextView(activity);
+        tip.setText(TIPS[new java.util.Random().nextInt(TIPS.length)]);
+        tip.setTextColor(TEXT);
+        tip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        tip.setGravity(Gravity.CENTER);
+        tip.setMaxWidth((int) (420 * dp));
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                                                     ViewGroup.LayoutParams.WRAP_CONTENT);
+        tp.topMargin = (int) (36 * dp);
+        box.addView(tip, tp);
         return box;
     }
 

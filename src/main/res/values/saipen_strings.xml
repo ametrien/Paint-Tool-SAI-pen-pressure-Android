@@ -54,6 +54,8 @@
     <string name="saipen_own_id_start">Start SAI</string>
     <string name="saipen_sharpness">SAI\'s screen sharpness. Higher is sharper, but slower and with smaller buttons.</string>
     <string name="saipen_sharpness_native">%1$d, the display\'s own</string>
+    <string name="saipen_tip_keyboard">Tip: a short tap with three fingers opens the keyboard, and another one closes it.</string>
+    <string name="saipen_tip_keys">Tip: hold three fingers still for a moment to show or hide the on-screen keys.</string>
     <string name="saipen_starting_wine">SAI is starting, %1$d s. The first start takes longer.</string>
     <string name="saipen_starting_drawing">SAI is drawing its window, %1$d s</string>
     <string name="saipen_find_title">Where is SAI?</string>
