@@ -8,7 +8,8 @@ How SAI Ver.2 stores the thumbnail (worked out from real files, see
 Sai2Thumb.java): a baseline JPEG, YCbCr 4:4:4, the standard Huffman tables,
 with all its headers taken out. The two quantisation tables stay, and the
 scan is cut at each row of 8x8 blocks (DC prediction starts over on each
-row), each row stored as u16 length + bytes. This script makes such a JPEG
+row), each row stored as u16 length + bytes, with no end marker (0 to 3
+zero bytes follow, to a multiple of 4). This script makes such a JPEG
 with cjpeg (a restart marker after each block row) and takes it apart the
 same way.
 
@@ -64,7 +65,7 @@ def sai2(luma, chroma, rows):
     thum = struct.pack('<II', W, H) + b'jssf' + struct.pack('<HHH', W, H, 3) + luma + chroma
     for r in rows:
         thum += struct.pack('<H', len(r)) + r
-    thum += struct.pack('<H', 0)
+    thum += bytes(-len(thum) % 4)   # no end marker, zeros up to a multiple of 4, as in SAI's files
     head = b'SAI-CANVAS-TYPE0' + bytes(0x40 - 16)
     table_end = 0x40 + 2 * 16
     head += b'thum' + struct.pack('<IQ', 0, table_end)

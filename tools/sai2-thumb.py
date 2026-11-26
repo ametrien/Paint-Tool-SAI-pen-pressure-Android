@@ -5,9 +5,9 @@ Format as found (SAI Ver.2, 'SAI-CANVAS-TYPE0'):
   file 0x40..: chunk table, 16 bytes per entry: tag[4], u32, u64 file offset
   'thum' chunk: u32 w, u32 h, 'jssf', u16 w, u16 h, u16 ?(3 = components?),
                 64-byte luma quant table, 64-byte chroma quant table (zigzag),
-                then one entry per row of 8x8 blocks: u16 length + baseline JPEG
-                scan data (standard Annex K Huffman, YCbCr 4:4:4, DC reset per row),
-                ended by a zero length.
+                then one entry per row of 8x8 blocks ((h + 7) // 8 of them): u16 length
+                + baseline JPEG scan data (standard Annex K Huffman, YCbCr 4:4:4, DC
+                reset per row). No end marker: 0 to 3 zero bytes follow.
 """
 import struct, sys
 
@@ -45,13 +45,11 @@ def to_jpeg(th):
     out += seg(0xdd, struct.pack('>H', (w + 7) // 8))
     out += seg(0xda, bytes([3, 1,0x00, 2,0x11, 3,0x11, 0, 63, 0]))
     off, rows = 0x92, []
-    while off + 2 <= len(th):
+    for _ in range((h + 7) // 8):
         n = struct.unpack_from('<H', th, off)[0]; off += 2
-        if n == 0:
-            break
+        if n == 0 or off + n > len(th):
+            raise ValueError('row %d of %d cut short' % (len(rows), (h + 7) // 8))
         rows.append(th[off:off+n]); off += n
-    if len(rows) != (h + 7) // 8:
-        raise ValueError('%d rows, expected %d' % (len(rows), (h + 7) // 8))
     for i, r in enumerate(rows):
         out += r + (bytes([0xff, 0xd0 + i % 8]) if i < len(rows) - 1 else b'')
     return out + b'\xff\xd9'

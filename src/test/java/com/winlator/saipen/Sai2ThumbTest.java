@@ -132,6 +132,38 @@ public class Sai2ThumbTest {
         expectFailure(d);
     }
 
+    /** SAI's files have no end marker after the last row, only 0 to 3 zero
+     *  bytes (all four seen in 48 real files). Version 1 of this class waited
+     *  for a zero length and failed on every one of them. */
+    @Test
+    public void noEndMarkerAndAnyPadding() throws Exception {
+        byte[] d = fixture();
+        long[] r = Sai2Thumb.thumRange(d, d.length);
+        byte[] thum = java.util.Arrays.copyOfRange(d, (int) r[0], (int) r[1]);
+        int end = 0x92;
+        for (int row = 0; row < (H + 7) / 8; row++) end += 2 + ((thum[end] & 255) | (thum[end + 1] & 255) << 8);
+        for (int pad = 0; pad <= 3; pad++) {
+            byte[] padded = java.util.Arrays.copyOf(thum, end + pad);   // zeros after the rows
+            Picture img = Picture.read(Sai2Thumb.toJpeg(padded));
+            assertEquals("padding " + pad, W, img.getWidth());
+            assertNear("padding " + pad + ", white", 0xffffff, img.getRGB(30, 17));
+        }
+    }
+
+    @Test
+    public void lastRowCutShort() throws Exception {
+        byte[] d = fixture();
+        long[] r = Sai2Thumb.thumRange(d, d.length);
+        byte[] thum = java.util.Arrays.copyOfRange(d, (int) r[0], (int) r[1]);
+        int end = 0x92;
+        for (int row = 0; row < (H + 7) / 8; row++) end += 2 + ((thum[end] & 255) | (thum[end + 1] & 255) << 8);
+        try {
+            Sai2Thumb.toJpeg(java.util.Arrays.copyOf(thum, end - 1));
+            fail("read a thumbnail with its last row cut short");
+        }
+        catch (IOException expected) {}
+    }
+
     @Test
     public void thumbnailEndsAtTheNextChunk() throws Exception {
         byte[] d = fixture();

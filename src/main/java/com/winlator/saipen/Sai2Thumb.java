@@ -19,8 +19,9 @@ import java.nio.charset.StandardCharsets;
  *   "thum" chunk (up to the next chunk):
  *         u32 width, u32 height, "jssf", u16 width, u16 height, u16 (3),
  *         64-byte luma and 64-byte chroma quantisation tables (zigzag order),
- *         then for each row of 8x8 blocks: u16 length + that row's JPEG scan
- *         data; a zero length ends it
+ *         then for each row of 8x8 blocks ((height + 7) / 8 of them): u16
+ *         length + that row's JPEG scan data. No end marker: after the last
+ *         row come 0 to 3 zero bytes (padding to a multiple of 4)
  *
  * The scan is baseline JPEG, YCbCr 4:4:4, with the standard Huffman tables of
  * the JPEG standard (Annex K), and the DC prediction starts over on each
@@ -94,20 +95,19 @@ public final class Sai2Thumb {
         segment(out, 0xdd, new byte[]{(byte) (mcus >> 8), (byte) mcus});    // DRI
         segment(out, 0xda, new byte[]{3, 1, 0x00, 2, 0x11, 3, 0x11, 0, 63, 0});  // SOS
 
-        int at = 0x92, row = 0;
-        while (true) {
-            if (at + 2 > thum.length) throw new IOException("thumbnail cut short");
+        /* exactly `rows` rows: the file has no end marker (what follows is
+         * 0 to 3 zero bytes, in the 48 real files looked at) */
+        int at = 0x92;
+        for (int row = 0; row < rows; row++) {
+            if (at + 2 > thum.length) throw new IOException("thumbnail cut short at row " + row + " of " + rows);
             int n = b.getShort(at) & 0xffff;
             at += 2;
-            if (n == 0) break;
-            if (at + n > thum.length) throw new IOException("thumbnail row past the end");
-            if (row == rows) throw new IOException("more rows than the height");
+            if (n == 0) throw new IOException("empty row " + row + " of " + rows);
+            if (at + n > thum.length) throw new IOException("thumbnail row " + row + " past the end");
             if (row > 0) { out.write(0xff); out.write(0xd0 + (row - 1) % 8); }  // RSTn
             out.write(thum, at, n);
             at += n;
-            row++;
         }
-        if (row != rows) throw new IOException(row + " rows, expected " + rows);
         out.write(0xff); out.write(0xd9);                                   // EOI
         return out.toByteArray();
     }
