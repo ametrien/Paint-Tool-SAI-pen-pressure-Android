@@ -133,17 +133,57 @@ final class DrawingsDialog {
     /** A timelapse was filed while this window is open: match the drawings
      *  to the timelapses again and show it on the card and the open page. */
     private final Runnable onTimelapses = this::timelapsesChanged;
+    /** Each drawing's timelapse: by name, then by look for the ones the
+     *  names lost (DrawingIndex.linkByLook). A link found by look renames the
+     *  timelapse after the drawing, so it holds from then on. On `io`. */
+    private static Map<File, Drawing> match(List<Entry> found, List<Drawing> videos) {
+        Map<File, Drawing> v = new HashMap<>();
+        Set<Drawing> claimed = new HashSet<>();
+        List<Entry> unclaimed = new java.util.ArrayList<>();
+        for (Entry e : found) {
+            Drawing d = DrawingIndex.timelapseFor(e, videos);
+            if (d != null) { v.put(e.file, d); claimed.add(d); }
+            else unclaimed.add(e);
+        }
+        List<Drawing> orphans = new java.util.ArrayList<>();
+        for (Drawing d : videos) if (!claimed.contains(d)) orphans.add(d);
+        if (orphans.isEmpty() || unclaimed.isEmpty()) return v;
+        Map<Drawing, Entry> byLook;
+        try {
+            byLook = DrawingIndex.linkByLook(unclaimed, orphans, e -> {
+                try { return TimelapseVideo.lookOf(e.file); }
+                catch (Throwable t) { return null; }
+            });
+        }
+        catch (RuntimeException e) {
+            Log.w(TAG, "drawings: matching timelapses by look", e);
+            return v;
+        }
+        if (byLook.isEmpty()) return v;
+        try {
+            DrawingLibrary lib = TimelapseShelf.load();
+            for (Map.Entry<Drawing, Entry> m : byLook.entrySet()) {
+                Entry e = m.getValue();
+                v.put(e.file, m.getKey());
+                Drawing kept = lib.drawing(m.getKey().id);
+                Log.i(TAG, "drawings: timelapse \"" + m.getKey().title + "\" linked by look to " + e.file.getName());
+                if (kept != null) kept.title = e.title;
+            }
+            TimelapseShelf.save(lib);
+        }
+        catch (IOException | RuntimeException x) {
+            Log.w(TAG, "drawings: saving a link found by look", x);
+        }
+        return v;
+    }
+
     private void timelapsesChanged() { run(io, () -> {
         if (closed) return;
         List<Drawing> videos;
         try { videos = TimelapseShelf.load().newestFirst(); }
         catch (RuntimeException e) { Log.w(TAG, "drawings: no timelapse list", e); return; }
         List<Entry> f = all;
-        Map<File, Drawing> v = new HashMap<>();
-        for (Entry e : f) {
-            Drawing d = DrawingIndex.timelapseFor(e, videos);
-            if (d != null) v.put(e.file, d);
-        }
+        Map<File, Drawing> v = match(f, videos);
         activity.runOnUiThread(() -> {
             if (closed || all != f) return;
             videoOf = v;
@@ -242,11 +282,7 @@ final class DrawingsDialog {
                 Log.w(TAG, "drawings: no timelapse list", e);
                 videos = Collections.emptyList();
             }
-            Map<File, Drawing> v = new HashMap<>();
-            for (Entry e : found) {
-                Drawing d = DrawingIndex.timelapseFor(e, videos);
-                if (d != null) v.put(e.file, d);
-            }
+            Map<File, Drawing> v = match(found, videos);
             List<Entry> f = found;
             activity.runOnUiThread(() -> {
                 if (closed) return;

@@ -139,6 +139,46 @@ public final class DrawingIndex {
         return best;
     }
 
+    /**
+     * The second link between a drawing and its timelapse, by look, for when
+     * the names no longer agree: the drawing was renamed (in SAI or a file
+     * manager), or a new canvas was saved under a name nothing saw. A
+     * timelapse that no drawing claims by name ("orphan") goes to the
+     * unclaimed drawing whose picture looks like the timelapse's last frame
+     * (SavedAsMatch, the same test as "The same drawing?"), saved no earlier
+     * than a minute before the timelapse began. Each drawing at most once.
+     * `look` reads a drawing's picture; only called for possible pairs.
+     */
+    public static java.util.Map<Drawing, Entry> linkByLook(List<Entry> unclaimed, List<Drawing> orphans,
+                                                           java.util.function.Function<Entry, DrawingLibrary.Signature> look) {
+        java.util.Map<Drawing, Entry> out = new java.util.LinkedHashMap<>();
+        java.util.Map<Entry, DrawingLibrary.Signature> seen = new java.util.HashMap<>();
+        java.util.Set<Entry> taken = new java.util.HashSet<>();
+        for (Drawing d : orphans) {
+            if (d.pieces.isEmpty()) continue;
+            long began = Long.MAX_VALUE;
+            for (DrawingLibrary.Piece p : d.pieces) began = Math.min(began, p.startedAt);
+            List<SavedAsMatch.Candidate> cands = new ArrayList<>();
+            java.util.Map<String, Entry> byKey = new java.util.HashMap<>();
+            for (Entry e : unclaimed) {
+                if (taken.contains(e) || e.modified < began - 60_000) continue;
+                DrawingLibrary.Signature sig = seen.containsKey(e) ? seen.get(e) : look.apply(e);
+                seen.put(e, sig);
+                if (sig == null) continue;
+                String key = e.file.getPath();
+                byKey.put(key, e);
+                cands.add(new SavedAsMatch.Candidate(key, sig));
+            }
+            String hit = SavedAsMatch.pick(d.closing(), cands);
+            if (hit != null) {
+                Entry e = byKey.get(hit);
+                taken.add(e);
+                out.put(d, e);
+            }
+        }
+        return out;
+    }
+
     static String bare(String title) {
         String t = title == null ? "" : title.trim();
         if (t.toLowerCase(Locale.ROOT).endsWith(".sai2")) t = t.substring(0, t.length() - 5).trim();

@@ -253,20 +253,9 @@ public final class TimelapseVideo {
             List<SavedAsMatch.Candidate> cands = new ArrayList<>();
             for (DrawingIndex.Entry e : DrawingIndex.all(SaiPenSetup.drawingsFolder())) {
                 if (e.modified < since - 60_000) continue;
-                android.graphics.Bitmap bm = SaiLauncherActivity.thumbnail(e.file, 96);
-                if (bm == null) continue;
-                android.graphics.Bitmap argb = bm.getConfig() == android.graphics.Bitmap.Config.ARGB_8888
-                    ? bm : bm.copy(android.graphics.Bitmap.Config.ARGB_8888, false);
-                int w = argb.getWidth(), h = argb.getHeight();
-                java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocate(w * h * 4);
-                argb.copyPixelsToBuffer(buf);
-                byte[] px = buf.array();
-                for (int i = 0; i < px.length; i += 4) {   /* RGBA in memory: swap to BGRA */
-                    byte r = px[i];
-                    px[i] = px[i + 2];
-                    px[i + 2] = r;
-                }
-                cands.add(new SavedAsMatch.Candidate(e.file.getName(), DrawingLibrary.Signature.of(px, w, h, w * 4)));
+                DrawingLibrary.Signature look = lookOf(e.file);
+                if (look == null) continue;
+                cands.add(new SavedAsMatch.Candidate(e.file.getName(), look));
             }
             return SavedAsMatch.pick(closing, cands);
         }
@@ -274,6 +263,24 @@ public final class TimelapseVideo {
             Log.w(TAG, "timelapse: matching the saved file by look: " + t);
             return null;
         }
+    }
+
+    /** A drawing file's picture as a fingerprint, from its small preview; null when unreadable. */
+    static DrawingLibrary.Signature lookOf(File file) {
+        android.graphics.Bitmap bm = SaiLauncherActivity.thumbnail(file, 96);
+        if (bm == null) return null;
+        android.graphics.Bitmap argb = bm.getConfig() == android.graphics.Bitmap.Config.ARGB_8888
+            ? bm : bm.copy(android.graphics.Bitmap.Config.ARGB_8888, false);
+        int w = argb.getWidth(), h = argb.getHeight();
+        java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocate(w * h * 4);
+        argb.copyPixelsToBuffer(buf);
+        byte[] px = buf.array();
+        for (int i = 0; i < px.length; i += 4) {   /* RGBA in memory: swap to BGRA */
+            byte r = px[i];
+            px[i] = px[i + 2];
+            px[i + 2] = r;
+        }
+        return DrawingLibrary.Signature.of(px, w, h, w * 4);
     }
 
     static long startOf(TimelapseFrames.Segment s) {
