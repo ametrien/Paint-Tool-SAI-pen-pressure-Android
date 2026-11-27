@@ -64,7 +64,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.4.39</summary>
+> <summary>What's new, 0.4.19 to 0.5.0</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -110,9 +110,12 @@ On a Mac? The same, also by me:
 >   and a palm resting on the glass no longer picks colours or leaves dots; a two-finger tap no
 >   longer leaves a dot; steadier two-finger zoom, scroll and turn. *Processors SAI sees* shows
 >   each core's strength (the fastest is 100%).
-> - **0.4.39:** your recent drawings on SAI Pen's screen, a tap opens one in SAI; *All drawings*
->   to search, sort, swipe through, share and delete them, with their timelapses; SAI Pen uses
->   less of the processor while you aren't drawing.
+> - **0.5.0:** your recent drawings on SAI Pen's screen; *All drawings* to search, sort, swipe
+>   through, share and delete them, with their timelapses; time spent on each drawing. The
+>   timelapse is made while you draw, has no stripes from fills or the eraser, and finds its
+>   drawing by how it looks even after a rename. A *Pen pressure* slider for a lighter touch.
+>   SD cards and USB drives as H: and on in SAI. *Try it* draws a line, S-curve or heart with
+>   every brush, texture and shape. A red *Exit SAI* key, and less processor use while idle.
 >
 > </details>
 
