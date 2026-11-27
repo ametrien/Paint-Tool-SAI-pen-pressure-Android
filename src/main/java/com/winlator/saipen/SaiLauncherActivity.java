@@ -216,6 +216,14 @@ public class SaiLauncherActivity extends AppCompatActivity {
         btnOpenBrushes = findViewById(R.id.SaiPenOpenBrushes);
         findViewById(R.id.SaiPenOpenBrushesRow).setOnClickListener(v -> openBrushesFolder());
         findViewById(R.id.SaiPenOpenDrawings).setOnClickListener(v -> openDrawingsFolder());
+        findViewById(R.id.SaiPenDrivesInfo).setOnClickListener(v -> {
+            List<String> cards = removableVolumes();
+            String now = cards.isEmpty() ? getString(R.string.saipen_drives_info_none)
+                                         : getString(R.string.saipen_drives_info_some, cards.size());
+            new AlertDialog.Builder(this, DIALOG_THEME).setTitle(R.string.saipen_drives_info_title)
+                .setMessage(getString(R.string.saipen_drives_info_text, now))
+                .setPositiveButton(android.R.string.ok, null).show();
+        });
         findViewById(R.id.SaiPenAllDrawings).setOnClickListener(v -> openAllDrawings());
         android.widget.CompoundButton autostart = findViewById(R.id.SaiPenAutostart);
         autostart.setChecked(prefs.getBoolean(PREF_AUTOSTART, FirstRun.AUTOSTART));

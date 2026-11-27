@@ -410,4 +410,8 @@
     <string name="saipen_home_tap_page_note">Off: a tap on a drawing opens it in SAI at once. On: the tap shows its page first, as in All drawings, with its timelapse and Open in SAI.</string>
     <string name="saipen_tl_space_info_title">Room for frames</string>
     <string name="saipen_tl_space_info_text">While you draw, timelapse frames are kept on the tablet. When they reach this size, every other frame is dropped so the timelapse still covers the whole drawing, just less finely.\n\nThe most is a quarter of the free space, never less than 2 GB and never more than 20 GB, so the frames can never fill the tablet.\n\nNow: %1$s free, so at most %2$s. Auto always takes the most, and follows the free space as it changes.\n\nThe frames are deleted once the video is made.</string>
+    <string name="saipen_drives_info_title">Drives in SAI</string>
+    <string name="saipen_drives_info_text">In SAI\'s Open and Save windows:\n\nF: is Documents/SAI Drawings. Save here: the start screen and All drawings show what is in it.\nD: is Download.\nE: is all of the tablet\'s storage.\nG: is the gallery: photos and screenshots, for references.\nS: is the folder SAI itself is in.\nH:, I:, … are SD cards and USB drives (a portable SSD, say), each one plugged in when SAI starts. One plugged in later shows after SAI starts again; the letters follow the order Android lists them in.\n\nSAI can open drawings from SD cards and USB drives, but on most tablets Android does not let it save there. Save to F: and copy the file over afterwards.\n\n%1$s</string>
+    <string name="saipen_drives_info_none">No SD card or USB drive is plugged in now.</string>
+    <string name="saipen_drives_info_some">Plugged in now: %1$d SD card(s) or USB drive(s).</string>
 </resources>
