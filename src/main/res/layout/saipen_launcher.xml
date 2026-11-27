@@ -986,6 +986,21 @@
                     android:minHeight="44dp"
                     android:text="@string/saipen_home_timelapses_switch"
                     android:textColor="?attr/colorPrimaryText" />
+
+                <Switch
+                    android:id="@+id/SaiPenHomeTapPage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_home_tap_page"
+                    android:textColor="?attr/colorPrimaryText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/saipen_home_tap_page_note"
+                    android:textColor="?attr/colorSecondaryText"
+                    android:textSize="13sp" />
             </LinearLayout>
 
         </LinearLayout>

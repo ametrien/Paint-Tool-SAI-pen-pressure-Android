@@ -388,4 +388,6 @@
     <string name="saipen_pressure_light">Лёгкое касание даёт %1$d %%, среднее %2$d %%</string>
     <string name="saipen_pressure_firm">Обычный</string>
     <string name="saipen_pressure_softest">Очень мягкий</string>
+    <string name="saipen_home_tap_page">Сначала показывать рисунок</string>
+    <string name="saipen_home_tap_page_note">Выключено: нажатие на рисунок сразу открывает его в SAI. Включено: сначала открывается его страница, как во «Всех рисунках», с таймлапсом и кнопкой «Открыть в SAI».</string>
 </resources>

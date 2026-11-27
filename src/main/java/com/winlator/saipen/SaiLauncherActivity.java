@@ -1099,6 +1099,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
         homeSwitch(R.id.SaiPenHomeDrawings, PREF_HOME_DRAWINGS, true);
         homeSwitch(R.id.SaiPenHomeRefs, PREF_HOME_REFERENCES, false);
         homeSwitch(R.id.SaiPenHomeTimelapses, PREF_HOME_TIMELAPSES, false);
+        /* a tap on a drawing: straight into SAI (default) or its page first */
+        android.widget.CompoundButton look = findViewById(R.id.SaiPenHomeTapPage);
+        look.setChecked(prefs.getBoolean(PREF_HOME_TAP_PAGE, false));
+        look.setOnCheckedChangeListener((v, on) -> prefs.edit().putBoolean(PREF_HOME_TAP_PAGE, on).apply());
         showHomeCount();
 
         /* on-screen keys over SAI: which keys, shortcuts, colour (FloatingKeysSettings) */
@@ -1840,6 +1844,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
     static final String PREF_HOME_DRAWINGS = "home_show_drawings";
     static final String PREF_HOME_REFERENCES = "home_show_references";
     static final String PREF_HOME_TIMELAPSES = "home_show_timelapses";
+    /** A tap on a start-screen drawing shows its page (as in All drawings) instead of opening SAI. */
+    static final String PREF_HOME_TAP_PAGE = "home_tap_shows_page";
 
     /** Fills the Drawings card's rows of thumbnails: the newest drawings (a
      *  tap opens one in SAI), and, when turned on, the reference pictures
@@ -1894,8 +1900,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 if (round != recentRound || isDestroyed()) return;
                 List<String> titles = new ArrayList<>(), refTitles = new ArrayList<>(), videoTitles = new ArrayList<>();
                 List<Runnable> taps = new ArrayList<>(), refTaps = new ArrayList<>(), videoTaps = new ArrayList<>();
-                for (File f : files) { titles.add(RecentDrawings.title(f)); taps.add(() -> openDrawing(f, null)); }
-                for (File f : refFiles) { refTitles.add(RecentDrawings.title(f)); refTaps.add(() -> openDrawing(f, null)); }
+                for (File f : files) { titles.add(RecentDrawings.title(f)); taps.add(() -> tapDrawing(f)); }
+                for (File f : refFiles) { refTitles.add(RecentDrawings.title(f)); refTaps.add(() -> tapDrawing(f)); }
                 for (DrawingLibrary.Drawing d : videos) {
                     videoTitles.add(d.title.isEmpty() ? d.folder : d.title);
                     videoTaps.add(() -> TimelapsesDialog.play(this, d));
@@ -1918,6 +1924,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
     /** The newest RecentDrawings.MAX of `files`. */
     private static List<File> first(List<File> files) {
         return new ArrayList<>(files.subList(0, Math.min(files.size(), RecentDrawings.MAX)));
+    }
+
+    /** A start-screen drawing tapped: into SAI, or its page when the artist chose so. */
+    private void tapDrawing(File f) {
+        if (prefs.getBoolean(PREF_HOME_TAP_PAGE, false)) DrawingsDialog.showDrawing(this, thumbs, f);
+        else openDrawing(f, null);
     }
 
     /** "All drawings": every drawing, searched and sorted (DrawingsDialog). */

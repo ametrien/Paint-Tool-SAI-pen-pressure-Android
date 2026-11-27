@@ -406,4 +406,6 @@
     <string name="saipen_pressure_light">A light press gives %1$d %%, a medium one %2$d %%</string>
     <string name="saipen_pressure_firm">Normal</string>
     <string name="saipen_pressure_softest">Very soft</string>
+    <string name="saipen_home_tap_page">Show a drawing before opening it</string>
+    <string name="saipen_home_tap_page_note">Off: a tap on a drawing opens it in SAI at once. On: the tap shows its page first, as in All drawings, with its timelapse and Open in SAI.</string>
 </resources>

@@ -212,6 +212,17 @@ final class DrawingsDialog {
         new DrawingsDialog(activity, thumbs).open();
     }
 
+    /** All drawings, straight on one drawing's page (a start-screen tap when
+     *  the artist chose to look before opening). Back goes to the cards. */
+    static void showDrawing(SaiLauncherActivity activity, ExecutorService thumbs, File drawing) {
+        DrawingsDialog d = new DrawingsDialog(activity, thumbs);
+        d.openFirst = drawing;
+        d.open();
+    }
+
+    /** The drawing whose page shows as soon as the list is read; null for the cards. */
+    private File openFirst;
+
     private DrawingsDialog(SaiLauncherActivity activity, ExecutorService thumbs) {
         this.activity = activity;
         this.thumbs = thumbs;
@@ -289,6 +300,9 @@ final class DrawingsDialog {
                 all = f;
                 videoOf = v;
                 showCards();
+                File first = openFirst;
+                openFirst = null;
+                if (first != null) for (Entry e : f) if (e.file.equals(first)) { showDrawing(e, 0); break; }
             });
         });
     }
