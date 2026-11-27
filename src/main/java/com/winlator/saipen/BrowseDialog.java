@@ -931,9 +931,12 @@ final class BrowseDialog implements BrowseThumbs.Listener {
             if (t.draws()) {
                 thumbs.make(() -> SamplePreview.tool(idx.settings, t, thumbs.shape(), w, h), big);
                 sampleNote.setText("A sample stroke, light to heavy to light: close to how SAI draws it, not exact.");
-                col.addView(shapeChoice(() -> thumbs.make(() -> SamplePreview.tool(idx.settings, t, thumbs.shape(), w, h), big)),
-                            lp(-2, -2, 0, 0, 0, 12));
-                tryPad(col, t, w);
+                TryPad pad = tryPad(col, t, w);
+                pad.sample(thumbs.shape());
+                col.addView(shapeChoice(() -> {
+                    thumbs.make(() -> SamplePreview.tool(idx.settings, t, thumbs.shape(), w, h), big);
+                    pad.sample(thumbs.shape());
+                }), col.indexOfChild(big) + 2, lp(-2, -2, 0, 0, 0, 12));
                 List<String[]> facts = new ArrayList<>();
                 facts.add(new String[] {"Size", size(t.size) + " px"});
                 facts.add(new String[] {"Density", t.density + "%"});
@@ -1024,7 +1027,7 @@ final class BrowseDialog implements BrowseThumbs.Listener {
     }
 
     /** "Try it": paper to draw on with the pen, with this tool, and Clear. */
-    private void tryPad(LinearLayout col, SaiSettingsFiles.Tool t, int w) {
+    private TryPad tryPad(LinearLayout col, SaiSettingsFiles.Tool t, int w) {
         LinearLayout head = row();
         TextView title = text(15, true, TEXT); title.setText("Try it");
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
@@ -1041,6 +1044,7 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         TextView note = text(11, false, TEXT3);
         note.setText("Draw with the pen: its pressure works as in this tool's settings, at the tool's size. Close to SAI, not exact.");
         col.addView(note, lp(-1, -2, 0, 4, 0, 14));
+        return pad;
     }
 
     /** "Try it" for a picture: paper to draw on with the pen the way SAI
@@ -1072,6 +1076,9 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         clear.setOnClickListener(v -> pad.clear());
         head.addView(clear, lp(-2, -2, 6, 0, 0, 0));
         col.addView(head, lp(-1, -2, 0, 2, 0, 6));
+        /* the tools' Line · S-curve · Heart: the pad draws that stroke with this picture */
+        pad.sample(thumbs.shape());
+        col.addView(shapeChoice(() -> pad.sample(thumbs.shape())), lp(-2, -2, 0, 0, 0, 8));
         pad.setBackground(round(SamplePreview.PAPER, 14));
         pad.setClipToOutline(true);
         col.addView(pad, new LinearLayout.LayoutParams(w, Math.min(dp(320), Math.round(w * 0.6f))));

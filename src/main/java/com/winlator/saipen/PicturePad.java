@@ -56,6 +56,8 @@ final class PicturePad extends View {
     private final Paint strokePaint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Matrix mx = new Matrix();
     private long seed = 1;
+    /** The sample stroke shown on clean paper (PressureStroke's shapes), -1 for none. */
+    private int shape = -1;
 
     /** kind: SettingsContents' picture kinds; folder: SAI's folder of the
      *  picture, relative to settings ("brushfom/bristle"). */
@@ -78,6 +80,7 @@ final class PicturePad extends View {
     void size(int which) {
         brush = SIZES[Math.max(0, Math.min(SIZES.length - 1, which))];
         make(getWidth(), getHeight(), false);
+        if (shape >= 0) sample(shape);
     }
 
     /** Back to clean paper (the paper texture's patch painted again). */
@@ -109,6 +112,7 @@ final class PicturePad extends View {
         } catch (RuntimeException | OutOfMemoryError ignored) {}
         if (kind == SettingsContents.PAPER_TEXTURES) { layer = new int[w * h]; patch(); }
         make(w, h, true);
+        if (shape >= 0) post(() -> sample(shape));
     }
 
     /** The brush for the next stroke, at the chosen size. */
@@ -178,47 +182,93 @@ final class PicturePad extends View {
     }
 
     @Override public boolean onTouchEvent(MotionEvent e) {
-        if (paper == null || (stamps() ? trail == null || stamp == null : live == null)) return false;
+        if (!ready()) return false;
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 if (!draws(e)) return false;
                 TryPad.drawing = true;
                 getParent().requestDisallowInterceptTouchEvent(true);
-                if (stamps()) stampAll(trail.begin(e.getX(), e.getY(), pressure(e, -1)));
-                else { live.begin(e.getX(), e.getY(), pressure(e, -1)); show(); }
+                penDown(e.getX(), e.getY(), pressure(e, -1));
                 return true;
             case MotionEvent.ACTION_MOVE:
-                if (!(stamps() ? trail.down() : live.down())) return false;
+                if (!isDown()) return false;
                 for (int k = 0; k < e.getHistorySize(); k++) to(e.getHistoricalX(k), e.getHistoricalY(k), pressure(e, k));
                 to(e.getX(), e.getY(), pressure(e, -1));
                 if (!stamps()) show();
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                if (!(stamps() ? trail.down() : live.down())) return false;
+                if (!isDown()) return false;
                 if (e.getActionMasked() == MotionEvent.ACTION_UP) to(e.getX(), e.getY(), pressure(e, -1));
-                if (stamps()) {
-                    trail.end();
-                    new Canvas(paper).drawBitmap(stroke, 0, 0, strokePaint);
-                    stroke.eraseColor(0);
-                    /* the next stroke's jitter differs, as in SAI */
-                    seed++;
-                    make(getWidth(), getHeight(), false);
-                } else {
-                    show();
-                    live.end();
-                    if (layer != null) commitLayer();
-                    else {
-                        new Canvas(paper).drawBitmap(stroke, 0, 0, null);
-                        stroke.eraseColor(0);
-                    }
-                    live.field.clear();
-                }
+                penUp();
                 TryPad.drawing = false;
                 invalidate();
                 return true;
         }
         return false;
+    }
+
+    private boolean ready() {
+        return paper != null && (stamps() ? trail != null && stamp != null : live != null);
+    }
+
+    private boolean isDown() { return stamps() ? trail.down() : live.down(); }
+
+    private void penDown(float x, float y, float p) {
+        if (stamps()) stampAll(trail.begin(x, y, p));
+        else { live.begin(x, y, p); show(); }
+    }
+
+    private void penUp() {
+        if (stamps()) {
+            trail.end();
+            new Canvas(paper).drawBitmap(stroke, 0, 0, strokePaint);
+            stroke.eraseColor(0);
+            /* the next stroke's jitter differs, as in SAI */
+            seed++;
+            make(getWidth(), getHeight(), false);
+        } else {
+            show();
+            live.end();
+            if (layer != null) commitLayer();
+            else {
+                new Canvas(paper).drawBitmap(stroke, 0, 0, null);
+                stroke.eraseColor(0);
+            }
+            live.field.clear();
+        }
+    }
+
+    /** The sample stroke the tools have (Line, S-curve, Heart), drawn with
+     *  this picture on clean paper, light to heavy to light; the pen draws
+     *  on over it. -1 for none (the old start: empty, or the paper's patch). */
+    void sample(int shape) {
+        this.shape = shape;
+        if (!ready() || isDown()) return;
+        clear();
+        if (shape < 0) return;
+        int w = getWidth(), h = getHeight();
+        if (layer != null) { java.util.Arrays.fill(layer, 0); paint(0, 0, w - 1, h - 1); }
+        double[] c = PressureStroke.curve(shape, w, h, Math.min(brush, h * 0.3));
+        /* evenly along the curve, a sample every 2 px, as a pen would send */
+        double total = 0;
+        for (int i = 2; i < c.length; i += 2) total += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]);
+        if (total <= 0) return;
+        double done = 0;
+        penDown((float) c[0], (float) c[1], (float) PressureStroke.pressure(shape, 0));
+        for (int i = 2; i < c.length; i += 2) {
+            double x0 = c[i - 2], y0 = c[i - 1], seg = Math.hypot(c[i] - x0, c[i + 1] - y0);
+            int n = Math.max(1, (int) Math.ceil(seg / 2));
+            for (int k = 1; k <= n; k++) {
+                double f = k / (double) n, t = (done + seg * f) / total;
+                to((float) (x0 + (c[i] - x0) * f), (float) (y0 + (c[i + 1] - y0) * f),
+                   (float) PressureStroke.pressure(shape, t));
+            }
+            done += seg;
+        }
+        if (!stamps()) show();
+        penUp();
+        invalidate();
     }
 
     private void to(float x, float y, float p) {

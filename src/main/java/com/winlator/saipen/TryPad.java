@@ -32,6 +32,8 @@ final class TryPad extends View {
     private float[] mask;
     private int[] row;
     private final int ink = SamplePreview.INK & 0xFFFFFF;
+    /** The sample stroke on clean paper (Line, S-curve, Heart), -1 for none. */
+    private int shape = -1;
 
     TryPad(Context c, File settings, SaiSettingsFiles.Tool tool) {
         super(c);
@@ -61,6 +63,39 @@ final class TryPad extends View {
         mask = null;
         try { mask = SamplePreview.padMask(settings, tool, w, h); }
         catch (RuntimeException | OutOfMemoryError ignored) {}
+        if (shape >= 0) post(() -> sample(shape));
+    }
+
+    /** The tools' sample stroke (Line, S-curve, Heart) drawn with this tool
+     *  on clean paper, light to heavy to light; the pen draws on over it. */
+    void sample(int shape) {
+        this.shape = shape;
+        if (live == null || live.down()) return;
+        clear();
+        if (shape < 0) return;
+        int w = getWidth(), h = getHeight();
+        double[] c = PressureStroke.curve(shape, w, h, Math.max(1, Math.min(tool.size, h * 0.3)));
+        double total = 0;
+        for (int i = 2; i < c.length; i += 2) total += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]);
+        if (total <= 0) return;
+        double done = 0;
+        live.begin((float) c[0], (float) c[1], (float) PressureStroke.pressure(shape, 0));
+        for (int i = 2; i < c.length; i += 2) {
+            double x0 = c[i - 2], y0 = c[i - 1], seg = Math.hypot(c[i] - x0, c[i + 1] - y0);
+            int n = Math.max(1, (int) Math.ceil(seg / 2));
+            for (int k = 1; k <= n; k++) {
+                double f = k / (double) n, t = (done + seg * f) / total;
+                live.to((float) (x0 + (c[i] - x0) * f), (float) (y0 + (c[i + 1] - y0) * f),
+                        (float) PressureStroke.pressure(shape, t));
+            }
+            done += seg;
+        }
+        show();
+        live.end();
+        new Canvas(paper).drawBitmap(stroke, 0, 0, null);
+        stroke.eraseColor(0);
+        live.field.clear();
+        invalidate();
     }
 
     @Override protected void onDetachedFromWindow() {
