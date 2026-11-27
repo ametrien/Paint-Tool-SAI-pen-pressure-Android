@@ -833,6 +833,13 @@ on SAI Pen's screen under **Palm rejection**, before starting SAI. Each works on
 > drawings in one video; 0.4.31 fixes both. It is still new, so please save your drawings in SAI
 > as usual and don't rely on the timelapse as the only record of your work.
 
+> [!WARNING]
+> **Tested with one open canvas only.** In 0.5.0 and earlier, having a second document open in
+> SAI, for example a reference picture opened next to your drawing, can break the timelapse:
+> it may record the other document instead and save almost nothing of your drawing, even if
+> you switch back to it. Until this is fixed, paste references into a layer of your drawing,
+> or keep Android's screen recorder running as a backup.
+
 **Record a timelapse** on SAI Pen's screen is on from the start. When the pen rests after a
 stroke, the app saves a frame of the canvas view you drew in, exactly as it looks on the screen.
 Later, **Make a timelapse video** turns the frames into an MP4 in
