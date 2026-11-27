@@ -22,6 +22,18 @@ import java.util.TreeMap;
  * from that name to a file within MERGE_MS of the file being written. A tab
  * switch changes the title too but writes no file, so it moves nothing.
  *
+ * Renames (2026-11-27, the owner: "what if we rename the file?"):
+ * - Save As of a drawing already saved ("art.sai2" to "art-v2.sai2"): the
+ *   title turns to a name not seen in SAI's title before in this SAI start,
+ *   and that file is written within MERGE_MS. The new file gets a COPY of the
+ *   history: the old file is still there, and its time stays true too. A
+ *   switch to a document open before (and Ctrl+S on it) copies nothing: its
+ *   name was in the title already.
+ * - A rename or move in a file manager, with SAI closed: the file keeps its
+ *   size and its time of change. follow() is given the files under SAI
+ *   Drawings now; a drawing whose file is gone moves to the one file with no
+ *   time of its own that has exactly the size and time its file last had.
+ *
  * No Android types: the JVM tests run it as it is.
  */
 public final class CanvasTime {
@@ -69,6 +81,13 @@ public final class CanvasTime {
     }
 
     private final Map<String, Canvas> canvases = new TreeMap<>();
+    /** The size and time of change each drawing's file had when last seen
+     *  (follow): how a file renamed in a file manager is found again. */
+    private final Map<String, long[]> marks = new TreeMap<>();
+    /** Keys SAI's title named in this SAI start: a Save As goes to a new one. */
+    private final java.util.Set<String> seenKeys = new java.util.HashSet<>();
+    /** The pending title change is a Save As of a saved drawing: copy, not move. */
+    private boolean copySwitch;
 
     /** A new canvas SAI saved under a name: "NewCanvas1" became "hand.sai2"
      *  at `atMs`. The timelapse packer (TimelapseVideo) files a session of
@@ -176,10 +195,24 @@ public final class CanvasTime {
 
     /** SAI's title went from naming `from` to naming `to` (keys, may be null). */
     public synchronized void titleChanged(String from, String to, long nowMs) {
+        boolean fresh = to != null && !seenKeys.contains(to);
+        /* on to another drawing: what waited for a save is over */
+        if (from != null && to != null && !from.equals(to)) switchAt = -1;
+        if (from != null) seenKeys.add(from);
+        if (to != null) seenKeys.add(to);
         if (from != null && from.startsWith(":") && to != null && !to.startsWith(":")) {
             switchFrom = from;
             switchTo = to;
             switchAt = nowMs;
+            copySwitch = false;
+            mergeIfSaved();
+        }
+        else if (from != null && !from.startsWith(":") && to != null && !to.startsWith(":")
+                 && !from.equals(to) && fresh) {
+            switchFrom = from;
+            switchTo = to;
+            switchAt = nowMs;
+            copySwitch = true;
             mergeIfSaved();
         }
     }
@@ -194,6 +227,20 @@ public final class CanvasTime {
     private void mergeIfSaved() {
         if (switchAt < 0 || savedAt < 0 || switchTo == null || !switchTo.equals(savedName)) return;
         if (Math.abs(switchAt - savedAt) > MERGE_MS) return;
+        if (copySwitch) {
+            /* Save As of a saved drawing: both files keep the history */
+            Canvas from = canvases.get(switchFrom);
+            if (from != null) {
+                Canvas to = canvases.computeIfAbsent(switchTo, k -> new Canvas());
+                Canvas copy = new Canvas();
+                copy.add(from);
+                to.add(copy);
+                dirty = true;
+            }
+            if (switchFrom.equals(lastKey)) lastKey = switchTo;
+            switchAt = savedAt = -1;
+            return;
+        }
         Canvas from = canvases.remove(switchFrom);
         if (from != null) canvases.computeIfAbsent(switchTo, k -> new Canvas()).add(from);
         renames.add(new Rename(switchFrom.substring(1), switchTo, savedAt));
@@ -215,6 +262,47 @@ public final class CanvasTime {
         if (best == null) return null;
         int slash = best.to.lastIndexOf('/');
         return slash < 0 ? best.to : best.to.substring(slash + 1);
+    }
+
+    /**
+     * The files under SAI Drawings now, by key ("comics/page.sai2"), each
+     * {size, time of change}. A drawing whose file is gone moves to the one
+     * file that has no time of its own and exactly the size and time its own
+     * file had when last seen: renamed or moved in a file manager. Then every
+     * drawing's file is noted as it is now. Call it with SAI closed (its
+     * running count would write over the move). True if anything changed.
+     */
+    public synchronized boolean follow(Map<String, long[]> files) {
+        boolean changed = false;
+        for (String k : new java.util.ArrayList<>(canvases.keySet())) {
+            if (k.startsWith(":") || files.containsKey(k)) continue;
+            long[] m = marks.get(k);
+            if (m == null) continue;
+            String hit = null;
+            int hits = 0;
+            for (Map.Entry<String, long[]> f : files.entrySet()) {
+                long[] v = f.getValue();
+                if (canvases.containsKey(f.getKey()) || v == null || v.length < 2) continue;
+                if (v[0] == m[0] && v[1] == m[1]) { hit = f.getKey(); hits++; }
+            }
+            if (hits != 1) continue;
+            canvases.put(hit, canvases.remove(k));
+            marks.remove(k);
+            if (k.equals(lastKey)) lastKey = hit;
+            changed = true;
+        }
+        for (String k : canvases.keySet()) {
+            long[] v = files.get(k);
+            if (v == null || v.length < 2) continue;
+            long[] m = marks.get(k);
+            if (m == null || m[0] != v[0] || m[1] != v[1]) {
+                marks.put(k, new long[] {v[0], v[1]});
+                changed = true;
+            }
+        }
+        if (marks.keySet().retainAll(canvases.keySet())) changed = true;
+        if (changed) dirty = true;
+        return changed;
     }
 
     /** The time on the drawing at `path` (relative to SAI Drawings), or null. */
@@ -269,6 +357,16 @@ public final class CanvasTime {
                 }
                 continue;
             }
+            if (f[0].equals("@file")) {
+                if (f.length >= 4) {
+                    try {
+                        marks.put(f[1], new long[] {Long.parseLong(f[2]), Long.parseLong(f[3])});
+                    }
+                    catch (NumberFormatException ignored) {
+                    }
+                }
+                continue;
+            }
             if (f[0].equals("@rename")) {
                 if (f.length >= 4) {
                     try {
@@ -307,6 +405,11 @@ public final class CanvasTime {
                    .append('\t').append(s.strokes).append('\t').append(String.format(Locale.ROOT, "%.0f", s.seconds))
                    .append('\n');
             }
+        }
+        /* four fields: an older SAI Pen skips lines shorter than five */
+        for (Map.Entry<String, long[]> e : marks.entrySet()) {
+            out.append("@file\t").append(e.getKey().replace('\t', ' ').replace('\n', ' ')).append('\t')
+               .append(e.getValue()[0]).append('\t').append(e.getValue()[1]).append('\n');
         }
         for (Rename r : renames) {
             out.append("@rename\t").append(r.from.replace('\t', ' ')).append('\t')
