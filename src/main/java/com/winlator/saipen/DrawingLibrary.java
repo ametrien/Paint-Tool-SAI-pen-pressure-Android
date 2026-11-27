@@ -34,6 +34,12 @@ import java.util.Set;
  * video is far worse than two entries for one drawing. It merges on strong
  * evidence, asks on plausible evidence, and keeps them apart otherwise.
  *
+ * Stronger than any look (2026-11-27, TimelapseDocs): the file. A session
+ * whose document SAI opened from a file another session saved to (or opened)
+ * continues that drawing, whatever it looks like now. The latest session to
+ * save a file owns it: a new canvas saved over an old drawing's file takes the
+ * file over, and the next opening of it continues the new drawing.
+ *
  * No Android types: the JVM tests check it.
  */
 public final class DrawingLibrary {
@@ -156,6 +162,10 @@ public final class DrawingLibrary {
         public final long startedAt; /* ms since 1970 */
         public final int frames, width, height;
         public final Signature opening, closing;
+        /** The file SAI opened this session's document from, "" if new or unknown. */
+        public String openedFrom = "";
+        /** The files it was saved to, oldest first. */
+        public final List<String> savedTo = new ArrayList<>();
 
         public Piece(String file, long startedAt, int frames, int width, int height, Signature opening, Signature closing) {
             this.file = file;
@@ -165,6 +175,11 @@ public final class DrawingLibrary {
             this.height = height;
             this.opening = opening;
             this.closing = closing;
+        }
+
+        boolean saved(String key) {
+            for (String s : savedTo) if (TimelapseDocs.key(s).equals(key)) return true;
+            return false;
         }
     }
 
@@ -304,9 +319,33 @@ public final class DrawingLibrary {
 
     /* ---- filing ---- */
 
-    /** Files a new piece: into its drawing on SAME, into a drawing of its
-     *  own otherwise (with a question waiting on ASK). Returns the drawing. */
+    /** The drawing a file belongs to: the one whose session saved it last;
+     *  if no session saved it, the one whose session opened it last. */
+    public Drawing ownerOf(String path) {
+        String k = TimelapseDocs.key(path);
+        if (k.isEmpty()) return null;
+        Drawing saver = null, opener = null;
+        long savedAt = Long.MIN_VALUE, openedAt = Long.MIN_VALUE;
+        for (Drawing d : drawings) {
+            for (Piece p : d.pieces) {
+                if (p.saved(k) && p.startedAt >= savedAt) { saver = d; savedAt = p.startedAt; }
+                if (TimelapseDocs.key(p.openedFrom).equals(k) && p.startedAt >= openedAt) { opener = d; openedAt = p.startedAt; }
+            }
+        }
+        return saver != null ? saver : opener;
+    }
+
+    /** Files a new piece: into the drawing of the file its document was
+     *  opened from; else by look, into its drawing on SAME, into a drawing
+     *  of its own otherwise (with a question waiting on ASK). Returns the
+     *  drawing. */
     public Drawing file(Piece piece, String title) {
+        Drawing owner = piece.openedFrom.isEmpty() ? null : ownerOf(piece.openedFrom);
+        if (owner != null) {
+            attach(piece, owner);
+            if (title != null && !title.isEmpty() && !isDefaultTitle(title)) owner.title = title;
+            return owner;
+        }
         Match m = classify(piece.opening, title, piece.file);
         if (m.kind == Kind.SAME) {
             Drawing d = drawing(m.drawingId);
@@ -484,8 +523,10 @@ public final class DrawingLibrary {
             for (Drawing d : drawings) {
                 w.write("drawing\t" + d.id + "\t" + clean(d.folder) + "\t" + clean(d.title) + "\n");
                 for (Piece p : d.pieces) {
+                    /* the files go last: 0.5.0 reads the first eight columns only */
                     w.write("piece\t" + clean(p.file) + "\t" + p.startedAt + "\t" + p.frames + "\t" + p.width + "\t" + p.height
-                            + "\t" + hex(p.opening) + "\t" + hex(p.closing) + "\n");
+                            + "\t" + hex(p.opening) + "\t" + hex(p.closing)
+                            + "\t" + clean(p.openedFrom) + "\t" + clean(String.join("|", p.savedTo)) + "\n");
                 }
             }
             for (Pending p : pending) w.write("pending\t" + clean(p.pieceFile) + "\t" + p.drawingId + "\t" + p.candidateId + "\n");
@@ -513,8 +554,12 @@ public final class DrawingLibrary {
                     case "piece":
                         if (cur == null || c.length < 8) break;
                         int w = Integer.parseInt(c[4]), h = Integer.parseInt(c[5]);
-                        cur.pieces.add(new Piece(c[1], Long.parseLong(c[2]), Integer.parseInt(c[3]), w, h,
-                                                 Signature.fromHex(c[6], w, h), Signature.fromHex(c[7], w, h)));
+                        Piece p = new Piece(c[1], Long.parseLong(c[2]), Integer.parseInt(c[3]), w, h,
+                                            Signature.fromHex(c[6], w, h), Signature.fromHex(c[7], w, h));
+                        if (c.length >= 9) p.openedFrom = c[8];
+                        /* '|' is never in a Windows path */
+                        if (c.length >= 10) for (String s : c[9].split("\\|")) if (!s.isEmpty()) p.savedTo.add(s);
+                        cur.pieces.add(p);
                         break;
                     case "pending":
                         if (c.length >= 4) lib.pending.add(new Pending(c[1], c[2], c[3]));

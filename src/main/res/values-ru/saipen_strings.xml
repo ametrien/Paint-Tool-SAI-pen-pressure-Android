@@ -67,6 +67,8 @@
     <string name="saipen_find_auto">Найти автоматически</string>
     <string name="saipen_find_manual">Выбрать папку</string>
     <string name="saipen_timelapse">Записывать таймлапс</string>
+    <string name="saipen_timelapse_experimental_short">Таймлапс, экспериментальная функция</string>
+    <string name="saipen_timelapse_experimental">⚠ Экспериментальная функция: таймлапс пока может работать не очень хорошо, и сеанс может пропасть. Пожалуйста, не полагайтесь на него. Для важного рисунка включите заодно запись экрана Android.</string>
     <string name="saipen_make_video">Сделать видео таймлапса (кадров: %1$d, около %2$d с)</string>
     <string name="saipen_discard_frames">Выбросить кадры, без видео</string>
     <string name="saipen_discard_frames_ask">Удалить записанные кадры (%1$d) и не делать видео? Следующий таймлапс начнётся с нуля. Отменить это нельзя.</string>

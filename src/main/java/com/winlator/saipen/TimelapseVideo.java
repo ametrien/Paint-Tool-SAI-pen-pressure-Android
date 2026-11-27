@@ -102,7 +102,10 @@ public final class TimelapseVideo {
         File frames = framesDir(containerRoot);
         if (countFrames(frames) == 0) return new TimelapsePack.Result();
         File packed = TimelapsePack.packedDir(containerRoot);
-        TimelapsePack.Result r = TimelapsePack.packAll(frames, TimelapsePack.newSessionDir(packed, new Date()));
+        File session = TimelapsePack.newSessionDir(packed, new Date());
+        TimelapsePack.Result r = TimelapsePack.packAll(frames, session);
+        /* the DLL's documents.txt is still that SAI start's: it goes along */
+        if (r.frames > 0) TimelapseDocs.copyInto(TimelapseDocs.source(containerRoot), session);
         Log.i(TAG, "timelapse: packed frames left from before: " + r);
         return r;
     }
@@ -210,7 +213,15 @@ public final class TimelapseVideo {
             DrawingLibrary.Signature closing = DrawingLibrary.Signature.of(b, last.header.width, last.header.height, last.header.stride);
 
             String name = s.name.isEmpty() && live.isDirectory() ? TimelapseLive.name(live) : s.name;
-            String title = titleOf(name, startOf(s), names);
+            /* the files SAI opened the document from and saved it to: the
+               surest way to its drawing, and its name (TimelapseDocs) */
+            TimelapseDocs.Doc files = TimelapseDocs.of(new File(packedRoot, s.session), s.canvasId, first.header.tickMs);
+            String title = files.title().isEmpty() ? titleOf(name, startOf(s), names) : files.title();
+            if (!files.isEmpty())
+                Log.i(TAG, "timelapse: " + name + " was opened from " + (files.openedFrom.isEmpty() ? "(a new canvas)" : files.openedFrom)
+                      + ", saved to " + (files.savedTo.isEmpty() ? "(nothing)" : String.join(", ", files.savedTo)));
+            else if (!files.known)
+                Log.i(TAG, "timelapse: " + name + ": no record of its files for this SAI start, matched by name and look");
             if (DrawingLibrary.isDefaultTitle(title)) {
                 /* saved under a name no frame saw: the file that looks like the end */
                 String saved = savedByLook(closing, startOf(s));
@@ -220,7 +231,7 @@ public final class TimelapseVideo {
                 }
             }
             DrawingLibrary.Drawing d = TimelapseShelf.add(lib, out, title, startOf(s), frameCount, s.width, s.height,
-                                                          opening, closing, b, last.header.stride);
+                                                          opening, closing, b, last.header.stride, files);
             made.filed.add(d.pieces.get(d.pieces.size() - 1).file);
             for (int i = 0; i < 8; i++) {
                 File j = TimelapseShelf.joined(d, i);

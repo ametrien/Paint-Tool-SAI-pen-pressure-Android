@@ -237,9 +237,12 @@ public final class TimelapsePack {
             boolean any = false;
             for (File f : left) {
                 if (f.getName().endsWith(WRITING)) f.delete();   /* a pack cut short */
-                else any = true;
+                else if (!f.getName().startsWith(TimelapseDocs.FILE)) any = true;   /* it goes with the frames */
             }
-            if (!any) s.delete();
+            if (!any) {
+                for (File f : left) if (f.getName().startsWith(TimelapseDocs.FILE)) f.delete();
+                s.delete();
+            }
         }
     }
 
