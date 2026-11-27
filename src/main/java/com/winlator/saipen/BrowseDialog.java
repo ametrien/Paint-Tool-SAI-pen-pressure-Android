@@ -931,12 +931,9 @@ final class BrowseDialog implements BrowseThumbs.Listener {
             if (t.draws()) {
                 thumbs.make(() -> SamplePreview.tool(idx.settings, t, thumbs.shape(), w, h), big);
                 sampleNote.setText("A sample stroke, light to heavy to light: close to how SAI draws it, not exact.");
-                TryPad pad = tryPad(col, t, w);
-                pad.sample(thumbs.shape());
-                col.addView(shapeChoice(() -> {
-                    thumbs.make(() -> SamplePreview.tool(idx.settings, t, thumbs.shape(), w, h), big);
-                    pad.sample(thumbs.shape());
-                }), col.indexOfChild(big) + 2, lp(-2, -2, 0, 0, 0, 12));
+                col.addView(shapeChoice(() -> thumbs.make(() -> SamplePreview.tool(idx.settings, t, thumbs.shape(), w, h), big)),
+                            lp(-2, -2, 0, 0, 0, 12));
+                tryPad(col, t, w);
                 List<String[]> facts = new ArrayList<>();
                 facts.add(new String[] {"Size", size(t.size) + " px"});
                 facts.add(new String[] {"Density", t.density + "%"});
@@ -956,10 +953,12 @@ final class BrowseDialog implements BrowseThumbs.Listener {
 
         File f = it.file;
         kind.setText(KIND_ONE[it.kind] + (it.hidden ? " · hidden from SAI" : ""));
-        thumbs.make(() -> BrowseThumbs.sample(it.kind, f, w, h), big);
+        thumbs.make(() -> BrowseThumbs.sample(it.kind, f, thumbs.shape(), w, h), big);
         sampleNote.setText(it.kind == SettingsContents.PAPER_TEXTURES ? a.getString(R.string.saipen_sample_paper_texture)
             : it.kind == SettingsContents.BRUSH_TEXTURES ? "A stroke painted through this texture: close to SAI, not exact."
             : "Stamped along a stroke with its starting values: close to SAI, not exact.");
+        col.addView(shapeChoice(() -> thumbs.make(() -> BrowseThumbs.sample(it.kind, f, thumbs.shape(), w, h), big)),
+                    lp(-2, -2, 0, 0, 0, 12));
         picturePad(col, it, w);
 
         LinearLayout pic = row();
@@ -1076,9 +1075,6 @@ final class BrowseDialog implements BrowseThumbs.Listener {
         clear.setOnClickListener(v -> pad.clear());
         head.addView(clear, lp(-2, -2, 6, 0, 0, 0));
         col.addView(head, lp(-1, -2, 0, 2, 0, 6));
-        /* the tools' Line · S-curve · Heart: the pad draws that stroke with this picture */
-        pad.sample(thumbs.shape());
-        col.addView(shapeChoice(() -> pad.sample(thumbs.shape())), lp(-2, -2, 0, 0, 0, 8));
         pad.setBackground(round(SamplePreview.PAPER, 14));
         pad.setClipToOutline(true);
         col.addView(pad, new LinearLayout.LayoutParams(w, Math.min(dp(320), Math.round(w * 0.6f))));
