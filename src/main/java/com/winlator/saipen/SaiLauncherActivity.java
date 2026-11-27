@@ -206,6 +206,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
         findViewById(R.id.SaiPenPcSettingsInfo).setOnClickListener(v -> rowInfo(R.string.saipen_pc_settings, R.string.saipen_pc_settings_short));
         findViewById(R.id.SaiPenAddBrushesInfo).setOnClickListener(v -> rowInfo(R.string.saipen_add_pack, R.string.saipen_add_pack_short));
         findViewById(R.id.SaiPenLicenceInfo).setOnClickListener(v -> licenceInfo());
+        /* the timelapse is experimental: the yellow triangle says so, just the text */
+        findViewById(R.id.SaiPenTimelapseWarn).setOnClickListener(v ->
+            new AlertDialog.Builder(this, DIALOG_THEME).setMessage(R.string.saipen_timelapse_experimental)
+                .setPositiveButton(android.R.string.ok, null).show());
         for (int k = 0; k < SettingsContents.KINDS; k++) {
             final int kind = k;
             findViewById(KIND_TILES[k]).setOnClickListener(v -> openInSai(kind));

@@ -539,26 +539,30 @@
             </LinearLayout>
 
             <!-- the timelapse is experimental (owner, 2026-11-27): a yellow
-                 triangle by its name, and a yellow note under the switch -->
+                 triangle where the other sections have their (i); a tap says so -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:contentDescription="@string/saipen_timelapse_experimental_short">
+                android:orientation="horizontal">
 
                 <TextView
                     style="@style/SaiPenLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:text="@string/saipen_section_timelapse" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="⚠"
-                    android:textColor="#FFC107"
-                    android:textSize="15sp"
-                    android:importantForAccessibility="no" />
+                <ImageView
+                    android:id="@+id/SaiPenTimelapseWarn"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="-6dp"
+                    android:padding="6dp"
+                    android:background="@drawable/saipen_row"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/saipen_timelapse_experimental_short"
+                    android:src="@drawable/ic_saipen_warn" />
             </LinearLayout>
 
             <Switch
@@ -573,11 +577,6 @@
             <TextView
                 style="@style/SaiPenNote"
                 android:layout_marginTop="0dp"
-                android:textColor="#FFC107"
-                android:text="@string/saipen_timelapse_experimental" />
-
-            <TextView
-                style="@style/SaiPenNote"
                 android:text="@string/saipen_timelapse_note" />
 
             <LinearLayout
