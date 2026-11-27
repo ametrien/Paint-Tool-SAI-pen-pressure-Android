@@ -1008,6 +1008,15 @@ public class SaiLauncherActivity extends AppCompatActivity {
         /* 2 GB up in half-GB steps, the last step is Auto: all that safely
            fits, a quarter of the free space */
         long free0 = getFilesDir().getUsableSpace();
+        findViewById(R.id.SaiPenTlSpaceInfo).setOnClickListener(v -> {
+            long free = getFilesDir().getUsableSpace();
+            String gb = "%.1f GB";
+            new AlertDialog.Builder(this, DIALOG_THEME).setTitle(R.string.saipen_tl_space_info_title)
+                .setMessage(getString(R.string.saipen_tl_space_info_text,
+                    String.format(java.util.Locale.ROOT, gb, free / (1024.0 * 1024 * 1024)),
+                    String.format(java.util.Locale.ROOT, gb, TimelapseBudget.megabytes(free) / 1024.0)))
+                .setPositiveButton(android.R.string.ok, null).show();
+        });
         bar.setMax(TimelapseBudget.lastStep(free0));
         bar.setProgress(TimelapseBudget.stepOf(timelapseRoomChoice(), free0));
         java.util.function.IntConsumer show = step -> {
