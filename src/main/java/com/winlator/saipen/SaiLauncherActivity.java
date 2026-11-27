@@ -1940,6 +1940,25 @@ public class SaiLauncherActivity extends AppCompatActivity {
         return new ArrayList<>(files.subList(0, Math.min(files.size(), RecentDrawings.MAX)));
     }
 
+    /** The SD cards and USB drives mounted now, as folders SAI can reach. */
+    private List<String> removableVolumes() {
+        List<String> out = new ArrayList<>();
+        try {
+            android.os.storage.StorageManager sm = getSystemService(android.os.storage.StorageManager.class);
+            for (android.os.storage.StorageVolume v : sm.getStorageVolumes()) {
+                if (!v.isRemovable() || !android.os.Environment.MEDIA_MOUNTED.equals(v.getState())) continue;
+                File dir = null;
+                if (android.os.Build.VERSION.SDK_INT >= 30) dir = v.getDirectory();
+                if (dir == null && v.getUuid() != null) dir = new File("/storage/" + v.getUuid());
+                if (dir != null && dir.isDirectory()) out.add(dir.getPath());
+            }
+        }
+        catch (RuntimeException e) {
+            Log.w(TAG, "drives: SD cards and USB drives not listed", e);
+        }
+        return out;
+    }
+
     /** A start-screen drawing tapped: into SAI, or its page when the artist chose so. */
     private void tapDrawing(File f) {
         if (prefs.getBoolean(PREF_HOME_TAP_PAGE, false)) DrawingsDialog.showDrawing(this, thumbs, f);
@@ -2157,8 +2176,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
         catch (IOException | RuntimeException e) {
             Log.w(TAG, "G: (the gallery) not set up", e);
         }
+        List<String> removable = removableVolumes();
+        Log.i(TAG, "drives: " + removable.size() + " SD card(s) or USB drive(s) as H: on " + removable);
         container.setDrives(SaiLocator.drives(saiDir.getPath(), AppUtils.DIRECTORY_DOWNLOADS, storage.getPath(),
-            SaiPenSetup.drawingsFolder().getPath(), gallery.getPath()));
+            SaiPenSetup.drawingsFolder().getPath(), gallery.getPath(), removable));
         container.setScreenSize(wineScreenSize());
         /* No Microsoft components: SAI draws with GDI and needs none of the
          * DirectX parts, Visual C++ runtimes or Windows Media decoder, and

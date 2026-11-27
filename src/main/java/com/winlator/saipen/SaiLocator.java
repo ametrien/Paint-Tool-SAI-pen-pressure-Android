@@ -445,6 +445,21 @@ public final class SaiLocator {
         return drives(saiDir, downloads, internal, drawings) + "G:" + gallery;
     }
 
+    /** And H:, I:, ... = each SD card or USB drive (a Samsung T7, say)
+     *  mounted when SAI starts, in the order Android lists them, at most
+     *  up to Z:. A card taken out between starts simply has no letter next
+     *  time; nothing else moves (people asked, 2026-11-27). */
+    public static String drives(String saiDir, String downloads, String internal, String drawings, String gallery,
+                                java.util.List<String> removable) {
+        StringBuilder b = new StringBuilder(drives(saiDir, downloads, internal, drawings, gallery));
+        char letter = 'H';
+        if (removable != null) for (String path : removable) {
+            if (path == null || path.isEmpty() || letter > 'Z') continue;
+            b.append(letter++).append(':').append(path);
+        }
+        return b.toString();
+    }
+
     /** The folders the Gallery app shows photos from: the camera and
      *  screenshots (DCIM), saved and downloaded pictures (Pictures). */
     public static final String[] GALLERY = {"DCIM", "Pictures"};

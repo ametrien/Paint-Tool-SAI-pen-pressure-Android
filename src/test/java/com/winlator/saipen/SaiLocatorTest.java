@@ -305,6 +305,20 @@ public class SaiLocatorTest {
     }
 
     @Test
+    public void sdCardsAndUsbDrivesGetHOnwards() {
+        String base = SaiLocator.drives("/sai", "/d", "/e", "/f", "/g");
+        assertEquals(base + "H:/storage/1234-ABCDI:/storage/5678-EF01",
+                     SaiLocator.drives("/sai", "/d", "/e", "/f", "/g",
+                                       java.util.Arrays.asList("/storage/1234-ABCD", "/storage/5678-EF01")));
+        assertEquals(base, SaiLocator.drives("/sai", "/d", "/e", "/f", "/g", java.util.Collections.emptyList()));
+        assertEquals(base, SaiLocator.drives("/sai", "/d", "/e", "/f", "/g", null));
+        java.util.List<String> many = new java.util.ArrayList<>();
+        for (int i = 0; i < 30; i++) many.add("/storage/v" + i);
+        String all = SaiLocator.drives("/sai", "/d", "/e", "/f", "/g", many);
+        assertTrue(all.endsWith("Z:/storage/v18"));        // H..Z is 19 letters, no more
+    }
+
+    @Test
     public void drivesWithTheGalleryAddG() {
         assertEquals("S:/saiD:/downloadE:/storage/emulated/0F:/documents/SAI DrawingsG:/data/data/sai.penpress/gallery",
                      SaiLocator.drives("/sai", "/download", "/storage/emulated/0",
