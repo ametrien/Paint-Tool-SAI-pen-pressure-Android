@@ -337,6 +337,7 @@
     <string name="saipen_sort_name_za">Z to A</string>
     <string name="saipen_sort_size_large">Largest first</string>
     <string name="saipen_sort_size_small">Smallest first</string>
+    <string name="saipen_drawings_kinds_off">Every kind of file is switched off above (.sai2, .png…). Tap one to show those drawings again.</string>
     <string name="saipen_formats_show">Show:</string>
     <string name="saipen_home_title">Start screen</string>
     <string name="saipen_home_on">%1$d of 3 shown</string>

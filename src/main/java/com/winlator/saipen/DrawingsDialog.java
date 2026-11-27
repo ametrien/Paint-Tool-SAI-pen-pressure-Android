@@ -498,7 +498,15 @@ final class DrawingsDialog {
                         + " · " + activity.getString(sortMeaning())
                         + " · " + activity.getString(R.string.saipen_drawings_hold_hint));
         summary.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
-        empty.setText(all.isEmpty() ? R.string.saipen_drawings_none : R.string.saipen_drawings_none_found);
+        /* nothing shown because every kind there is was switched off: say so */
+        boolean allKindsOff = false;
+        if (!all.isEmpty() && list.isEmpty()) {
+            List<File> files = new ArrayList<>();
+            for (Entry e : all) files.add(e.file);
+            allKindsOff = hiddenFormats().containsAll(DrawingFormats.present(files));
+        }
+        empty.setText(all.isEmpty() ? R.string.saipen_drawings_none
+                      : allKindsOff ? R.string.saipen_drawings_kinds_off : R.string.saipen_drawings_none_found);
         empty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
         adapter.notifyDataSetChanged();
     }

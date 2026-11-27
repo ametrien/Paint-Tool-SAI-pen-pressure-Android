@@ -309,6 +309,7 @@
     <string name="saipen_sort_name_za">От Я до А</string>
     <string name="saipen_sort_size_large">Сначала большие</string>
     <string name="saipen_sort_size_small">Сначала маленькие</string>
+    <string name="saipen_drawings_kinds_off">Все форматы выше выключены (.sai2, .png…). Нажмите на нужный, чтобы снова показать эти рисунки.</string>
     <string name="saipen_formats_show">Показывать:</string>
     <string name="saipen_home_title">Стартовый экран</string>
     <string name="saipen_home_on">показано %1$d из 3</string>

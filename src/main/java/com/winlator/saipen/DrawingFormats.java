@@ -15,7 +15,8 @@ import java.util.TreeSet;
  * Which files count as drawings: every kind SAI Ver.2's Open window lists as
  * "Image Files" (.sai2, .sai, .psd, .psb, .bmp, .jpg, .jpeg, .png, .tga). All
  * are shown unless the artist hides a kind in All drawings; what is hidden is
- * one preference, a comma list, so the start screen's row follows it too.
+ * one preference, a comma list, for All drawings only: the start screen
+ * always shows every drawing.
  *
  * .jpeg counts as jpg. No Android types: the JVM tests run it as it is.
  */

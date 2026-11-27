@@ -1823,17 +1823,28 @@ public class SaiLauncherActivity extends AppCompatActivity {
         boolean wantDrawings = prefs.getBoolean(PREF_HOME_DRAWINGS, true);
         boolean wantRefs = prefs.getBoolean(PREF_HOME_REFERENCES, false);
         boolean wantTimelapses = prefs.getBoolean(PREF_HOME_TIMELAPSES, false);
-        java.util.Set<String> hidden = DrawingFormats.parse(prefs.getString(DrawingFormats.PREF_HIDDEN, ""));
+        /* the format chips are All drawings' own filter: the start screen
+           shows every drawing (a hidden .sai2 there emptied this row,
+           2026-11-27) */
         thumbs.execute(() -> {
-            List<File> every = DrawingFormats.shown(RecentDrawings.newest(folder, Integer.MAX_VALUE), hidden);
+            List<File> listed;
+            try {
+                listed = RecentDrawings.newest(folder, Integer.MAX_VALUE);
+            }
+            catch (Throwable t) {
+                Log.e(TAG, "start screen: listing the drawings", t);
+                listed = new ArrayList<>();
+            }
+            List<File> every = listed;
             /* references are the artist's, not drawings: their own row */
             List<File> own = new ArrayList<>(), refs = new ArrayList<>();
             for (File f : every) (RecentDrawings.isReference(f, folder) ? refs : own).add(f);
             List<File> files = wantDrawings ? first(own) : new ArrayList<>();
             List<File> refFiles = wantRefs ? first(refs) : new ArrayList<>();
             List<android.graphics.Bitmap> pictures = new ArrayList<>(), refPictures = new ArrayList<>();
-            for (File f : files) pictures.add(thumbnail(f, px));
-            for (File f : refFiles) refPictures.add(thumbnail(f, px));
+            /* one picture that can't be read must not keep the whole row away */
+            for (File f : files) pictures.add(safeThumbnail(f, px));
+            for (File f : refFiles) refPictures.add(safeThumbnail(f, px));
             List<DrawingLibrary.Drawing> videos = new ArrayList<>();
             List<android.graphics.Bitmap> stills = new ArrayList<>();
             if (wantTimelapses) {
@@ -1846,8 +1857,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
                         stills.add(still.isFile() ? pictureFile(still, px) : null);
                     }
                 }
-                catch (RuntimeException e) {
+                catch (Throwable e) {
                     Log.w(TAG, "start screen: no timelapse list", e);
+                    while (stills.size() < videos.size()) stills.add(null);
                 }
             }
             ui.post(() -> {
@@ -1860,10 +1872,15 @@ public class SaiLauncherActivity extends AppCompatActivity {
                     videoTitles.add(d.title.isEmpty() ? d.folder : d.title);
                     videoTaps.add(() -> TimelapsesDialog.play(this, d));
                 }
-                fillRow(R.id.SaiPenRecentScroll, R.id.SaiPenRecent, 0, titles, pictures, taps, R.string.saipen_recent_open);
+                List<File> videoFiles = new ArrayList<>();
+                for (DrawingLibrary.Drawing d : videos) videoFiles.add(TimelapseShelf.joined(d, 0));
+                fillRow(R.id.SaiPenRecentScroll, R.id.SaiPenRecent, 0, titles, pictures, taps, R.string.saipen_recent_open, null);
                 fillRow(R.id.SaiPenRefsScroll, R.id.SaiPenRefs, R.id.SaiPenRefsLabel, refTitles, refPictures, refTaps,
-                        R.string.saipen_recent_open);
-                fillRow(R.id.SaiPenTlScroll, R.id.SaiPenTl, R.id.SaiPenTlLabel, videoTitles, stills, videoTaps, 0);
+                        R.string.saipen_recent_open, null);
+                fillRow(R.id.SaiPenTlScroll, R.id.SaiPenTl, R.id.SaiPenTlLabel, videoTitles, stills, videoTaps, 0, videoFiles);
+                Log.i(TAG, "start screen: " + files.size() + " drawing(s)" + (wantDrawings ? "" : " (row off)") + " of "
+                      + own.size() + ", " + refFiles.size() + " reference(s)" + (wantRefs ? "" : " (row off)") + ", "
+                      + videos.size() + " timelapse(s)" + (wantTimelapses ? "" : " (row off)"));
                 ((TextView) findViewById(R.id.SaiPenAllDrawingsValue))
                     .setText(own.isEmpty() ? "" : String.valueOf(own.size()));
             });
@@ -1933,8 +1950,22 @@ public class SaiLauncherActivity extends AppCompatActivity {
     /** One row of thumbnails with names under them; empty hides the row
      *  and its label (`labelId`, 0 for none). `describe` reads "Open %s"
      *  for a picture, 0 to use the name alone. */
+    /** A thumbnail, or null if anything at all goes wrong reading it. */
+    private static android.graphics.Bitmap safeThumbnail(File f, int px) {
+        try {
+            return thumbnail(f, px);
+        }
+        catch (Throwable t) {
+            Log.w(TAG, "start screen: no picture for " + f.getName() + ": " + t);
+            return null;
+        }
+    }
+
+    /** `videos` (null for none): a timelapse per item, played in the
+     *  picture's place while the pen hovers over it (HoverVideo). */
     private void fillRow(int scrollId, int rowId, int labelId, List<String> titles,
-                         List<android.graphics.Bitmap> pictures, List<Runnable> taps, int describe) {
+                         List<android.graphics.Bitmap> pictures, List<Runnable> taps, int describe,
+                         List<File> videos) {
         View scroll = findViewById(scrollId);
         android.widget.LinearLayout row = findViewById(rowId);
         row.removeAllViews();
@@ -1952,12 +1983,24 @@ public class SaiLauncherActivity extends AppCompatActivity {
             item.setContentDescription(describe != 0 ? getString(describe, title) : title);
             item.setOnClickListener(v -> tap.run());
 
-            android.widget.ImageView picture = new android.widget.ImageView(this);
-            picture.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
-            picture.setBackgroundResource(R.drawable.saipen_tile);
             int pad = (int) (3 * dp);
-            picture.setPadding(pad, pad, pad, pad);
-            if (pictures.get(i) != null) picture.setImageBitmap(pictures.get(i));
+            View picture;
+            if (videos != null && i < videos.size()) {
+                HoverVideo hv = new HoverVideo(this);
+                hv.setBackgroundResource(R.drawable.saipen_tile);
+                hv.setPadding(pad, pad, pad, pad);
+                hv.setStill(pictures.get(i));
+                hv.setVideo(videos.get(i));
+                picture = hv;
+            }
+            else {
+                android.widget.ImageView img = new android.widget.ImageView(this);
+                img.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+                img.setBackgroundResource(R.drawable.saipen_tile);
+                img.setPadding(pad, pad, pad, pad);
+                if (pictures.get(i) != null) img.setImageBitmap(pictures.get(i));
+                picture = img;
+            }
             item.addView(picture, new android.widget.LinearLayout.LayoutParams(
                 (int) (RECENT_W_DP * dp), (int) (RECENT_H_DP * dp)));
 
