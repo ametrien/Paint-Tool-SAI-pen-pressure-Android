@@ -1,5 +1,5 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index 5a2f248..5a22da3 100644
+index 5a2f248..147925b 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
 @@ -5,14 +5,45 @@ android {
@@ -275,7 +275,7 @@ index 3bb2d01..02d6a4f 100644
              cbEnableBackgroundWakelock.setVisibility(isChecked ? View.VISIBLE : View.GONE);
              if (!isChecked) cbEnableBackgroundWakelock.setChecked(false);
 diff --git a/app/src/main/java/com/winlator/XServerDisplayActivity.java b/app/src/main/java/com/winlator/XServerDisplayActivity.java
-index 18acd68..e328ed3 100644
+index 18acd68..e0036e0 100644
 --- a/app/src/main/java/com/winlator/XServerDisplayActivity.java
 +++ b/app/src/main/java/com/winlator/XServerDisplayActivity.java
 @@ -141,6 +141,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
@@ -324,15 +324,16 @@ index 18acd68..e328ed3 100644
          }
          return true;
      }
-@@ -428,6 +445,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -428,6 +445,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
      }
  
      private void exit() {
 +        com.winlator.saipen.SpeedSession.finish();   /* SAI Pen: the speed log's summary */
++        com.winlator.saipen.SaiEnded.closed(getFilesDir());   /* SAI Pen: closed on purpose (SaiEnded) */
          winHandler.stop();
          if (environment != null) environment.stopEnvironmentComponents();
  
-@@ -438,7 +456,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -438,7 +457,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
              options.startPath = FileUtils.getDirname(intent.getStringExtra("exec_path"));
              AppUtils.restartApplication(this, options);
          }
@@ -348,7 +349,7 @@ index 18acd68..e328ed3 100644
          ForegroundService.stopSession(this);
      }
  
-@@ -508,6 +533,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -508,6 +534,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
          GuestProgramLauncherComponent guestProgramLauncherComponent = new GuestProgramLauncherComponent();
  
          if (container != null) {
@@ -357,7 +358,7 @@ index 18acd68..e328ed3 100644
              if (container.getHUDMode() == FrameRating.Mode.FULL.ordinal()) envVars.put("X11_WND_GPU_INFO", "1");
  
              String desktopName = shortcut != null || getIntent().hasExtra("exec_path") ? "nogui" : "shell";
-@@ -595,7 +622,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -595,7 +623,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
          capturePointerOnExternalMouse = preferences.getBoolean("capture_pointer_on_external_mouse", true);
          touchpadView = new TouchpadView(this, xServer, capturePointerOnExternalMouse);
          touchpadView.setSensitivity(globalCursorSpeed);
@@ -378,7 +379,7 @@ index 18acd68..e328ed3 100644
          touchpadView.setFourFingersTapCallback(() -> {
              if (!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(GravityCompat.START);
          });
-@@ -629,6 +668,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -629,6 +669,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
          if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
          AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
@@ -403,7 +404,7 @@ index 18acd68..e328ed3 100644
      }
  
      private void showInputControlsDialog() {
-@@ -797,6 +854,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -797,6 +855,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
      @Override
      public boolean dispatchKeyEvent(KeyEvent event) {
@@ -425,7 +426,7 @@ index 18acd68..e328ed3 100644
          return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
                 (!ExternalController.isGameController(event.getDevice()) && super.dispatchKeyEvent(event));
      }
-@@ -972,6 +1044,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -972,6 +1045,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                      execPath = null;
                  }
              }

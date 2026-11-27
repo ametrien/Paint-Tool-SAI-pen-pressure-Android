@@ -449,4 +449,23 @@
     <string name="saipen_drives_info_text">In SAI\'s Open and Save windows:\n\nF: is Documents/SAI Drawings. Save here: the start screen and All drawings show what is in it.\nD: is Download.\nE: is all of the tablet\'s storage.\nG: is the gallery: photos and screenshots, for references.\nS: is the folder SAI itself is in.\nH:, I:, … are SD cards and USB drives (a portable SSD, say), each one plugged in when SAI starts. One plugged in later shows after SAI starts again; the letters follow the order Android lists them in.\n\nSAI can open drawings from SD cards and USB drives, but on most tablets Android does not let it save there. Save to F: and copy the file over afterwards.\n\n%1$s</string>
     <string name="saipen_drives_info_none">No SD card or USB drive is plugged in now.</string>
     <string name="saipen_drives_info_some">Plugged in now: %1$d SD card(s) or USB drive(s).</string>
+
+    <!-- SAI did not close by itself last time (SaiEnded, SaiEndedNotice) -->
+    <string name="saipen_ended_title">SAI didn\'t close by itself last time</string>
+    <string name="saipen_ended_low_memory">Android closed SAI Pen to free memory for other apps, while SAI was open.</string>
+    <string name="saipen_ended_background">Android ended SAI while SAI Pen was in the background, after you switched to another app.</string>
+    <string name="saipen_ended_swiped">SAI Pen was swiped away in the recent apps (or stopped in Settings) while SAI was open. Next time close SAI with its own red ✕ or File > Exit.</string>
+    <string name="saipen_ended_crashed">SAI Pen stopped with an error while SAI was open. Sorry! If it happens again, please tell me: Report a problem, at the bottom of this screen, shows what to send.</string>
+    <string name="saipen_ended_updated">A new SAI Pen was installed while SAI was open, and installing closes SAI at once. Next time, save your drawing and close SAI before you update.</string>
+    <string name="saipen_ended_restarted">The device was turned off or restarted while SAI was open.</string>
+    <string name="saipen_ended_unknown">SAI Pen was closed while SAI was open, most likely by Android to free memory.</string>
+    <string name="saipen_ended_lost">What you hadn\'t saved in SAI is lost, and so are SAI\'s own settings changed since it started (new tools, the panel layout): SAI keeps them only when it closes itself.</string>
+    <string name="saipen_ended_battery_help">What helps: in Android\'s settings for SAI Pen, Battery: Unrestricted, and keep SAI Pen off the Sleeping apps lists. Close other apps before drawing. Save often.</string>
+    <string name="saipen_ended_open_app_settings">SAI Pen\'s settings</string>
+
+    <!-- Report a problem (BugReport) -->
+    <string name="saipen_report">Report a problem</string>
+    <string name="saipen_report_intro">Paste this with your report (on Reddit or GitHub): the device, SAI Pen\'s and SAI\'s settings and how fast SAI drew. No licence, System ID or file names are in it, and nothing is sent: it is only copied.</string>
+    <string name="saipen_report_copy">Copy</string>
+    <string name="saipen_report_copied">Copied. Paste it into your report.</string>
 </resources>

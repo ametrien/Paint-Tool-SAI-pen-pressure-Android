@@ -90,4 +90,9 @@
     <string name="saipen_ready_past_help">Settings below may help: Screen drawing, Screen sharpness, Fast processor cores.</string>
     <string name="saipen_power_saver_on">Battery saver came on: SAI may draw slower. You can turn it off in the quick settings.</string>
     <string name="saipen_power_hot">The device is hot: SAI may draw slower. A break or taking off the case helps.</string>
+    <string name="saipen_ready_background_name">In the background</string>
+    <string name="saipen_ready_background_ok">Unrestricted</string>
+    <string name="saipen_ready_background_restricted">Restricted</string>
+    <string name="saipen_ready_background_help">Android may close SAI when you switch apps, and what you hadn\'t saved is lost. In SAI Pen\'s settings choose Battery: Unrestricted.</string>
+    <string name="saipen_ready_background_open">Open SAI Pen\'s settings ›</string>
 </resources>

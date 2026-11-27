@@ -10,7 +10,8 @@ import java.util.Map;
  * and, folded under it, every check with its number and what helps.
  *
  * The checks: free memory, battery saver (Android slows the processor down
- * on purpose), heat (the processor slows itself down), free storage, the
+ * on purpose), battery optimization (Android may end SAI when you switch
+ * apps, and SAI's unsaved work and settings go with it: issue #3), heat (the processor slows itself down), free storage, the
  * screen sharpness, and how fast SAI drew in the last sessions here.
  *
  * The sharpness advice comes only from this device's own speed logs
@@ -26,7 +27,7 @@ import java.util.Map;
  * PowerManager, StatFs, the speed logs) and the JVM tests check the rules.
  */
 public final class DeviceReadiness {
-    public enum Kind { MEMORY, BATTERY, TEMPERATURE, STORAGE, SHARPNESS, PAST }
+    public enum Kind { MEMORY, BATTERY, BACKGROUND, TEMPERATURE, STORAGE, SHARPNESS, PAST }
 
     /** OK: green; BETTER: could be better, yellow; LAG: will lag, red; UNKNOWN: gray. */
     public enum Level { OK, BETTER, LAG, UNKNOWN }
@@ -50,6 +51,8 @@ public final class DeviceReadiness {
     public static final class Input {
         public long availMb = -1, totalMb = -1, freeDiskMb = -1;
         public boolean lowMemory, powerSave;
+        /** SAI Pen is under battery optimization (not Battery: Unrestricted) */
+        public boolean backgroundRestricted;
         public int thermal = -1;
         /** SAI's screen sharpness (its height in pixels) */
         public int sharpness;
@@ -93,6 +96,7 @@ public final class DeviceReadiness {
             : in.availMb < LOW_MEMORY_MB ? Level.BETTER : Level.OK;
         out.add(new Check(Kind.MEMORY, memory));
         out.add(new Check(Kind.BATTERY, in.powerSave ? Level.BETTER : Level.OK));
+        out.add(new Check(Kind.BACKGROUND, in.backgroundRestricted ? Level.BETTER : Level.OK));
         Level heat = in.thermal < 0 ? Level.UNKNOWN
             : in.thermal >= THERMAL_SEVERE ? Level.LAG
             : in.thermal >= THERMAL_MODERATE ? Level.BETTER : Level.OK;

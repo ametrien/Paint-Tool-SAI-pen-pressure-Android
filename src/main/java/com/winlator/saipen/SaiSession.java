@@ -81,6 +81,10 @@ public final class SaiSession {
             }
         });
 
+        /* SAI is open: if nothing removes this, SAI did not close by itself (SaiEnded) */
+        SaiEnded.started(activity.getFilesDir(), SaiEndedNotice.versionCode(activity), System.currentTimeMillis());
+        final boolean[] onScreen = {true};
+
         final TimelapseRecorder timelapse = TimelapseRecorder.start(SaiPenSetup.containerRoot);
 
         final File drawingsDir = SaiPenSetup.drawingsFolder();
@@ -128,8 +132,13 @@ public final class SaiSession {
                 }
                 @Override public void onActivityResumed(Activity a) {}
                 @Override public void onActivityCreated(Activity a, android.os.Bundle b) {}
-                @Override public void onActivityStarted(Activity a) {}
-                @Override public void onActivityStopped(Activity a) {}
+                /* started to stopped: on the screen, even behind a dialog or in split screen */
+                @Override public void onActivityStarted(Activity a) {
+                    if (a == activity) onScreen[0] = true;
+                }
+                @Override public void onActivityStopped(Activity a) {
+                    if (a == activity) onScreen[0] = false;
+                }
                 @Override public void onActivitySaveInstanceState(Activity a, android.os.Bundle b) {}
                 @Override public void onActivityDestroyed(Activity a) {}
             };
@@ -153,6 +162,11 @@ public final class SaiSession {
                 try { observer.stopWatching(); } catch (Throwable ignored) {}
             }
             activity.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);
+            if (!onScreen[0]) {
+                /* nobody closes SAI with its cross from another app: Android ended it */
+                Log.i(TAG, "SAI went away while SAI Pen was in the background");
+                SaiEnded.goneInBackground(activity.getFilesDir());
+            }
             Log.i(TAG, "SAI closed: back to SAI Pen's screen");
             SpeedSession.finish();
             if (timelapse != null) timelapse.finish();

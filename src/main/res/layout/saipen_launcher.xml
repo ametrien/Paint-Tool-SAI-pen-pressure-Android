@@ -1081,6 +1081,16 @@
             android:padding="8dp"
             android:text="@string/saipen_cheat_link" />
 
+        <!-- what to send with a bug report (BugReport) -->
+        <TextView
+            android:id="@+id/SaiPenReport"
+            style="@style/SaiPenNote"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/saipen_row"
+            android:padding="8dp"
+            android:text="@string/saipen_report" />
+
         <!-- ===== the small print ===== -->
         <LinearLayout
             android:layout_width="wrap_content"

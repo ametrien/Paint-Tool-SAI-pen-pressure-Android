@@ -39,9 +39,18 @@ public class DeviceReadinessTest {
     @Test
     public void aReadyDeviceIsAllGreen() {
         List<Check> c = DeviceReadiness.checks(fine());
-        assertEquals("[MEMORY OK, BATTERY OK, TEMPERATURE OK, STORAGE OK, SHARPNESS OK, PAST OK]", c.toString());
+        assertEquals("[MEMORY OK, BATTERY OK, BACKGROUND OK, TEMPERATURE OK, STORAGE OK, SHARPNESS OK, PAST OK]", c.toString());
         assertEquals(Level.OK, DeviceReadiness.overall(c));
         assertEquals(0, DeviceReadiness.toImprove(c));
+    }
+
+    @Test
+    public void background() {
+        DeviceReadiness.Input in = fine();
+        assertEquals(Level.OK, level(in, Kind.BACKGROUND));
+        in.backgroundRestricted = true;
+        assertEquals("Android may end SAI when you switch apps", Level.BETTER, level(in, Kind.BACKGROUND));
+        assertEquals(1, DeviceReadiness.toImprove(DeviceReadiness.checks(in)));
     }
 
     @Test

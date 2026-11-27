@@ -179,7 +179,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
         boolean afterSession = intent.hasExtra("container_id");
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         autoLaunch = savedInstanceState == null && prefs.getBoolean(PREF_AUTOSTART, FirstRun.AUTOSTART)
-            && SaiLocator.shouldAutoLaunch(true, afterSession, false, true);
+            && SaiLocator.shouldAutoLaunch(true, afterSession, false, true)
+            /* SAI did not close by itself last time: say so first (SaiEnded) */
+            && !SaiEndedNotice.pending(this);
 
         setContentView(R.layout.saipen_launcher);
         tvStatus = findViewById(R.id.SaiPenStatus);
@@ -269,6 +271,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
             .setTitle(R.string.saipen_gestures).setMessage(R.string.saipen_gestures_text)
             .setPositiveButton(android.R.string.ok, null).show());
         findViewById(R.id.SaiPenCheatSheet).setOnClickListener(v -> CheatSheetDialog.show(this, prefs));
+        findViewById(R.id.SaiPenReport).setOnClickListener(v -> showBugReport());
         findViewById(R.id.SaiPenSettings).setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
 
         TextView tvVersion = findViewById(R.id.SaiPenVersion);
@@ -296,6 +299,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         if (savedInstanceState == null && !autoLaunch
                 && !prefs.getBoolean(CheatSheet.PREF_CHEAT_SHEET_SEEN, FirstRun.CHEAT_SHEET_SEEN))
             CheatSheetDialog.show(this, prefs);
+        if (savedInstanceState == null) SaiEndedNotice.showIfPending(this, prefs, DIALOG_THEME, this::showBugReport);
 
         startup();
     }
@@ -369,6 +373,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         }
         android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
         in.powerSave = pm != null && pm.isPowerSaveMode();
+        in.backgroundRestricted = !backgroundUnrestricted();
         in.thermal = pm != null && android.os.Build.VERSION.SDK_INT >= 29 ? pm.getCurrentThermalStatus() : -1;
         try {
             in.freeDiskMb = new android.os.StatFs(Environment.getExternalStorageDirectory().getPath()).getAvailableBytes() >> 20;
@@ -455,6 +460,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 value = getString(in.powerSave ? R.string.saipen_ready_battery_saver : R.string.saipen_ready_battery_ok);
                 help = getString(R.string.saipen_ready_battery_help);
                 break;
+            case BACKGROUND:
+                name = getString(R.string.saipen_ready_background_name);
+                value = getString(in.backgroundRestricted ? R.string.saipen_ready_background_restricted
+                    : R.string.saipen_ready_background_ok);
+                help = getString(R.string.saipen_ready_background_help);
+                break;
             case TEMPERATURE:
                 name = getString(R.string.saipen_ready_heat_name);
                 value = getString(c.level == DeviceReadiness.Level.UNKNOWN ? R.string.saipen_ready_unknown
@@ -513,6 +524,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 helpView.setText(help + " " + getString(R.string.saipen_ready_battery_open));
                 helpView.setOnClickListener(v -> openBatterySaverSettings());
             }
+            else if (c.kind == DeviceReadiness.Kind.BACKGROUND) {
+                helpView.setText(help + " " + getString(R.string.saipen_ready_background_open));
+                helpView.setOnClickListener(v -> SaiEndedNotice.openAppSettings(this));
+            }
             else helpView.setText(help);
             helpView.setTextSize(12);
             helpView.setTextColor(levelColor(c.level));
@@ -535,6 +550,167 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
     private static String gb(long mb, java.util.Locale loc) {
         return String.format(loc, "%.1f", mb / 1024f);
+    }
+
+    /* ---- Report a problem (BugReport) ---- */
+
+    /** Everything that helps with a bug report, as text (BugReport says
+     *  what never goes in). */
+    private String bugReportText() {
+        String versionName = "?";
+        try {
+            versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        }
+        catch (Exception ignored) {}
+        BugReport r = new BugReport(versionName, SaiEndedNotice.versionCode(this));
+        java.util.Locale root = java.util.Locale.ROOT;
+
+        /* the device */
+        r.add("Device", android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL);
+        r.add("Android", android.os.Build.VERSION.RELEASE + " (API " + android.os.Build.VERSION.SDK_INT + ")");
+        String soc = android.os.Build.VERSION.SDK_INT >= 31
+            ? android.os.Build.SOC_MANUFACTURER + " " + android.os.Build.SOC_MODEL : android.os.Build.HARDWARE;
+        r.add("Processor", soc);
+        FastCores fc = cpuCores();
+        int n = fc.cores.length;
+        if (n > 0) {
+            int[] values = new int[n];
+            boolean pct = fc.fromCapacity;
+            for (int i = 0; i < n; i++) values[i] = pct ? fc.strengthPercent(i) : (int) (fc.speed[i] / 1000);
+            r.add("Cores", BugReport.cores(values, fc.fast.length, pct ? "%" : " MHz"));
+        }
+        else r.add("Cores", String.valueOf(Runtime.getRuntime().availableProcessors()));
+        android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+        r.add("Display", Math.max(dm.widthPixels, dm.heightPixels) + "x" + Math.min(dm.widthPixels, dm.heightPixels)
+            + ", " + Math.round(getWindowManager().getDefaultDisplay().getRefreshRate()) + " Hz, " + dm.densityDpi + " dpi");
+
+        /* the device right now */
+        r.heading("Right now");
+        android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        if (am != null) {
+            android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            r.item("Memory", BugReport.gb(mi.availMem >> 20) + " of " + BugReport.gb(mi.totalMem >> 20) + " GB free"
+                + (mi.lowMemory ? ", Android says low" : ""));
+        }
+        try {
+            r.item("Storage", BugReport.gb(new android.os.StatFs(Environment.getExternalStorageDirectory().getPath())
+                .getAvailableBytes() >> 20) + " GB free");
+        }
+        catch (RuntimeException ignored) {}
+        android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+        android.os.BatteryManager bm = (android.os.BatteryManager) getSystemService(BATTERY_SERVICE);
+        String battery = bm != null ? bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY) + "%" : "?";
+        if (bm != null && bm.isCharging()) battery += ", charging";
+        if (pm != null) battery += ", battery saver " + BugReport.onOff(pm.isPowerSaveMode());
+        r.item("Battery", battery);
+        r.item("Runs in the background", backgroundUnrestricted() ? "unrestricted" : "restricted by battery optimization");
+        if (pm != null && android.os.Build.VERSION.SDK_INT >= 29) r.item("Temperature", BugReport.thermal(pm.getCurrentThermalStatus()));
+
+        /* SAI */
+        r.heading("SAI");
+        if (saiDir != null) {
+            String build = BugReport.saiBuild(saiDir.getName());
+            r.item("Build", build != null ? build : "not in the folder's name (SAI's title bar shows it)");
+            r.item("Bits", String.valueOf(SaiLocator.exeBits(new File(saiDir, "sai2.exe"))));
+        }
+        else r.item("Found", "no");
+        if (container != null) r.item("Licence added", SaiLocator.installedLicences(saiV2Dir()).isEmpty() ? "no" : "yes");
+        r.item("Settings from a PC or brush packs", BrushImport.hasSaiSettings(SaiPenSetup.settingsFolder()) ? "yes" : "no");
+
+        /* SAI Pen's own settings */
+        r.heading("SAI Pen's settings");
+        int h = screenHeight();
+        r.item("Screen sharpness", h + (h == SaiLocator.defaultScreenHeight(shortSide()) ? " (default)" : ""));
+        r.item("Screen drawing", FrontBuffer.readMode(getFilesDir()).name().toLowerCase(root).replace('_', ' '));
+        r.item("Fast processor cores", SaiCores.readMode(getFilesDir()).name().toLowerCase(root));
+        int stored = prefs.getInt(SaiProcessors.PREF, SaiProcessors.AUTO), seen = saiProcessors();
+        r.item("Processors SAI sees", (seen == SaiProcessors.ALL ? "all" : String.valueOf(seen))
+            + (stored == SaiProcessors.AUTO ? " (recommended)" : " (chosen)"));
+        r.item("Pen pressure softness", String.valueOf(prefs.getInt(PenPressure.PREF_SOFTNESS, FirstRun.PEN_SOFTNESS)));
+        r.item("Palm rejection", "Android's palm " + BugReport.onOff(prefs.getBoolean(PalmFilter.PREF_PALM_ANDROID, FirstRun.PALM_ANDROID))
+            + ", pen near " + BugReport.onOff(prefs.getBoolean(PalmFilter.PREF_PALM_PEN_NEAR, FirstRun.PALM_PEN_NEAR))
+            + ", large touches " + BugReport.onOff(prefs.getBoolean(PalmFilter.PREF_PALM_BIG, FirstRun.PALM_BIG)));
+        r.item("SAI's language", SaiLanguage.target(prefs.getString(SaiLanguage.PREF_CHOICE, null), SaiPenSetup.deviceLanguage())
+            + (prefs.getString(SaiLanguage.PREF_CHOICE, null) == null ? " (as the device)" : " (chosen)"));
+        r.item("Font for Japanese text", prefs.getString(FontLink.PREF_FONT, FontLink.DEFAULT_FONT));
+        r.item("Timelapse", BugReport.onOff(prefs.getBoolean(PREF_TIMELAPSE, FirstRun.TIMELAPSE)));
+        r.item("Speed log", BugReport.onOff(prefs.getBoolean(SpeedSession.PREF_SPEED_LOG, FirstRun.SPEED_LOG)));
+        r.item("On-screen keys", BugReport.onOff(prefs.getBoolean(FloatingKeys.PREF_ON, FloatingKeys.ON_BY_DEFAULT)));
+        r.item("Gestures changed", String.valueOf(Gestures.changed(Gestures.actions(prefs.getAll()))));
+        r.item("Start SAI right away", BugReport.onOff(prefs.getBoolean(PREF_AUTOSTART, FirstRun.AUTOSTART)));
+
+        /* Winlator's settings and Box64: changed there, they change how SAI runs */
+        r.heading("Winlator settings");
+        r.item("Background protection", BugReport.onOff(prefs.getBoolean("enable_background_protection", true)));
+        r.item("Wakelock when locked", BugReport.onOff(prefs.getBoolean("enable_background_wakelock", false)));
+        r.item("Move cursor to touchpoint", BugReport.onOff(prefs.getBoolean("move_cursor_to_touchpoint", true)));
+        r.item("Capture pointer on external mouse", BugReport.onOff(prefs.getBoolean("capture_pointer_on_external_mouse", true)));
+        r.item("Cursor speed", String.format(root, "%.2f", prefs.getFloat("cursor_speed", 1.0f)));
+        r.item("Cursor size", String.format(root, "%.2f", prefs.getFloat("cursor_scale", 1.0f)));
+        String box64Preset = prefs.getString("box64_preset", com.winlator.box64.Box64Preset.DEFAULT);
+        r.item("Box64 preset", box64Preset);
+        r.item("Box64 version", prefs.getString("box64_version", null));
+        if (container != null) {
+            String cp = container.getBox64Preset();
+            if (cp != null && !cp.equals(box64Preset)) r.item("Box64 preset of SAI's container", cp);
+            try {
+                r.item("Box64 variables", com.winlator.box64.Box64PresetManager.getEnvVars(this,
+                    cp != null ? cp : box64Preset).toString());
+            }
+            catch (RuntimeException ignored) {}
+            r.item("Wine", container.getWineVersion());
+            r.item("Graphics driver", container.getGraphicsDriver());
+            r.item("DX wrapper", container.getDXWrapper());
+            r.item("Environment variables", container.getEnvVars());
+        }
+
+        /* how fast SAI drew here */
+        r.heading("Speed (this device's speed logs)");
+        SpeedHistory history = SpeedHistory.fromFolder(new File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), SpeedSession.FOLDER));
+        r.item("Last sessions", history.recentMs >= 0 ? history.recentMs + " ms from pen to screen (median)" : "not enough strokes yet");
+        for (java.util.Map.Entry<Integer, CoresCompare.Result> e : history.bySharpness.entrySet()) {
+            int ms = e.getValue().median();
+            r.item("At sharpness " + e.getKey(), (ms >= 0 ? ms + " ms" : "too few strokes")
+                + ", " + e.getValue().sessions + " session(s), " + e.getValue().strokes() + " strokes");
+        }
+
+        r.heading("Last time SAI did not close by itself");
+        r.item("What", prefs.getString(SaiEndedNotice.PREF_LAST, "never noticed"));
+        return r.text();
+    }
+
+    /** Is SAI Pen off battery optimization (Settings > Apps > SAI Pen > Battery: Unrestricted)? */
+    private boolean backgroundUnrestricted() {
+        android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+        return pm == null || pm.isIgnoringBatteryOptimizations(getPackageName());
+    }
+
+    /** The report, to read before copying it: nothing is sent anywhere. */
+    private void showBugReport() {
+        String text = bugReportText();
+        float dp = getResources().getDisplayMetrics().density;
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextIsSelectable(true);
+        view.setTypeface(android.graphics.Typeface.MONOSPACE);
+        view.setTextSize(12);
+        view.setPadding((int) (20 * dp), (int) (8 * dp), (int) (20 * dp), (int) (8 * dp));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(view);
+        new AlertDialog.Builder(this, DIALOG_THEME)
+            .setTitle(R.string.saipen_report)
+            .setMessage(R.string.saipen_report_intro)
+            .setView(scroll)
+            .setPositiveButton(R.string.saipen_report_copy, (d, w) -> {
+                android.content.ClipboardManager cb = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (cb != null) cb.setPrimaryClip(android.content.ClipData.newPlainText("SAI Pen", text));
+                android.widget.Toast.makeText(this, R.string.saipen_report_copied, android.widget.Toast.LENGTH_LONG).show();
+            })
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
     }
 
     /* ---- how much you draw (DrawingStats) ---- */
