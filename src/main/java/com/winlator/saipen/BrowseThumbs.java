@@ -103,7 +103,7 @@ final class BrowseThumbs {
 
     int shape() { return shape; }
 
-    /** Another sample shape for tools: kept, and the tools' cells made
+    /** Another sample shape for tools and pictures: kept, and the cells made
      *  again in it as they are shown (the old ones go at the next run). */
     void shape(int s) {
         s = PressureStroke.shape(s);
@@ -182,17 +182,18 @@ final class BrowseThumbs {
     }
 
     Job picture(int kind, File f) {
-        String key = "pic|" + kind + "|" + f.getPath() + "|" + f.length() + "|" + f.lastModified() + "|" + cell;
-        return new Job(key, () -> sample(kind, f, cell, cell));
+        int sh = shape;
+        String key = "pic2|" + sh + "|" + kind + "|" + f.getPath() + "|" + f.length() + "|" + f.lastModified() + "|" + cell;
+        return new Job(key, () -> sample(kind, f, sh, cell, cell));
     }
 
     /** The sample for a picture of one kind, at any size (the detail page's is bigger). */
-    static Bitmap sample(int kind, File f, int w, int h) {
+    static Bitmap sample(int kind, File f, int shape, int w, int h) {
         switch (kind) {
-            case SettingsContents.BRUSH_TEXTURES: return SamplePreview.brushTexture(f, w, h);
-            case SettingsContents.PAPER_TEXTURES: return SamplePreview.paperTexture(f, w, h);
+            case SettingsContents.BRUSH_TEXTURES: return SamplePreview.brushTexture(f, shape, w, h);
+            case SettingsContents.PAPER_TEXTURES: return SamplePreview.paperTexture(f, shape, w, h);
             default: return SamplePreview.stamps(f, SaiSettingsFiles.ini(SaiSettingsFiles.iniOf(f)),
-                                                 kind == SettingsContents.SCATTER, w, h);
+                                                 kind == SettingsContents.SCATTER, shape, w, h);
         }
     }
 

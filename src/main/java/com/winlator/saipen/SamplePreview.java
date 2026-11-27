@@ -36,10 +36,21 @@ final class SamplePreview {
     static final int PAPER = 0xFFF4F2EC, INK = 0xFF26272A;
 
     private static Path curve(int w, int h) {
+        return curve(PressureStroke.S_CURVE, w, h, h * 0.38);
+    }
+
+    /** The person's sample shape (Line, S-curve, Heart) as a path, as the tools draw it. */
+    private static Path curve(int shape, int w, int h, double width) {
+        double[] c = PressureStroke.curve(shape, w, h, width);
         Path p = new Path();
-        p.moveTo(w * 0.12f, h * 0.70f);
-        p.cubicTo(w * 0.34f, h * 0.06f, w * 0.62f, h * 0.98f, w * 0.88f, h * 0.30f);
+        p.moveTo((float) c[0], (float) c[1]);
+        for (int i = 2; i < c.length; i += 2) p.lineTo((float) c[i], (float) c[i + 1]);
         return p;
+    }
+
+    /** A picture's stroke width in the sample: the heart goes round on itself, so narrower. */
+    private static float strokeWidth(int shape, int h, float wide) {
+        return shape == PressureStroke.HEART ? h * 0.15f : wide;
     }
 
     private static Bitmap paper(int w, int h) {
@@ -74,15 +85,18 @@ final class SamplePreview {
     }
 
     /** A brush texture: a wide stroke painted through it. */
-    static Bitmap brushTexture(File tex, int w, int h) {
+    static Bitmap brushTexture(File tex, int w, int h) { return brushTexture(tex, PressureStroke.S_CURVE, w, h); }
+
+    static Bitmap brushTexture(File tex, int shape, int w, int h) {
         Bitmap out = paper(w, h);
         Bitmap layer = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setStyle(Paint.Style.STROKE);
         p.setStrokeCap(Paint.Cap.ROUND);
-        p.setStrokeWidth(h * 0.38f);
+        p.setStrokeWidth(strokeWidth(shape, h, h * 0.38f));
+        p.setStrokeJoin(Paint.Join.ROUND);
         p.setColor(INK);
-        new Canvas(layer).drawPath(curve(w, h), p);
+        new Canvas(layer).drawPath(curve(shape, w, h, strokeWidth(shape, h, h * 0.38f)), p);
         mask(layer, tex, 1f);
         new Canvas(out).drawBitmap(layer, 0, 0, null);
         layer.recycle();
@@ -90,25 +104,48 @@ final class SamplePreview {
     }
 
     /** A paper texture: the paper itself, its grain tiled over the whole sample. */
-    static Bitmap paperTexture(File tex, int w, int h) {
+    static Bitmap paperTexture(File tex, int w, int h) { return paperTexture(tex, PressureStroke.S_CURVE, w, h); }
+
+    /** A paper texture: its grain faint over the paper, and the sample
+     *  stroke painted on a layer with it, where the grain shows most. */
+    static Bitmap paperTexture(File tex, int shape, int w, int h) {
         Bitmap out = paper(w, h);
         Bitmap m = inkMask(decode(tex, 256), 1f);
         if (m == null) return out;
         Paint p = new Paint();
         p.setShader(new BitmapShader(m, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
-        p.setColorFilter(new PorterDuffColorFilter(Color.argb(150, 0x55, 0x50, 0x48), PorterDuff.Mode.SRC_IN));
+        p.setColorFilter(new PorterDuffColorFilter(Color.argb(70, 0x55, 0x50, 0x48), PorterDuff.Mode.SRC_IN));
         new Canvas(out).drawRect(0, 0, w, h, p);
+        Bitmap layer = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Paint s = new Paint(Paint.ANTI_ALIAS_FLAG);
+        s.setStyle(Paint.Style.STROKE);
+        s.setStrokeCap(Paint.Cap.ROUND);
+        s.setStrokeJoin(Paint.Join.ROUND);
+        float width = strokeWidth(shape, h, h * 0.38f);
+        s.setStrokeWidth(width);
+        s.setColor(0xFF3F6496);
+        new Canvas(layer).drawPath(curve(shape, w, h, width), s);
+        Paint grain = new Paint();
+        grain.setShader(new BitmapShader(m, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
+        grain.setXfermode(new android.graphics.PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        new Canvas(layer).drawRect(0, 0, w, h, grain);
+        new Canvas(out).drawBitmap(layer, 0, 0, null);
+        layer.recycle();
         m.recycle();
         return out;
     }
 
     /** A brush or scatter shape, stamped along the curve with its starting values. */
     static Bitmap stamps(File shape, Map<String, String> ini, boolean scatter, int w, int h) {
+        return stamps(shape, ini, scatter, PressureStroke.S_CURVE, w, h);
+    }
+
+    static Bitmap stamps(File shape, Map<String, String> ini, boolean scatter, int stroke, int w, int h) {
         Bitmap out = paper(w, h);
         Bitmap m = inkMask(decode(shape, 160), 1f);
         if (m == null) return out;
         float scaling = num(ini, "Scaling", 100) / 100f;
-        float size = h * (scatter ? 0.26f : 0.34f) * scaling;
+        float size = h * (scatter ? 0.26f : 0.34f) * scaling * (stroke == PressureStroke.HEART ? 0.5f : 1f);
         float spacing = Math.max(1.5f, size * num(ini, "Spacing", scatter ? 25 : 10) / 100f);
         float scatterBy = num(ini, "Scattering", 0) / 100f;
         float sizeJitter = num(ini, "SizeJitter", 0) / 100f;
@@ -119,7 +156,7 @@ final class SamplePreview {
         p.setColorFilter(new PorterDuffColorFilter(INK, PorterDuff.Mode.SRC_IN));
         p.setAlpha(alpha);
         Canvas c = new Canvas(out);
-        PathMeasure pm = new PathMeasure(curve(w, h), false);
+        PathMeasure pm = new PathMeasure(curve(stroke, w, h, size), false);
         float[] pos = new float[2], tan = new float[2];
         Random r = new Random(7);
         Matrix mx = new Matrix();
