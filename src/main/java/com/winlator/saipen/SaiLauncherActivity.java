@@ -585,10 +585,15 @@ public class SaiLauncherActivity extends AppCompatActivity {
     }
 
     private void exportStatsCsv(String csv) {
+        exportStatsCsv(csv, "Drawing statistics.csv");
+    }
+
+    /** Also one drawing's statistics, from its Statistics window (DrawingsDialog). */
+    void exportStatsCsv(String csv, String fileName) {
         statsCsv = csv;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.setType("text/csv");
-        intent.putExtra(Intent.EXTRA_TITLE, "Drawing statistics.csv");
+        intent.putExtra(Intent.EXTRA_TITLE, fileName);
         startActivityForResult(intent, REQUEST_STATS_EXPORT);
     }
 

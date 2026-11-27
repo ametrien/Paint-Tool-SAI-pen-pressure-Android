@@ -114,6 +114,61 @@ public final class DrawingDays {
         return out;
     }
 
+    /**
+     * One drawing's days as a spreadsheet, for Export CSV in its Statistics
+     * window. Like DrawingStats.csv, one row a day with the same clock and
+     * hour columns, but only what the sittings know: no pen-only time. The
+     * drawing's name is the first column, so several exports can be pasted
+     * into one sheet. Time counted before days were kept is a last row of its
+     * own, with no date.
+     */
+    public static String csv(String drawing, Map<String, DrawingStats.Day> days, double earlierSeconds) {
+        String name = quote(drawing == null ? "" : drawing);
+        StringBuilder out = new StringBuilder("Drawing,Date,Weekday,Strokes,Drawing minutes,Sittings,"
+            + "Longest sitting minutes,First stroke,Last stroke");
+        for (int h = 0; h < 24; h++) out.append(",Minutes ").append(String.format(java.util.Locale.US, "%02d", h)).append(":00");
+        out.append('\n');
+        for (Map.Entry<String, DrawingStats.Day> e : new TreeMap<>(days).entrySet()) {
+            DrawingStats.Day d = e.getValue();
+            if (d.strokes <= 0) continue;
+            LocalDate date;
+            try {
+                date = LocalDate.parse(e.getKey());
+            }
+            catch (RuntimeException bad) {
+                continue;
+            }
+            out.append(name).append(',').append(e.getKey()).append(',')
+               .append(date.getDayOfWeek().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.US)).append(',')
+               .append(d.strokes).append(',').append(DrawingStats.number(d.activeSeconds / 60)).append(',')
+               .append(d.sessions).append(',').append(DrawingStats.number(d.longestSession / 60)).append(',')
+               .append(DrawingStats.clock(d.firstAt)).append(',').append(DrawingStats.clock(d.lastAt));
+            for (int h = 0; h < 24; h++) out.append(',').append(d.hourly == null ? "" : DrawingStats.number(d.hourly[h] / 60));
+            out.append('\n');
+        }
+        if (earlierSeconds >= 60) {
+            out.append(name).append(",,Before days were kept,,").append(DrawingStats.number(earlierSeconds / 60)).append(",,,,");
+            for (int h = 0; h < 24; h++) out.append(',');
+            out.append('\n');
+        }
+        return out.toString();
+    }
+
+    /** The file name the export suggests: "portrait.sai2" -> "portrait statistics.csv". */
+    public static String csvName(String drawing) {
+        String t = drawing == null ? "" : drawing.trim();
+        int dot = t.lastIndexOf('.');
+        if (dot > 0) t = t.substring(0, dot);
+        t = t.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        return (t.isEmpty() ? "Drawing" : t) + " statistics.csv";
+    }
+
+    /** A CSV field: quoted when it holds a comma, a quote or a line break. */
+    static String quote(String s) {
+        if (s.indexOf(',') < 0 && s.indexOf('"') < 0 && s.indexOf('\n') < 0 && s.indexOf('\r') < 0) return s;
+        return '"' + s.replace("\"", "\"\"") + '"';
+    }
+
     /** The key of a drawing: its path under SAI Drawings, "/" between folders. */
     public static String key(String folder, String name) {
         return folder == null || folder.isEmpty() ? name : folder + "/" + name;

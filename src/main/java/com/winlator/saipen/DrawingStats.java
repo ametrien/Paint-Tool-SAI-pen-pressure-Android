@@ -346,11 +346,11 @@ public final class DrawingStats {
         return out.toString();
     }
 
-    private static String number(double x) {
+    static String number(double x) {
         return String.format(Locale.US, "%.1f", x);
     }
 
-    private static String clock(double seconds) {
+    static String clock(double seconds) {
         if (seconds < 0) return "";
         int s = (int) Math.round(seconds);
         return String.format(Locale.US, "%02d:%02d", (s / 3600) % 24, (s / 60) % 60);

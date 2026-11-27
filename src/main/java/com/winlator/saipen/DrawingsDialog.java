@@ -963,7 +963,8 @@ final class DrawingsDialog {
             CanvasTime.Canvas c = spent;
             double earlier = sum == null ? 0 : sum.earlierSeconds;
             byDay.setOnClickListener(v -> StatisticsDialog.showDrawing(activity, e.title,
-                DrawingDays.days(c, java.time.ZoneId.systemDefault()), earlier));
+                DrawingDays.days(c, java.time.ZoneId.systemDefault()), earlier,
+                csv -> activity.exportStatsCsv(csv, DrawingDays.csvName(e.title))));
             info.addView(byDay, lp(-1, -2, 0, 0, 0, 12));
         }
 

@@ -68,9 +68,11 @@ final class StatisticsDialog {
         new StatisticsDialog(activity, days, exporter, null, 0).open();
     }
 
-    /** One drawing's statistics: the same window over its days only. */
-    static void showDrawing(Activity activity, String name, Map<String, DrawingStats.Day> days, double earlierSeconds) {
-        StatisticsDialog d = new StatisticsDialog(activity, days, null, name, earlierSeconds);
+    /** One drawing's statistics: the same window over its days only;
+     *  `exporter` (may be null) gets its CSV (DrawingDays.csv). */
+    static void showDrawing(Activity activity, String name, Map<String, DrawingStats.Day> days, double earlierSeconds,
+                            Exporter exporter) {
+        StatisticsDialog d = new StatisticsDialog(activity, days, exporter, name, earlierSeconds);
         /* a drawing's days are few: all of them, not the last month */
         d.period = Period.ALL;
         d.open();
@@ -158,7 +160,8 @@ final class StatisticsDialog {
         root.addView(note);
         if (exporter != null) {
             TextView export = pill("Export CSV…", true);
-            export.setOnClickListener(v -> exporter.export(DrawingStats.csv(days)));
+            export.setOnClickListener(v -> exporter.export(drawing == null ? DrawingStats.csv(days)
+                                                                           : DrawingDays.csv(drawing, days, earlierSeconds)));
             root.addView(export, lp(-2, -2, 0, 16, 0, 0));
         }
 

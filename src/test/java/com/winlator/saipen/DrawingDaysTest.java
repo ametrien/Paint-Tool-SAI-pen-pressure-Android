@@ -105,4 +105,53 @@ public class DrawingDaysTest {
         assertEquals("comics/b.sai2", DrawingDays.key("comics", "b.sai2"));
         assertEquals("b.sai2", DrawingDays.key("", "b.sai2"));
     }
+
+    @Test
+    public void oneDrawingsDaysAsCsv() {
+        CanvasTime.Canvas c = new CanvasTime.Canvas();
+        c.sessions.add(sitting(at(25, 10, 0), at(25, 11, 0), 100, 3000));
+        c.sessions.add(sitting(at(25, 20, 0), at(25, 20, 30), 40, 1200));
+        c.sessions.add(sitting(at(26, 9, 0), at(26, 9, 10), 10, 600));
+        String csv = DrawingDays.csv("ttt.sai2", DrawingDays.days(c, ZONE), 0);
+        String[] lines = csv.split("\n");
+        assertEquals("a header and one row a day", 3, lines.length);
+        String[] head = lines[0].split(",", -1);
+        assertEquals("Drawing", head[0]);
+        assertEquals("Minutes 23:00", head[head.length - 1]);
+        assertEquals(33, head.length);
+        String[] day = lines[1].split(",", -1);
+        assertEquals(33, day.length);
+        assertEquals("ttt.sai2", day[0]);
+        assertEquals("2026-11-25", day[1]);
+        assertEquals("Wednesday", day[2]);
+        assertEquals("140", day[3]);
+        assertEquals("70.0", day[4]);          /* minutes */
+        assertEquals("2", day[5]);             /* sittings */
+        assertEquals("50.0", day[6]);          /* the longest sitting */
+        assertEquals("10:00", day[7]);
+        assertEquals("20:30", day[8]);
+        assertEquals("50.0", day[9 + 10]);     /* 10:00 to 11:00 */
+        assertTrue(lines[2].startsWith("ttt.sai2,2026-11-26,Thursday,10,10.0,1,"));
+    }
+
+    @Test
+    public void earlierTimeIsALastRowWithNoDate() {
+        CanvasTime.Canvas c = new CanvasTime.Canvas();
+        c.sessions.add(sitting(at(26, 9, 0), at(26, 9, 10), 10, 600));
+        String csv = DrawingDays.csv("a, \"b\"", DrawingDays.days(c, ZONE), 3600);
+        String[] lines = csv.split("\n");
+        assertEquals(3, lines.length);
+        assertTrue("a name with a comma or quote is quoted", lines[1].startsWith("\"a, \"\"b\"\"\",2026-11-26,"));
+        assertTrue(lines[2].startsWith("\"a, \"\"b\"\"\",,Before days were kept,,60.0,"));
+        assertEquals(33, lines[2].substring(lines[2].indexOf("\",") + 1).split(",", -1).length + 0);
+        assertTrue(DrawingDays.csv("x", DrawingDays.days(c, ZONE), 30).split("\n").length == 2);
+    }
+
+    @Test
+    public void theExportsFileName() {
+        assertEquals("ttt statistics.csv", DrawingDays.csvName("ttt.sai2"));
+        assertEquals("a_b statistics.csv", DrawingDays.csvName("a/b"));
+        assertEquals("Drawing statistics.csv", DrawingDays.csvName(""));
+        assertEquals(".hidden statistics.csv", DrawingDays.csvName(".hidden"));
+    }
 }
