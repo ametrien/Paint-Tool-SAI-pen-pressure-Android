@@ -273,6 +273,11 @@ public final class CanvasTime {
      * running count would write over the move). True if anything changed.
      */
     public synchronized boolean follow(Map<String, long[]> files) {
+        return follow(files, null);
+    }
+
+    /** As above; each move made goes into `moved` (old key to new), if given. */
+    public synchronized boolean follow(Map<String, long[]> files, Map<String, String> moved) {
         boolean changed = false;
         for (String k : new java.util.ArrayList<>(canvases.keySet())) {
             if (k.startsWith(":") || files.containsKey(k)) continue;
@@ -289,6 +294,7 @@ public final class CanvasTime {
             canvases.put(hit, canvases.remove(k));
             marks.remove(k);
             if (k.equals(lastKey)) lastKey = hit;
+            if (moved != null) moved.put(k, hit);
             changed = true;
         }
         for (String k : canvases.keySet()) {
@@ -303,6 +309,29 @@ public final class CanvasTime {
         if (marks.keySet().retainAll(canvases.keySet())) changed = true;
         if (changed) dirty = true;
         return changed;
+    }
+
+    /** "Find its file" in All drawings: the time on `from`, whose file is
+     *  gone, goes to `to` (added to any time `to` has). With SAI closed. */
+    public synchronized boolean move(String from, String to) {
+        if (from.equals(to)) return false;
+        Canvas c = canvases.remove(from);
+        if (c == null) return false;
+        Canvas there = canvases.get(to);
+        if (there == null) canvases.put(to, c);
+        else there.add(c);
+        marks.remove(from);
+        if (from.equals(lastKey)) lastKey = to;
+        dirty = true;
+        return true;
+    }
+
+    /** "Forget it": the time on a drawing whose file is gone. With SAI closed. */
+    public synchronized boolean remove(String key) {
+        boolean had = canvases.remove(key) != null;
+        marks.remove(key);
+        if (had) dirty = true;
+        return had;
     }
 
     /** The time on the drawing at `path` (relative to SAI Drawings), or null. */

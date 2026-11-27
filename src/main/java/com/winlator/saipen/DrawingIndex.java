@@ -179,6 +179,69 @@ public final class DrawingIndex {
         return out;
     }
 
+    /**
+     * Something that belongs to a drawing whose file is not under SAI Drawings
+     * any more (renamed or moved in a way nothing could follow, or deleted):
+     * its time (CanvasTime), its timelapse, or both when their names agree.
+     * All drawings lists them, so the artist can say which file it is now,
+     * or forget it (DrawingLinks).
+     */
+    public static final class Lost {
+        /** Its name as last known: the file's, or the timelapse's. */
+        public final String name;
+        /** Its key in CanvasTime ("comics/page.sai2"), or null when only a timelapse. */
+        public String timeKey;
+        public CanvasTime.Canvas time;
+        /** Its timelapse, or null when only time. */
+        public Drawing video;
+
+        Lost(String name) {
+            this.name = name;
+        }
+    }
+
+    /**
+     * What has lost its file: time on a key no file has now, and timelapses
+     * no file claims (`unclaimed`, the matching's leftovers, those forgotten
+     * by hand already left out). A timelapse goes with the time of the same
+     * name. Newest first, by the last stroke or session.
+     */
+    public static List<Lost> lost(java.util.Set<String> fileKeys, java.util.Map<String, CanvasTime.Canvas> time,
+                                  List<Drawing> unclaimed) {
+        List<Lost> out = new ArrayList<>();
+        java.util.Map<String, Lost> byName = new java.util.HashMap<>();
+        for (java.util.Map.Entry<String, CanvasTime.Canvas> e : time.entrySet()) {
+            String k = e.getKey();
+            CanvasTime.Canvas c = e.getValue();
+            if (k.startsWith(":") || c == null || c.strokes <= 0 || fileKeys.contains(k)) continue;
+            int slash = k.lastIndexOf('/');
+            Lost l = new Lost(slash < 0 ? k : k.substring(slash + 1));
+            l.timeKey = k;
+            l.time = c;
+            out.add(l);
+            byName.putIfAbsent(bare(l.name), l);
+        }
+        for (Drawing d : unclaimed) {
+            if (d.pieces.isEmpty()) continue;
+            Lost l = byName.get(bare(d.title));
+            if (l != null && l.video == null) {
+                l.video = d;
+                continue;
+            }
+            l = new Lost(d.title == null || d.title.isEmpty() ? d.folder : d.title);
+            l.video = d;
+            out.add(l);
+        }
+        out.sort((a, b) -> Long.compare(lastOf(b), lastOf(a)));
+        return out;
+    }
+
+    private static long lastOf(Lost l) {
+        long t = l.time == null ? 0 : l.time.last;
+        if (l.video != null) t = Math.max(t, DrawingLibrary.lastDrawn(l.video));
+        return t;
+    }
+
     static String bare(String title) {
         String t = title == null ? "" : title.trim();
         if (t.toLowerCase(Locale.ROOT).endsWith(".sai2")) t = t.substring(0, t.length() - 5).trim();

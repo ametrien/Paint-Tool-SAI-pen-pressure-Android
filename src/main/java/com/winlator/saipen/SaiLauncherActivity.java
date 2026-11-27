@@ -2018,7 +2018,18 @@ public class SaiLauncherActivity extends AppCompatActivity {
             }
             File file = new File(getFilesDir(), CanvasTime.FILE);
             CanvasTime ct = CanvasTime.load(file);
-            if (ct.follow(now) && !ct.saveIfChanged(file)) Log.w(TAG, "start screen: time per drawing not saved");
+            java.util.Map<String, String> moved = new java.util.HashMap<>();
+            if (ct.follow(now, moved) && !ct.saveIfChanged(file)) Log.w(TAG, "start screen: time per drawing not saved");
+            if (!moved.isEmpty()) {
+                /* what was decided by hand for a drawing goes along with it */
+                File linksFile = new File(getFilesDir(), DrawingLinks.FILE);
+                DrawingLinks links = DrawingLinks.load(linksFile);
+                for (java.util.Map.Entry<String, String> m : moved.entrySet()) {
+                    links.moveFile(m.getKey(), m.getValue());
+                    Log.i(TAG, "start screen: " + m.getKey() + " was renamed to " + m.getValue() + ", its time follows");
+                }
+                links.save(linksFile);
+            }
         }
         catch (RuntimeException e) {
             Log.w(TAG, "start screen: following renamed drawings", e);

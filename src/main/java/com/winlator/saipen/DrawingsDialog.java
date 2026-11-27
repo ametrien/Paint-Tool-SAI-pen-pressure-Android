@@ -124,6 +124,14 @@ final class DrawingsDialog {
     /** Time on each drawing (CanvasTime) by its key (DrawingDays.key), read with the list. */
     private Map<String, CanvasTime.Canvas> spentOf = new HashMap<>();
     private Map<String, DrawingDays.Summary> summaryOf = new HashMap<>();
+    /** What the artist decided by hand (DrawingLinks), read with the list. */
+    private DrawingLinks links = new DrawingLinks();
+    /** Time and timelapses whose drawing file is gone (DrawingIndex.lost). */
+    private List<DrawingIndex.Lost> lost = Collections.emptyList();
+    /** Every timelapse with a video, newest first: for Link a timelapse. */
+    private List<Drawing> videosAll = Collections.emptyList();
+    /** The Without a file page is open. */
+    private boolean lostOpen;
     private String query = "";
     private String folder = null;
     private Sort sort = Sort.NEWEST;
@@ -139,17 +147,29 @@ final class DrawingsDialog {
     /** Each drawing's timelapse: by name, then by look for the ones the
      *  names lost (DrawingIndex.linkByLook). A link found by look renames the
      *  timelapse after the drawing, so it holds from then on. On `io`. */
-    private static Map<File, Drawing> match(List<Entry> found, List<Drawing> videos) {
+    private static Map<File, Drawing> match(List<Entry> found, List<Drawing> videos, DrawingLinks links) {
         Map<File, Drawing> v = new HashMap<>();
         Set<Drawing> claimed = new HashSet<>();
         List<Entry> unclaimed = new java.util.ArrayList<>();
+        /* what the artist linked by hand always wins (DrawingLinks) */
+        Map<String, Drawing> byId = new HashMap<>();
+        for (Drawing d : videos) byId.put(d.id, d);
         for (Entry e : found) {
-            Drawing d = DrawingIndex.timelapseFor(e, videos);
+            String id = links.linkOf(key(e));
+            Drawing d = id == null ? null : byId.get(id);
+            if (d != null) { v.put(e.file, d); claimed.add(d); }
+        }
+        for (Entry e : found) {
+            if (v.containsKey(e.file)) continue;
+            String k = key(e);
+            List<Drawing> may = new ArrayList<>();
+            for (Drawing d : videos) if (links.mayPair(k, d.id)) may.add(d);
+            Drawing d = DrawingIndex.timelapseFor(e, may);
             if (d != null) { v.put(e.file, d); claimed.add(d); }
             else unclaimed.add(e);
         }
         List<Drawing> orphans = new java.util.ArrayList<>();
-        for (Drawing d : videos) if (!claimed.contains(d)) orphans.add(d);
+        for (Drawing d : videos) if (!claimed.contains(d) && !links.isForgotten(d.id)) orphans.add(d);
         if (orphans.isEmpty() || unclaimed.isEmpty()) return v;
         Map<Drawing, Entry> byLook;
         try {
@@ -167,6 +187,7 @@ final class DrawingsDialog {
             DrawingLibrary lib = TimelapseShelf.load();
             for (Map.Entry<Drawing, Entry> m : byLook.entrySet()) {
                 Entry e = m.getValue();
+                if (!links.mayPair(key(e), m.getKey().id)) continue;   /* unlinked by hand */
                 v.put(e.file, m.getKey());
                 Drawing kept = lib.drawing(m.getKey().id);
                 Log.i(TAG, "drawings: timelapse \"" + m.getKey().title + "\" linked by look to " + e.file.getName());
@@ -186,15 +207,48 @@ final class DrawingsDialog {
         try { videos = TimelapseShelf.load().newestFirst(); }
         catch (RuntimeException e) { Log.w(TAG, "drawings: no timelapse list", e); return; }
         List<Entry> f = all;
-        Map<File, Drawing> v = match(f, videos);
+        DrawingLinks l = links;
+        Map<File, Drawing> v = match(f, videos, l);
+        List<DrawingIndex.Lost> gone = lostOf(fileKeys, v, videos, spentOf, l);
+        List<Drawing> withVideo = withVideo(videos);
         activity.runOnUiThread(() -> {
             if (closed || all != f) return;
             videoOf = v;
+            lost = gone;
+            videosAll = withVideo;
             Log.i(TAG, "drawings: timelapses matched again, " + v.size() + " drawing(s) have one");
-            if (shown != null) showDrawing(shown, 0);
-            else if (adapter != null) adapter.notifyDataSetChanged();   /* keeps the scroll and a selection */
+            if (lostOpen) showLost();
+            else if (shown != null) showDrawing(shown, 0);
+            else if (adapter != null) {
+                adapter.notifyDataSetChanged();   /* keeps the scroll and a selection */
+                showLostRow();
+            }
         });
     }); }
+
+    /** A drawing's key in CanvasTime and DrawingLinks: its path under SAI Drawings. */
+    private static String key(Entry e) {
+        return DrawingDays.key(e.folder, e.file.getName());
+    }
+
+    /** Every file under SAI Drawings, references too, by key: a record whose
+     *  key is here has its file. */
+    private Set<String> fileKeys = Collections.emptySet();
+
+    private static List<DrawingIndex.Lost> lostOf(Set<String> keys, Map<File, Drawing> v, List<Drawing> videos,
+                                                  Map<String, CanvasTime.Canvas> spent, DrawingLinks links) {
+        Set<Drawing> claimed = new HashSet<>(v.values());
+        List<Drawing> unclaimed = new ArrayList<>();
+        for (Drawing d : videos)
+            if (!claimed.contains(d) && !links.isForgotten(d.id) && TimelapseShelf.joined(d, 0).isFile()) unclaimed.add(d);
+        return DrawingIndex.lost(keys, spent, unclaimed);
+    }
+
+    private static List<Drawing> withVideo(List<Drawing> videos) {
+        List<Drawing> out = new ArrayList<>();
+        for (Drawing d : videos) if (!d.pieces.isEmpty() && TimelapseShelf.joined(d, 0).isFile()) out.add(d);
+        return out;
+    }
     /** Cards held to be deleted; selecting while not empty. */
     private final Set<File> selected = new LinkedHashSet<>();
     private boolean deleting;
@@ -253,9 +307,9 @@ final class DrawingsDialog {
         }
         /* back on a drawing's page goes to the cards, not out */
         dialog.setOnKeyListener((d, key, e) -> {
-            if (key != KeyEvent.KEYCODE_BACK || (shown == null && selected.isEmpty())) return false;
+            if (key != KeyEvent.KEYCODE_BACK || (shown == null && !lostOpen && selected.isEmpty())) return false;
             if (e.getAction() == KeyEvent.ACTION_UP) {
-                if (shown != null) showCards();
+                if (shown != null || lostOpen) showCards();
                 else clearSelection();
             }
             return true;
@@ -276,14 +330,25 @@ final class DrawingsDialog {
         });
         loading();
         dialog.show();
+        run(io, this::clearShared);
+        reload();
+    }
 
+    /** Reads the drawings, their timelapses and time, and what was decided by
+     *  hand; then shows the page that was open (the first time: the cards, or
+     *  openFirst's page). After a link, an unlink or a forget, too. */
+    private void reload() {
         File root = SaiPenSetup.drawingsFolder();
         run(io, () -> {
-            clearShared();
-            List<Entry> found;
+            List<Entry> found = new ArrayList<>();
+            Set<String> keys = new HashSet<>();
             List<Drawing> videos;
             try {
-                found = DrawingIndex.all(root);
+                for (File file : RecentDrawings.newest(root, Integer.MAX_VALUE)) {
+                    Entry en = DrawingIndex.entry(file, root);
+                    keys.add(key(en));
+                    if (!RecentDrawings.isReference(file, root)) found.add(en);
+                }
             }
             catch (RuntimeException e) {
                 Log.w(TAG, "drawings: listing", e);
@@ -296,7 +361,8 @@ final class DrawingsDialog {
                 Log.w(TAG, "drawings: no timelapse list", e);
                 videos = Collections.emptyList();
             }
-            Map<File, Drawing> v = match(found, videos);
+            DrawingLinks l = DrawingLinks.load(new File(activity.getFilesDir(), DrawingLinks.FILE));
+            Map<File, Drawing> v = match(found, videos, l);
             List<Entry> f = found;
             Map<String, CanvasTime.Canvas> spent;
             try {
@@ -308,12 +374,24 @@ final class DrawingsDialog {
             }
             Map<String, CanvasTime.Canvas> sp = spent;
             Map<String, DrawingDays.Summary> sums = DrawingDays.summaries(spent, java.time.ZoneId.systemDefault());
+            List<DrawingIndex.Lost> gone = lostOf(keys, v, videos, sp, l);
+            List<Drawing> withVideo = withVideo(videos);
             activity.runOnUiThread(() -> {
                 if (closed) return;
+                Entry was = shown;
                 all = f;
+                fileKeys = keys;
                 videoOf = v;
                 spentOf = sp;
                 summaryOf = sums;
+                links = l;
+                lost = gone;
+                videosAll = withVideo;
+                if (lostOpen) { showLost(); return; }
+                if (was != null) {
+                    list = DrawingIndex.view(all, query, folder, sort, reversed, hiddenFormats());
+                    for (Entry e : f) if (e.file.equals(was.file)) { showDrawing(e, 0); return; }
+                }
                 showCards();
                 File first = openFirst;
                 openFirst = null;
@@ -334,6 +412,7 @@ final class DrawingsDialog {
 
     private void showCards() {
         shown = null;
+        lostOpen = false;
         page.removeAllViews();
         LinearLayout top = column();
         top.setPadding(dp(20), dp(16), dp(20), 0);
@@ -433,6 +512,13 @@ final class DrawingsDialog {
         }
         summary = text(13, false, TEXT3);
         top.addView(summary, lp(-1, -2, 0, 0, 0, 10));
+        /* time or timelapses whose drawing file is gone: a way to fix it */
+        lostRow = text(14, true, WARN);
+        lostRow.setBackground(round(SURFACE, 10));
+        lostRow.setPadding(dp(14), dp(10), dp(14), dp(10));
+        lostRow.setOnClickListener(v -> showLost());
+        top.addView(lostRow, lp(-1, -2, 0, 0, 0, 10));
+        showLostRow();
         page.addView(top);
 
         empty = text(15, false, TEXT2);
@@ -848,8 +934,9 @@ final class DrawingsDialog {
 
     /** A drawing's page; from: -1/+1 when it came by ‹ › or a swipe (it slides in), 0 otherwise. */
     private void showDrawing(Entry e, int from) {
-        if (shown == null && grid != null) cardsAt = grid.getFirstVisiblePosition();
+        if (shown == null && !lostOpen && grid != null) cardsAt = grid.getFirstVisiblePosition();
         shown = e;
+        lostOpen = false;
         /* the search's keyboard, if it was up, goes with the cards */
         InputMethodManager ime = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (ime != null) ime.hideSoftInputFromWindow(page.getWindowToken(), 0);
@@ -969,7 +1056,13 @@ final class DrawingsDialog {
         }
 
         Drawing video = videoOf.get(e.file);
-        if (video != null) info.addView(timelapseBlock(video), lp(-1, -2, 0, 0, 0, 12));
+        if (video != null) info.addView(timelapseBlock(e, video), lp(-1, -2, 0, 0, 0, 12));
+        else if (!videosAll.isEmpty()) {
+            /* no timelapse found for it: the artist can say which one it is */
+            TextView link = pill(activity.getString(R.string.saipen_tl_link), SURFACE, TEXT);
+            link.setOnClickListener(v -> pickTimelapse(e));
+            info.addView(link, lp(-1, -2, 0, 0, 0, 12));
+        }
 
         TextView openIt = pill(activity.getString(R.string.saipen_drawing_open), ACCENT, Color.WHITE);
         /* the window stays, saying so, until SAI is really on its way: the
@@ -1000,7 +1093,7 @@ final class DrawingsDialog {
 
     /** The timelapse: its last frame, playing in place under a hovering
      *  pen; a tap or Watch plays it on the whole screen (VideoPlayerDialog). */
-    private View timelapseBlock(Drawing video) {
+    private View timelapseBlock(Entry e, Drawing video) {
         LinearLayout tl = column();
         tl.setBackground(round(SURFACE, 14));
         tl.setPadding(dp(10), dp(10), dp(10), dp(10));
@@ -1041,7 +1134,250 @@ final class DrawingsDialog {
         watch.setOnClickListener(v -> TimelapsesDialog.play(activity, video));
         row.addView(watch, lpw(-2, -2, 0, 10, 0, 0, 0));
         tl.addView(row);
+        /* linked to the wrong drawing? the artist undoes it (DrawingLinks) */
+        TextView notThis = text(13, false, TEXT2);
+        notThis.setText(R.string.saipen_tl_not_this);
+        notThis.setPadding(dp(4), dp(10), dp(4), dp(2));
+        notThis.setOnClickListener(v -> askUnlink(e, video));
+        tl.addView(notThis);
         return tl;
+    }
+
+    /* ---- by hand: links, unlinks, records without a file (DrawingLinks) ---- */
+
+    private static final int WARN = 0xFFFFC107;
+    private TextView lostRow;
+
+    /** "⚠ 2 have no drawing file ›" over the cards, while any have. */
+    private void showLostRow() {
+        if (lostRow == null) return;
+        int n = lost.size();
+        lostRow.setVisibility(n == 0 ? View.GONE : View.VISIBLE);
+        if (n > 0) lostRow.setText("⚠  " + activity.getResources().getQuantityString(R.plurals.saipen_lost_row, n, n) + "  ›");
+    }
+
+    /** The page of things whose drawing file is gone: say which file it is
+     *  now, or forget it. */
+    private void showLost() {
+        if (shown == null && !lostOpen && grid != null) cardsAt = grid.getFirstVisiblePosition();
+        shown = null;
+        lostOpen = true;
+        page.removeAllViews();
+        ScrollView scroll = new ScrollView(activity);
+        LinearLayout col = column();
+        col.setPadding(dp(20), dp(16), dp(20), dp(24));
+        scroll.addView(col);
+        page.addView(scroll, new LinearLayout.LayoutParams(-1, -1));
+
+        LinearLayout head = new LinearLayout(activity);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        TextView back = pill("‹", SURFACE, TEXT);
+        back.setContentDescription(activity.getString(R.string.saipen_back));
+        back.setOnClickListener(v -> showCards());
+        head.addView(back, lpw(-2, -2, 0, 0, 0, 10, 0));
+        TextView title = text(21, true, TEXT);
+        title.setText(R.string.saipen_lost_title);
+        title.setSingleLine();
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView close = pill(activity.getString(R.string.saipen_close), SURFACE, TEXT);
+        close.setOnClickListener(v -> dialog.dismiss());
+        head.addView(close);
+        col.addView(head, lp(-1, -2, 0, 0, 0, 12));
+
+        TextView intro = text(14, false, TEXT2);
+        intro.setText(lost.isEmpty() ? R.string.saipen_lost_none : R.string.saipen_lost_intro);
+        col.addView(intro, lp(-1, -2, 0, 0, 0, 14));
+
+        for (DrawingIndex.Lost l : lost) {
+            LinearLayout card = column();
+            card.setBackground(round(SURFACE, 14));
+            card.setPadding(dp(14), dp(12), dp(14), dp(12));
+            LinearLayout top = new LinearLayout(activity);
+            top.setGravity(Gravity.CENTER_VERTICAL);
+            if (l.video != null) {
+                ImageView still = new ImageView(activity);
+                still.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                still.setBackground(round(0xFF24282C, 8));
+                still.setClipToOutline(true);
+                still.setContentDescription(activity.getString(R.string.saipen_drawing_watch));
+                still.setOnClickListener(v -> TimelapsesDialog.play(activity, l.video));
+                top.addView(still, lpw(dp(96), dp(72), 0, 0, 0, 12, 0));
+                File f = TimelapseShelf.still(l.video);
+                int px = dp(160);
+                run(io, () -> {
+                    Bitmap b = closed || !f.isFile() ? null : decodeSampled(f, px);
+                    if (b != null) activity.runOnUiThread(() -> still.setImageBitmap(b));
+                });
+            }
+            LinearLayout words = column();
+            TextView name = text(16, true, TEXT);
+            name.setText(l.name);
+            name.setSingleLine();
+            name.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+            words.addView(name);
+            if (l.time != null) {
+                DrawingDays.Summary s = DrawingDays.summary(l.time, java.time.ZoneId.systemDefault());
+                TextView t = text(13, false, TEXT2);
+                t.setText(activity.getString(R.string.saipen_lost_time, spentLine(s)));
+                words.addView(t, lp(-1, -2, 0, 2, 0, 0));
+            }
+            if (l.video != null) {
+                int n = l.video.pieces.size();
+                TextView t = text(13, false, TEXT2);
+                t.setText(activity.getString(R.string.saipen_lost_timelapse,
+                          activity.getResources().getQuantityString(R.plurals.saipen_sessions, n, n),
+                          shortDay(DrawingLibrary.lastDrawn(l.video))));
+                words.addView(t, lp(-1, -2, 0, 2, 0, 0));
+            }
+            top.addView(words, new LinearLayout.LayoutParams(0, -2, 1f));
+            card.addView(top);
+
+            LinearLayout buttons = new LinearLayout(activity);
+            TextView find = pill(activity.getString(R.string.saipen_lost_find), ACCENT, Color.WHITE);
+            find.setOnClickListener(v -> pickFile(l));
+            TextView forget = pill(activity.getString(R.string.saipen_lost_forget), BG, TEXT);
+            forget.setOnClickListener(v -> askForget(l));
+            buttons.addView(find, lpw(0, -2, 1f, 0, 0, 4, 0));
+            buttons.addView(forget, lpw(0, -2, 1f, 4, 0, 0, 0));
+            card.addView(buttons, lp(-1, -2, 0, 12, 0, 0));
+            col.addView(card, lp(-1, -2, 0, 0, 0, 10));
+        }
+    }
+
+    /** "Which file is it now?": the drawings, those with no time and no
+     *  timelapse of their own first (most likely), newest first. */
+    private void pickFile(DrawingIndex.Lost l) {
+        if (all.isEmpty()) {
+            android.widget.Toast.makeText(activity, R.string.saipen_lost_no_files, android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        List<Entry> free = new ArrayList<>(), taken = new ArrayList<>();
+        for (Entry e : all) {
+            CanvasTime.Canvas c = spentOf.get(key(e));
+            boolean busy = (c != null && c.strokes > 0) || videoOf.containsKey(e.file);
+            (busy ? taken : free).add(e);
+        }
+        List<Entry> order = new ArrayList<>(free);
+        order.addAll(taken);
+        String[] labels = new String[order.size()];
+        DateFormat day = DateFormat.getDateInstance(DateFormat.MEDIUM);
+        for (int i = 0; i < labels.length; i++) {
+            Entry e = order.get(i);
+            labels[i] = e.title + (e.folder.isEmpty() ? "" : "  (" + e.folder + ")") + "  ·  " + day.format(new Date(e.modified))
+                        + (i >= free.size() ? "  ·  " + activity.getString(R.string.saipen_lost_has_own) : "");
+        }
+        new AlertDialog.Builder(activity, SaiLauncherActivity.DIALOG_THEME)
+            .setTitle(activity.getString(R.string.saipen_lost_pick_title, l.name))
+            .setItems(labels, (d, which) -> found(l, order.get(which)))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    /** The lost thing is that file's: its time moves there, its timelapse is linked. */
+    private void found(DrawingIndex.Lost l, Entry e) {
+        if (l.time != null && SpeedSession.running()) {
+            android.widget.Toast.makeText(activity, R.string.saipen_lost_close_sai, android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        String to = key(e);
+        run(io, () -> {
+            File linksFile = new File(activity.getFilesDir(), DrawingLinks.FILE);
+            DrawingLinks dl = DrawingLinks.load(linksFile);
+            if (l.timeKey != null) {
+                File timeFile = new File(activity.getFilesDir(), CanvasTime.FILE);
+                CanvasTime ct = CanvasTime.load(timeFile);
+                if (ct.move(l.timeKey, to) && !ct.saveIfChanged(timeFile)) Log.w(TAG, "drawings: time per drawing not saved");
+                dl.moveFile(l.timeKey, to);
+            }
+            if (l.video != null) dl.link(to, l.video.id);
+            if (!dl.save(linksFile)) Log.w(TAG, "drawings: links not saved");
+            Log.i(TAG, "drawings: \"" + l.name + "\" is " + to + " now (by hand)");
+            activity.runOnUiThread(() -> { if (!closed) reload(); });
+        });
+    }
+
+    private void askForget(DrawingIndex.Lost l) {
+        StringBuilder what = new StringBuilder();
+        if (l.time != null) what.append(activity.getString(R.string.saipen_lost_forget_time));
+        if (l.video != null) {
+            if (what.length() > 0) what.append("\n\n");
+            what.append(activity.getString(R.string.saipen_lost_forget_video));
+        }
+        new AlertDialog.Builder(activity, SaiLauncherActivity.DIALOG_THEME)
+            .setTitle(activity.getString(R.string.saipen_lost_forget_q, l.name))
+            .setMessage(what.toString())
+            .setPositiveButton(R.string.saipen_lost_forget, (d, w) -> forget(l))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    private void forget(DrawingIndex.Lost l) {
+        if (l.time != null && SpeedSession.running()) {
+            android.widget.Toast.makeText(activity, R.string.saipen_lost_close_sai, android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        run(io, () -> {
+            if (l.timeKey != null) {
+                File timeFile = new File(activity.getFilesDir(), CanvasTime.FILE);
+                CanvasTime ct = CanvasTime.load(timeFile);
+                if (ct.remove(l.timeKey) && !ct.saveIfChanged(timeFile)) Log.w(TAG, "drawings: time per drawing not saved");
+            }
+            if (l.video != null) {
+                File linksFile = new File(activity.getFilesDir(), DrawingLinks.FILE);
+                DrawingLinks dl = DrawingLinks.load(linksFile);
+                dl.forget(l.video.id);
+                if (!dl.save(linksFile)) Log.w(TAG, "drawings: links not saved");
+            }
+            Log.i(TAG, "drawings: \"" + l.name + "\" forgotten (by hand)");
+            activity.runOnUiThread(() -> { if (!closed) reload(); });
+        });
+    }
+
+    /** "Not this drawing's timelapse": they are never paired again by themselves. */
+    private void askUnlink(Entry e, Drawing video) {
+        new AlertDialog.Builder(activity, SaiLauncherActivity.DIALOG_THEME)
+            .setTitle(activity.getString(R.string.saipen_tl_not_this_q, e.title))
+            .setMessage(R.string.saipen_tl_not_this_what)
+            .setPositiveButton(R.string.saipen_tl_unlink, (d, w) -> setLink(e, video, false))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    /** "Link a timelapse…": those with no drawing first, newest first. */
+    private void pickTimelapse(Entry e) {
+        Set<Drawing> claimed = new HashSet<>(videoOf.values());
+        List<Drawing> order = new ArrayList<>();
+        for (Drawing d : videosAll) if (!claimed.contains(d)) order.add(d);
+        int free = order.size();
+        for (Drawing d : videosAll) if (claimed.contains(d)) order.add(d);
+        String[] labels = new String[order.size()];
+        for (int i = 0; i < labels.length; i++) {
+            Drawing d = order.get(i);
+            int n = d.pieces.size();
+            labels[i] = (d.title == null || d.title.isEmpty() ? d.folder : d.title) + "  ·  "
+                        + activity.getResources().getQuantityString(R.plurals.saipen_sessions, n, n) + "  ·  "
+                        + shortDay(DrawingLibrary.lastDrawn(d))
+                        + (i >= free ? "  ·  " + activity.getString(R.string.saipen_tl_has_drawing) : "");
+        }
+        new AlertDialog.Builder(activity, SaiLauncherActivity.DIALOG_THEME)
+            .setTitle(activity.getString(R.string.saipen_tl_link_title, e.title))
+            .setItems(labels, (d, which) -> setLink(e, order.get(which), true))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    private void setLink(Entry e, Drawing video, boolean link) {
+        String k = key(e);
+        run(io, () -> {
+            File linksFile = new File(activity.getFilesDir(), DrawingLinks.FILE);
+            DrawingLinks dl = DrawingLinks.load(linksFile);
+            if (link) dl.link(k, video.id);
+            else dl.unlink(k, video.id);
+            if (!dl.save(linksFile)) Log.w(TAG, "drawings: links not saved");
+            Log.i(TAG, "drawings: timelapse \"" + video.title + "\" " + (link ? "linked to " : "unlinked from ") + k + " (by hand)");
+            activity.runOnUiThread(() -> { if (!closed) reload(); });
+        });
     }
 
     /** A picture file decoded no bigger than about twice `maxPx` across. */

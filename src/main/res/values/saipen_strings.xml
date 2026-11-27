@@ -381,6 +381,32 @@
     <string name="saipen_drawing_size">Size</string>
     <string name="saipen_drawing_timelapse">Timelapse</string>
     <string name="saipen_drawing_timelapse_hint">Hover the pen over it to play it here.</string>
+    <!-- by hand: timelapses linked or unlinked, things whose drawing file is gone (DrawingLinks) -->
+    <string name="saipen_tl_link">Link a timelapse…</string>
+    <string name="saipen_tl_link_title">The timelapse of “%1$s”</string>
+    <string name="saipen_tl_has_drawing">has a drawing</string>
+    <string name="saipen_tl_not_this">Not this drawing\'s timelapse?</string>
+    <string name="saipen_tl_not_this_q">Unlink this timelapse from “%1$s”?</string>
+    <string name="saipen_tl_not_this_what">SAI Pen will not link the two again by itself. The timelapse stays in My timelapses, and you can link it to the right drawing under Without a file.</string>
+    <string name="saipen_tl_unlink">Unlink</string>
+    <plurals name="saipen_lost_row">
+        <item quantity="one">1 thing has no drawing file</item>
+        <item quantity="other">%d things have no drawing file</item>
+    </plurals>
+    <string name="saipen_lost_title">Without a file</string>
+    <string name="saipen_lost_intro">These have time on them or a timelapse, but their drawing is not in Documents/SAI Drawings under that name any more: renamed, moved elsewhere, or deleted. Tell SAI Pen which file it is now, or forget it.</string>
+    <string name="saipen_lost_none">Everything has its drawing file.</string>
+    <string name="saipen_lost_time">Time: %1$s</string>
+    <string name="saipen_lost_timelapse">Timelapse: %1$s, last %2$s</string>
+    <string name="saipen_lost_find">Find its file…</string>
+    <string name="saipen_lost_forget">Forget</string>
+    <string name="saipen_lost_pick_title">Which file is “%1$s” now?</string>
+    <string name="saipen_lost_has_own">has its own</string>
+    <string name="saipen_lost_no_files">There are no drawings in Documents/SAI Drawings.</string>
+    <string name="saipen_lost_close_sai">Close SAI first: while it runs, it is counting the time on drawings.</string>
+    <string name="saipen_lost_forget_q">Forget “%1$s”?</string>
+    <string name="saipen_lost_forget_time">Its time is deleted for good.</string>
+    <string name="saipen_lost_forget_video">Its timelapse stays in My timelapses, it is just not listed here any more.</string>
     <string name="saipen_video_other_app">Other app</string>
     <string name="saipen_drawing_watch">Watch</string>
     <string name="saipen_drawing_open">Open in SAI</string>

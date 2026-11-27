@@ -363,6 +363,34 @@
     <string name="saipen_drawing_size">Размер</string>
     <string name="saipen_drawing_timelapse">Таймлапс</string>
     <string name="saipen_drawing_timelapse_hint">Наведите перо, чтобы он заиграл прямо здесь.</string>
+    <!-- вручную: таймлапсы привязаны или отвязаны, записи без файла рисунка (DrawingLinks) -->
+    <string name="saipen_tl_link">Привязать таймлапс…</string>
+    <string name="saipen_tl_link_title">Таймлапс рисунка «%1$s»</string>
+    <string name="saipen_tl_has_drawing">уже с рисунком</string>
+    <string name="saipen_tl_not_this">Это не его таймлапс?</string>
+    <string name="saipen_tl_not_this_q">Отвязать этот таймлапс от «%1$s»?</string>
+    <string name="saipen_tl_not_this_what">SAI Pen больше не будет сам их связывать. Таймлапс останется в «Мои таймлапсы», и его можно привязать к нужному рисунку в разделе «Без файла».</string>
+    <string name="saipen_tl_unlink">Отвязать</string>
+    <plurals name="saipen_lost_row">
+        <item quantity="one">%d запись без файла рисунка</item>
+        <item quantity="few">%d записи без файла рисунка</item>
+        <item quantity="many">%d записей без файла рисунка</item>
+        <item quantity="other">%d записи без файла рисунка</item>
+    </plurals>
+    <string name="saipen_lost_title">Без файла</string>
+    <string name="saipen_lost_intro">У этих записей есть время или таймлапс, но рисунка с таким именем в Документы/SAI Drawings больше нет: его переименовали, перенесли или удалили. Покажите SAI Pen, какой это файл теперь, или забудьте запись.</string>
+    <string name="saipen_lost_none">У всех записей есть свой файл.</string>
+    <string name="saipen_lost_time">Время: %1$s</string>
+    <string name="saipen_lost_timelapse">Таймлапс: %1$s, последний %2$s</string>
+    <string name="saipen_lost_find">Найти его файл…</string>
+    <string name="saipen_lost_forget">Забыть</string>
+    <string name="saipen_lost_pick_title">Какой файл теперь «%1$s»?</string>
+    <string name="saipen_lost_has_own">уже со своей историей</string>
+    <string name="saipen_lost_no_files">В Документы/SAI Drawings нет рисунков.</string>
+    <string name="saipen_lost_close_sai">Сначала закройте SAI: пока он открыт, он считает время на рисунках.</string>
+    <string name="saipen_lost_forget_q">Забыть «%1$s»?</string>
+    <string name="saipen_lost_forget_time">Время на нём будет удалено насовсем.</string>
+    <string name="saipen_lost_forget_video">Таймлапс останется в «Мои таймлапсы», просто здесь его больше не будет.</string>
     <string name="saipen_video_other_app">Другое приложение</string>
     <string name="saipen_drawing_watch">Смотреть</string>
     <string name="saipen_drawing_open">Открыть в SAI</string>
