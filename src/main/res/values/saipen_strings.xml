@@ -232,6 +232,8 @@
     <string name="saipen_section_brushes">Brushes and textures</string>
     <string name="saipen_section_licence">SAI licence</string>
     <string name="saipen_section_timelapse">Timelapse</string>
+    <string name="saipen_timelapse_experimental_short">Timelapse, experimental</string>
+    <string name="saipen_timelapse_experimental">⚠ Experimental: the timelapse may not work well yet, and a session can be lost. Please don\'t rely on it. For a drawing that matters, keep Android\'s screen recorder on as well.</string>
     <string name="saipen_section_settings">Settings</string>
     <string name="saipen_sharpness_title">Screen sharpness</string>
     <string name="saipen_palm_title">Palm rejection</string>

@@ -538,9 +538,28 @@
                 <View style="@style/SaiPenDivider" />
             </LinearLayout>
 
-            <TextView
-                style="@style/SaiPenLabel"
-                android:text="@string/saipen_section_timelapse" />
+            <!-- the timelapse is experimental (owner, 2026-11-27): a yellow
+                 triangle by its name, and a yellow note under the switch -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:contentDescription="@string/saipen_timelapse_experimental_short">
+
+                <TextView
+                    style="@style/SaiPenLabel"
+                    android:text="@string/saipen_section_timelapse" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="⚠"
+                    android:textColor="#FFC107"
+                    android:textSize="15sp"
+                    android:importantForAccessibility="no" />
+            </LinearLayout>
 
             <Switch
                 android:id="@+id/SaiPenTimelapse"
@@ -554,6 +573,11 @@
             <TextView
                 style="@style/SaiPenNote"
                 android:layout_marginTop="0dp"
+                android:textColor="#FFC107"
+                android:text="@string/saipen_timelapse_experimental" />
+
+            <TextView
+                style="@style/SaiPenNote"
                 android:text="@string/saipen_timelapse_note" />
 
             <LinearLayout

@@ -111,9 +111,22 @@ public final class TimelapseShelf {
     public static Drawing add(DrawingLibrary lib, File encoded, String title, long startedAt, int frames,
                               int width, int height, DrawingLibrary.Signature opening,
                               DrawingLibrary.Signature closing, byte[] lastPixels, int stride) throws IOException {
+        return add(lib, encoded, title, startedAt, frames, width, height, opening, closing, lastPixels, stride, null);
+    }
+
+    /** As above; `files` (may be null): which file the document was opened
+     *  from and saved to (TimelapseDocs), the surest way to its drawing. */
+    public static Drawing add(DrawingLibrary lib, File encoded, String title, long startedAt, int frames,
+                              int width, int height, DrawingLibrary.Signature opening,
+                              DrawingLibrary.Signature closing, byte[] lastPixels, int stride,
+                              TimelapseDocs.Doc files) throws IOException {
         Set<String> all = new HashSet<>();
         for (Drawing d : lib.drawings) for (Piece p : d.pieces) all.add(p.file);
         Piece piece = new Piece(DrawingLibrary.pieceName(startedAt, all), startedAt, frames, width, height, opening, closing);
+        if (files != null) {
+            piece.openedFrom = files.openedFrom;
+            piece.savedTo.addAll(files.savedTo);
+        }
         Drawing d = lib.file(piece, title);
         File dest = pieceFile(d, piece);
         move(encoded, dest);

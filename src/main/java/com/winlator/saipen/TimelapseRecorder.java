@@ -27,7 +27,7 @@ public final class TimelapseRecorder {
      *  1 GB, which a 30-minute drawing went past (furisode, 2026-11-26). */
     public static volatile long budgetBytes = TimelapseBudget.MIN_MB << 20;
 
-    private final File frames, sessionDir, packedRoot;
+    private final File frames, sessionDir, packedRoot, docs;
     private final ScheduledExecutorService thread;
     private final TimelapsePack.Result total = new TimelapsePack.Result();
 
@@ -35,6 +35,7 @@ public final class TimelapseRecorder {
         frames = TimelapseVideo.framesDir(containerRoot);
         packedRoot = TimelapsePack.packedDir(containerRoot);
         sessionDir = TimelapsePack.newSessionDir(packedRoot, new Date());
+        docs = TimelapseDocs.source(containerRoot);
         thread = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "sai-timelapse-pack");
             t.setDaemon(true);
@@ -76,6 +77,15 @@ public final class TimelapseRecorder {
     private synchronized void packNow() {
         try {
             TimelapsePack.Result r = TimelapsePack.packAll(frames, sessionDir);
+            /* which file each document is, kept with this SAI start's frames */
+            if (r.frames > 0 || sessionDir.isDirectory()) {
+                try {
+                    TimelapseDocs.copyInto(docs, sessionDir);
+                }
+                catch (java.io.IOException e) {
+                    Log.w(TAG, "timelapse: keeping documents.txt: " + e.getMessage());
+                }
+            }
             if (r.frames == 0) return;
             total.frames += r.frames;
             total.rawBytes += r.rawBytes;
