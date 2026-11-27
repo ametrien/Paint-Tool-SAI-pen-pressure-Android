@@ -632,6 +632,31 @@ you use, it needs a pen with pressure: [check a pen in a minute](#check-a-pen-in
 </details>
 
 <details>
+<summary><b>Which tablet would you choose?</b></summary>
+
+People ask me this, and honestly I can't say which one is best: I've only drawn on Samsung
+devices myself. What I can tell from my own:
+
+- **Galaxy Tab S6 Lite:** a little slow, but fine when SAI sees only the fast cores, as SAI Pen
+  sets it by default (*Settings > Processors SAI sees*).
+- **Galaxy S24 Ultra:** SAI flies.
+
+I'm not telling anyone to buy a tablet, or anything else: what you buy is your own choice and at
+your own risk. But if I were picking a new tablet for myself, I'd look at:
+
+- **Several fast processor cores.** SAI runs in an emulator (Box64 translates its code while it
+  runs), so it needs a lot from the processor, and SAI splits each stroke over the cores it sees.
+  The more fast cores, and the faster they are, the less lag. Search the web for the processor
+  and "cores". The question above sorts devices by their processor.
+- **A size that is comfortable for you** to draw on.
+- **The pen.** For me this decides it: I love Samsung's S Pen because it is very light. Apple's
+  pens feel quite heavy to me, and in long drawing sessions a light pen is much more comfortable,
+  for me at least. Other brands are fine too, as long as the pen gives pressure:
+  [check a pen in a minute](#check-a-pen-in-a-minute-without-sai).
+
+</details>
+
+<details>
 <summary><b>Why does SAI take so long to start?</b></summary>
 
 How long SAI takes to open depends mostly on the processor. Measured from tapping **Start SAI**
