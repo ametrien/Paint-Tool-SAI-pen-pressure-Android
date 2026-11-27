@@ -333,6 +333,15 @@
     <string name="saipen_drawing_time">Время рисования</string>
     <string name="saipen_drawing_when">Рисовали</string>
     <string name="saipen_drawing_time_none">Пока не посчитано</string>
+    <string name="saipen_drawing_days">Дней работы</string>
+    <string name="saipen_drawing_stats_open">Статистика по дням</string>
+    <string name="saipen_drawing_last">последний раз %1$s</string>
+    <plurals name="saipen_days">
+        <item quantity="one">%d день</item>
+        <item quantity="few">%d дня</item>
+        <item quantity="many">%d дней</item>
+        <item quantity="other">%d дня</item>
+    </plurals>
     <string name="saipen_under_a_minute">меньше минуты</string>
     <string name="saipen_minutes_short">%1$d мин</string>
     <string name="saipen_hours_minutes_short">%1$d ч %2$d мин</string>

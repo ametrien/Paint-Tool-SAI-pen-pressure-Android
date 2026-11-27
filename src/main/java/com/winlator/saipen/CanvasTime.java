@@ -34,9 +34,10 @@ public final class CanvasTime {
         public double seconds;
         /** Wall clock, milliseconds; 0 when unknown. */
         public long first, last;
-        /** Each sitting on this drawing, oldest first: for statistics per
-         *  drawing (by day, time, strokes) later. Empty for time counted
-         *  before sessions were kept. */
+        /** Each sitting on this drawing, oldest first: its statistics by
+         *  day (DrawingDays). Empty for time counted before sessions were
+         *  kept. A sitting never spans midnight: it is split there, as
+         *  DrawingStats starts a new session on a new day. */
         public final java.util.List<Session> sessions = new java.util.ArrayList<>();
 
         void add(Canvas o) {
@@ -143,7 +144,8 @@ public final class CanvasTime {
         if (c.first == 0) c.first = wallMs;
         c.last = Math.max(c.last, wallMs);
         Session s = c.sessions.isEmpty() ? null : c.sessions.get(c.sessions.size() - 1);
-        if (s == null || freshStart || wallMs - s.end > DrawingStats.SESSION_GAP * 1000) {
+        if (s == null || freshStart || wallMs - s.end > DrawingStats.SESSION_GAP * 1000
+            || !sameDay(s.start, wallMs)) {
             s = new Session();
             s.start = wallMs;
             c.sessions.add(s);
@@ -155,6 +157,14 @@ public final class CanvasTime {
         lastUpAt = t;
         lastKey = key;
         dirty = true;
+    }
+
+    /** Same local calendar day: a sitting past midnight goes on as a new one,
+     *  so each day of a drawing is its own. */
+    static boolean sameDay(long aMs, long bMs) {
+        java.time.ZoneId zone = java.time.ZoneId.systemDefault();
+        return java.time.Instant.ofEpochMilli(aMs).atZone(zone).toLocalDate()
+            .equals(java.time.Instant.ofEpochMilli(bMs).atZone(zone).toLocalDate());
     }
 
     /** SAI closed mid-stroke: drop it, and the time away is not drawing. */
@@ -214,6 +224,17 @@ public final class CanvasTime {
         Canvas copy = new Canvas();
         copy.add(c);
         return copy;
+    }
+
+    /** Every drawing's time, copied, by key; for the cards of All drawings. */
+    public synchronized Map<String, Canvas> all() {
+        Map<String, Canvas> out = new TreeMap<>();
+        for (Map.Entry<String, Canvas> e : canvases.entrySet()) {
+            Canvas copy = new Canvas();
+            copy.add(e.getValue());
+            out.put(e.getKey(), copy);
+        }
+        return out;
     }
 
     /* ---- the file ---- */

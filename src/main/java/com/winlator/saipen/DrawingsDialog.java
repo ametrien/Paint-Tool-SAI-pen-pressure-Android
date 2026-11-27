@@ -121,6 +121,9 @@ final class DrawingsDialog {
     private List<Entry> all = Collections.emptyList();
     /** Each drawing's timelapse, for those that have one (DrawingIndex.timelapseFor). */
     private Map<File, Drawing> videoOf = new HashMap<>();
+    /** Time on each drawing (CanvasTime) by its key (DrawingDays.key), read with the list. */
+    private Map<String, CanvasTime.Canvas> spentOf = new HashMap<>();
+    private Map<String, DrawingDays.Summary> summaryOf = new HashMap<>();
     private String query = "";
     private String folder = null;
     private Sort sort = Sort.NEWEST;
@@ -295,10 +298,22 @@ final class DrawingsDialog {
             }
             Map<File, Drawing> v = match(found, videos);
             List<Entry> f = found;
+            Map<String, CanvasTime.Canvas> spent;
+            try {
+                spent = CanvasTime.load(new File(activity.getFilesDir(), CanvasTime.FILE)).all();
+            }
+            catch (RuntimeException e) {
+                Log.w(TAG, "drawings: no time per drawing", e);
+                spent = new HashMap<>();
+            }
+            Map<String, CanvasTime.Canvas> sp = spent;
+            Map<String, DrawingDays.Summary> sums = DrawingDays.summaries(spent, java.time.ZoneId.systemDefault());
             activity.runOnUiThread(() -> {
                 if (closed) return;
                 all = f;
                 videoOf = v;
+                spentOf = sp;
+                summaryOf = sums;
                 showCards();
                 File first = openFirst;
                 openFirst = null;
@@ -595,6 +610,8 @@ final class DrawingsDialog {
         final TextView kind = text(11, true, TEXT);
         final TextView check = text(13, true, Color.WHITE);
         final TextView name = text(14, true, TEXT), line = text(12, false, TEXT3), where = text(12, false, TEXT3);
+        /* days and time on it: "5 days · 7 h 20 min · 26 Nov" (DrawingDays) */
+        final TextView spent = text(12, false, TEXT2);
         Entry entry;
 
         Card() {
@@ -626,13 +643,14 @@ final class DrawingsDialog {
             cp.setMargins(dp(6), dp(6), dp(6), dp(6));
             frame.addView(check, cp);
             view.addView(frame, lp(-1, dp(CARD_PICTURE_DP), 0, 0, 0, 8));
-            for (TextView t : new TextView[] {name, line, where}) {
+            for (TextView t : new TextView[] {name, line, spent, where}) {
                 t.setSingleLine();
                 t.setEllipsize(TextUtils.TruncateAt.END);
             }
             where.setEllipsize(TextUtils.TruncateAt.START);
             view.addView(name);
             view.addView(line, lp(-1, -2, 0, 2, 0, 0));
+            view.addView(spent);
             view.addView(where);
             view.setOnClickListener(v -> {
                 if (entry == null) return;
@@ -669,6 +687,11 @@ final class DrawingsDialog {
             boolean showWhere = folder == null && !e.folder.isEmpty();
             where.setText(showWhere ? e.folder : "");
             where.setVisibility(showWhere ? View.VISIBLE : View.INVISIBLE);
+            /* an empty line keeps the cards of a row the same height */
+            DrawingDays.Summary sum = summaryOf.get(DrawingDays.key(e.folder, e.file.getName()));
+            spent.setText(sum == null ? "" : spentLine(sum));
+            spent.setVisibility(sum == null ? View.INVISIBLE : View.VISIBLE);
+            view.setContentDescription(sum == null ? e.title : e.title + ", " + spentLong(sum));
             kind.setText("." + DrawingFormats.of(e.file));
             Drawing video = videoOf.get(e.file);
             badge.setVisibility(video != null ? View.VISIBLE : View.GONE);
@@ -916,8 +939,8 @@ final class DrawingsDialog {
         fact(facts, R.string.saipen_drawing_size, Formatter.formatShortFileSize(activity, e.size), true);
         fact(facts, R.string.saipen_drawing_format, "." + DrawingFormats.of(e.file), true);
         /* time on it, counted from strokes while SAI showed it (CanvasTime) */
-        CanvasTime.Canvas spent = CanvasTime.load(new File(activity.getFilesDir(), CanvasTime.FILE))
-            .get(e.folder.isEmpty() ? e.file.getName() : e.folder + "/" + e.file.getName());
+        CanvasTime.Canvas spent = spentOf.get(DrawingDays.key(e.folder, e.file.getName()));
+        DrawingDays.Summary sum = summaryOf.get(DrawingDays.key(e.folder, e.file.getName()));
         if (spent == null || spent.strokes == 0) {
             fact(facts, R.string.saipen_drawing_time, activity.getString(R.string.saipen_drawing_time_none), false);
         }
@@ -927,9 +950,22 @@ final class DrawingsDialog {
             DateFormat day = DateFormat.getDateInstance(DateFormat.MEDIUM);
             String firstDay = day.format(new Date(spent.first)), lastDay = day.format(new Date(spent.last));
             fact(facts, R.string.saipen_drawing_when, firstDay.equals(lastDay) ? firstDay
-                 : activity.getString(R.string.saipen_date_range, firstDay, lastDay), false);
+                 : activity.getString(R.string.saipen_date_range, firstDay, lastDay), sum != null && sum.days > 0);
+            if (sum != null && sum.days > 0) {
+                fact(facts, R.string.saipen_drawing_days,
+                     activity.getResources().getQuantityString(R.plurals.saipen_days, sum.days, sum.days), false);
+            }
         }
         info.addView(facts, lp(-1, -2, 0, 0, 0, 12));
+        /* its days, time and strokes on each: the Statistics window over this drawing alone */
+        if (spent != null && spent.strokes > 0) {
+            TextView byDay = pill(activity.getString(R.string.saipen_drawing_stats_open), SURFACE, TEXT);
+            CanvasTime.Canvas c = spent;
+            double earlier = sum == null ? 0 : sum.earlierSeconds;
+            byDay.setOnClickListener(v -> StatisticsDialog.showDrawing(activity, e.title,
+                DrawingDays.days(c, java.time.ZoneId.systemDefault()), earlier));
+            info.addView(byDay, lp(-1, -2, 0, 0, 0, 12));
+        }
 
         Drawing video = videoOf.get(e.file);
         if (video != null) info.addView(timelapseBlock(video), lp(-1, -2, 0, 0, 0, 12));
@@ -1018,6 +1054,35 @@ final class DrawingsDialog {
         BitmapFactory.Options d = new BitmapFactory.Options();
         d.inSampleSize = sample;
         return BitmapFactory.decodeFile(f.getPath(), d);
+    }
+
+    /** The card's line: "5 days · 7 h 20 min · 26 Nov"; days left out
+     *  when all its time is from before days were kept. */
+    private String spentLine(DrawingDays.Summary s) {
+        StringBuilder out = new StringBuilder();
+        if (s.days > 0) out.append(activity.getResources().getQuantityString(R.plurals.saipen_days, s.days, s.days)).append(" · ");
+        out.append(minutes(s.seconds));
+        if (s.last > 0) out.append(" · ").append(shortDay(s.last));
+        return out.toString();
+    }
+
+    /** The same, read out: "5 days, 7 h 20 min, last drawn 26 Nov". */
+    private String spentLong(DrawingDays.Summary s) {
+        StringBuilder out = new StringBuilder();
+        if (s.days > 0) out.append(activity.getResources().getQuantityString(R.plurals.saipen_days, s.days, s.days)).append(", ");
+        out.append(minutes(s.seconds));
+        if (s.last > 0) out.append(", ").append(activity.getString(R.string.saipen_drawing_last, shortDay(s.last)));
+        return out.toString();
+    }
+
+    /** "26 Nov", with the year when it is not this year's. */
+    private String shortDay(long ms) {
+        int flags = android.text.format.DateUtils.FORMAT_SHOW_DATE | android.text.format.DateUtils.FORMAT_ABBREV_MONTH;
+        java.util.Calendar then = java.util.Calendar.getInstance(), now = java.util.Calendar.getInstance();
+        then.setTimeInMillis(ms);
+        flags |= then.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR)
+            ? android.text.format.DateUtils.FORMAT_NO_YEAR : android.text.format.DateUtils.FORMAT_SHOW_YEAR;
+        return android.text.format.DateUtils.formatDateTime(activity, ms, flags);
     }
 
     /** "1 h 5 min", "12 min", "under a minute". */

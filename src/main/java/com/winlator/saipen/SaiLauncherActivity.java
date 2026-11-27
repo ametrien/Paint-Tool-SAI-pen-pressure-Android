@@ -1901,6 +1901,17 @@ public class SaiLauncherActivity extends AppCompatActivity {
             /* one picture that can't be read must not keep the whole row away */
             for (File f : files) pictures.add(safeThumbnail(f, px));
             for (File f : refFiles) refPictures.add(safeThumbnail(f, px));
+            /* the time on each, for the line under its picture (DrawingDays) */
+            List<DrawingDays.Summary> spent = new ArrayList<>();
+            try {
+                java.util.Map<String, DrawingDays.Summary> sums = DrawingDays.summaries(
+                    CanvasTime.load(new File(getFilesDir(), CanvasTime.FILE)).all(), java.time.ZoneId.systemDefault());
+                for (File f : files) spent.add(sums.get(drawingKey(folder, f)));
+            }
+            catch (RuntimeException e) {
+                Log.w(TAG, "start screen: no time per drawing", e);
+                spent.clear();
+            }
             List<DrawingLibrary.Drawing> videos = new ArrayList<>();
             List<android.graphics.Bitmap> stills = new ArrayList<>();
             if (wantTimelapses) {
@@ -1930,10 +1941,13 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 }
                 List<File> videoFiles = new ArrayList<>();
                 for (DrawingLibrary.Drawing d : videos) videoFiles.add(TimelapseShelf.joined(d, 0));
-                fillRow(R.id.SaiPenRecentScroll, R.id.SaiPenRecent, 0, titles, pictures, taps, R.string.saipen_recent_open, null);
+                List<String> details = new ArrayList<>();
+                for (DrawingDays.Summary d : spent) details.add(d == null ? "" : recentLine(d));
+                fillRow(R.id.SaiPenRecentScroll, R.id.SaiPenRecent, 0, titles, pictures, taps, R.string.saipen_recent_open, null,
+                        details.size() == titles.size() ? details : null);
                 fillRow(R.id.SaiPenRefsScroll, R.id.SaiPenRefs, R.id.SaiPenRefsLabel, refTitles, refPictures, refTaps,
-                        R.string.saipen_recent_open, null);
-                fillRow(R.id.SaiPenTlScroll, R.id.SaiPenTl, R.id.SaiPenTlLabel, videoTitles, stills, videoTaps, 0, videoFiles);
+                        R.string.saipen_recent_open, null, null);
+                fillRow(R.id.SaiPenTlScroll, R.id.SaiPenTl, R.id.SaiPenTlLabel, videoTitles, stills, videoTaps, 0, videoFiles, null);
                 Log.i(TAG, "start screen: " + files.size() + " drawing(s)" + (wantDrawings ? "" : " (row off)") + " of "
                       + own.size() + ", " + refFiles.size() + " reference(s)" + (wantRefs ? "" : " (row off)") + ", "
                       + videos.size() + " timelapse(s)" + (wantTimelapses ? "" : " (row off)"));
@@ -1971,6 +1985,24 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private void tapDrawing(File f) {
         if (prefs.getBoolean(PREF_HOME_TAP_PAGE, false)) DrawingsDialog.showDrawing(this, thumbs, f);
         else openDrawing(f, null);
+    }
+
+    /** A start-screen tile's line: the time only, "7 h 20 min", as the
+     *  tile is too narrow for the days too (All drawings shows them). */
+    private String recentLine(DrawingDays.Summary d) {
+        return d.seconds < 60 ? getString(R.string.saipen_under_minute_short) : duration(d.seconds);
+    }
+
+    /** A drawing's key in CanvasTime: its path under SAI Drawings; null outside it. */
+    static String drawingKey(File drawingsFolder, File drawing) {
+        try {
+            java.nio.file.Path rel = drawingsFolder.toPath().relativize(drawing.toPath());
+            String key = rel.toString().replace(File.separatorChar, '/');
+            return key.isEmpty() || key.startsWith("..") ? null : key;
+        }
+        catch (RuntimeException e) {
+            return null;
+        }
     }
 
     /** "All drawings": every drawing, searched and sorted (DrawingsDialog). */
@@ -2046,7 +2078,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
      *  picture's place while the pen hovers over it (HoverVideo). */
     private void fillRow(int scrollId, int rowId, int labelId, List<String> titles,
                          List<android.graphics.Bitmap> pictures, List<Runnable> taps, int describe,
-                         List<File> videos) {
+                         List<File> videos, List<String> details) {
         View scroll = findViewById(scrollId);
         android.widget.LinearLayout row = findViewById(rowId);
         row.removeAllViews();
@@ -2094,6 +2126,19 @@ public class SaiLauncherActivity extends AppCompatActivity {
             name.setPadding(0, (int) (4 * dp), 0, 0);
             item.addView(name, new android.widget.LinearLayout.LayoutParams(
                 (int) (RECENT_W_DP * dp), android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+            /* days and time on it; an empty line keeps the row's tiles even */
+            if (details != null) {
+                String detail = details.get(i);
+                TextView spent = new TextView(this);
+                spent.setText(detail.isEmpty() ? " " : detail);
+                spent.setTextSize(11);
+                spent.setTextColor(StatisticsDialog.TEXT3);
+                spent.setSingleLine(true);
+                spent.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                item.addView(spent, new android.widget.LinearLayout.LayoutParams(
+                    (int) (RECENT_W_DP * dp), android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+                if (!detail.isEmpty()) item.setContentDescription(item.getContentDescription() + ", " + detail);
+            }
 
             android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
