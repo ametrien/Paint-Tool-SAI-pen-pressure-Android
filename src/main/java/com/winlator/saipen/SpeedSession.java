@@ -232,6 +232,12 @@ public final class SpeedSession {
         if (ct != null) ct.titleChanged(CanvasTime.key(was), CanvasTime.key(title), System.currentTimeMillis());
     }
 
+    /** SAI is running: its time per drawing is counted in memory and saved
+     *  from there, so nothing else may change canvas-time.txt now. */
+    public static synchronized boolean running() {
+        return current != null;
+    }
+
     /** SAI wrote a file under SAI Drawings (SaiSession's watcher): `path`
      *  relative to it. A new canvas saved under a name keeps its time. */
     public static void fileSaved(String path) {

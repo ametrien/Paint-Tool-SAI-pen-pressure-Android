@@ -1901,6 +1901,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 listed = new ArrayList<>();
             }
             List<File> every = listed;
+            followRenames(folder, every);
             /* references are the artist's, not drawings: their own row */
             List<File> own = new ArrayList<>(), refs = new ArrayList<>();
             for (File f : every) (RecentDrawings.isReference(f, folder) ? refs : own).add(f);
@@ -2003,6 +2004,27 @@ public class SaiLauncherActivity extends AppCompatActivity {
     }
 
     /** A drawing's key in CanvasTime: its path under SAI Drawings; null outside it. */
+    /** A drawing renamed or moved in a file manager keeps its time
+     *  (CanvasTime.follow): every file under SAI Drawings, by key, with its
+     *  size and time of change. Only with SAI closed: while it runs, its own
+     *  count is saved over the file. */
+    private void followRenames(File folder, List<File> files) {
+        if (SpeedSession.running()) return;
+        try {
+            java.util.Map<String, long[]> now = new java.util.HashMap<>();
+            for (File f : files) {
+                String key = drawingKey(folder, f);
+                if (key != null) now.put(key, new long[] {f.length(), f.lastModified()});
+            }
+            File file = new File(getFilesDir(), CanvasTime.FILE);
+            CanvasTime ct = CanvasTime.load(file);
+            if (ct.follow(now) && !ct.saveIfChanged(file)) Log.w(TAG, "start screen: time per drawing not saved");
+        }
+        catch (RuntimeException e) {
+            Log.w(TAG, "start screen: following renamed drawings", e);
+        }
+    }
+
     static String drawingKey(File drawingsFolder, File drawing) {
         try {
             java.nio.file.Path rel = drawingsFolder.toPath().relativize(drawing.toPath());

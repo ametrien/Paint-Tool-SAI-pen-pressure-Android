@@ -1,7 +1,9 @@
 package com.winlator.saipen;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -140,5 +142,98 @@ public class CanvasTimeTest {
         assertEquals(1, c.strokes);
         assertEquals(3.0, c.seconds, 0.01);
         assertEquals(1700000000000L, c.first);
+    }
+
+    /* ---- renames (2026-11-27) ---- */
+
+    @Test
+    public void saveAsOfASavedDrawingCopiesItsHistory() {
+        CanvasTime t = new CanvasTime();
+        t.titleChanged(null, "art.sai2", 0);
+        t.penDown(0); t.penUp(10, "art.sai2", 1000);
+        t.titleChanged("art.sai2", "art-v2.sai2", 50_000);
+        t.fileSaved("art-v2.sai2", 51_000);
+        assertEquals("the new file has the history", 1, t.get("art-v2.sai2").strokes);
+        assertEquals("and the old file keeps it", 1, t.get("art.sai2").strokes);
+        assertEquals(1, t.get("art-v2.sai2").sessions.size());
+        t.penDown(20); t.penUp(21, "art-v2.sai2", 60_000);
+        assertEquals(2, t.get("art-v2.sai2").strokes);
+        assertEquals(1, t.get("art.sai2").strokes);
+    }
+
+    @Test
+    public void aSwitchToADocumentOpenBeforeCopiesNothing() {
+        CanvasTime t = new CanvasTime();
+        t.titleChanged(null, "a.sai2", 0);
+        t.titleChanged("a.sai2", "b.sai2", 1_000);      /* b opened */
+        t.titleChanged("b.sai2", "a.sai2", 2_000);
+        t.fileSaved("b.sai2", 3_000);                   /* not b's Save As: we left it */
+        assertEquals(null, t.get("b.sai2"));
+        t.penDown(0); t.penUp(10, "a.sai2", 3_000);
+        t.titleChanged("a.sai2", "b.sai2", 50_000);     /* back to b, Ctrl+S on it */
+        t.fileSaved("b.sai2", 51_000);
+        assertEquals(null, t.get("b.sai2"));
+        assertEquals(1, t.get("a.sai2").strokes);
+    }
+
+    @Test
+    public void aSaveAsLongAfterTheSwitchCopiesNothing() {
+        CanvasTime t = new CanvasTime();
+        t.titleChanged(null, "a.sai2", 0);
+        t.penDown(0); t.penUp(10, "a.sai2", 1);
+        t.titleChanged("a.sai2", "c.sai2", 50_000);
+        t.fileSaved("c.sai2", 50_000 + CanvasTime.MERGE_MS + 1);
+        assertEquals(null, t.get("c.sai2"));
+    }
+
+    static java.util.Map<String, long[]> files(Object... kv) {
+        java.util.Map<String, long[]> m = new java.util.HashMap<>();
+        for (int i = 0; i < kv.length; i += 3) m.put((String) kv[i], new long[] {(Long) kv[i + 1], (Long) kv[i + 2]});
+        return m;
+    }
+
+    @Test
+    public void aRenameInAFileManagerIsFollowed() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(10, "art.sai2", 1000);
+        assertTrue("its file noted", t.follow(files("art.sai2", 5000L, 777L, "other.sai2", 9000L, 888L)));
+        assertTrue(t.follow(files("comics/portrait.sai2", 5000L, 777L, "other.sai2", 9000L, 888L)));
+        assertEquals(null, t.get("art.sai2"));
+        assertEquals(1, t.get("comics/portrait.sai2").strokes);
+        assertFalse("nothing more to do", t.follow(files("comics/portrait.sai2", 5000L, 777L)));
+    }
+
+    @Test
+    public void aRenameIsOnlyFollowedWhenItIsSure() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(10, "art.sai2", 1000);
+        t.penDown(20); t.penUp(21, "busy.sai2", 2000);
+        t.follow(files("art.sai2", 5000L, 777L, "busy.sai2", 1L, 2L));
+        /* two candidates exactly alike: a copy; nobody guesses */
+        t.follow(files("x.sai2", 5000L, 777L, "y.sai2", 5000L, 777L, "busy.sai2", 1L, 2L));
+        assertEquals(1, t.get("art.sai2").strokes);
+        assertEquals(null, t.get("x.sai2"));
+        /* the only match has time of its own: not a rename */
+        t.follow(files("busy.sai2", 5000L, 777L));
+        assertEquals(1, t.get("art.sai2").strokes);
+        assertEquals(1, t.get("busy.sai2").strokes);
+        /* saved since (another size): deleted, not renamed */
+        t.follow(files("n.sai2", 5100L, 999L, "busy.sai2", 1L, 2L));
+        assertEquals(null, t.get("n.sai2"));
+    }
+
+    @Test
+    public void theFileMarksAreKeptAndOldVersionsSkipThem() {
+        CanvasTime t = new CanvasTime();
+        t.penDown(0); t.penUp(10, "art.sai2", 1000);
+        t.follow(files("art.sai2", 5000L, 777L));
+        String text = t.serialize();
+        assertTrue(text.contains("@file\tart.sai2\t5000\t777\n"));
+        CanvasTime back = new CanvasTime();
+        back.parse(text);
+        back.follow(files("new.sai2", 5000L, 777L));
+        assertEquals(1, back.get("new.sai2").strokes);
+        for (String line : text.split("\n"))
+            if (line.startsWith("@file")) assertEquals("shorter than a drawing's line", 4, line.split("\t").length);
     }
 }
