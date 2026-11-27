@@ -693,6 +693,8 @@ SAI runs inside the app with Wine, which gives it drive letters for folders on y
 |---|---|---|
 | **`F:\`** | **Documents/SAI Drawings** | **Your drawings.** Safe, and stays when you uninstall the app. |
 | **`E:\`** | your whole device | Any folder, such as `E:\Pictures`, `E:\DCIM` or `E:\Art` |
+| **`G:\`** | your gallery (`DCIM` and `Pictures`) | Photos and screenshots to open as references |
+| **`H:\`**, **`I:\`**, … | SD cards and USB drives | Each one plugged in when SAI starts. Opening works, but on most tablets Android doesn't let SAI save there: save to `F:\` and copy the file over |
 | **`D:\`** | Download | Works, but clearing Downloads could delete your drawings |
 | **`S:\`** | SAI's own folder (`sai2.exe`) | |
 | **`C:\`** | only inside the app | **Don't save here**: your file manager can't see it, and uninstalling deletes it |
