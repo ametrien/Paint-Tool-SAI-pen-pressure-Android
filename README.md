@@ -643,7 +643,8 @@ devices myself. What I can tell from my own:
 
 I keep making SAI Pen faster wherever I can in the code, so that older devices work better too.
 But there is a limit to what the code can do: SAI runs in an emulator, and a slow processor stays
-slow.
+slow. I think SAI Pen is already about as close to that limit as it gets, give or take, at least
+with everything I can think of.
 
 I'm not telling anyone to buy a tablet, or anything else: what you buy is your own choice and at
 your own risk. But if I were picking a new tablet for myself, I'd look at:
