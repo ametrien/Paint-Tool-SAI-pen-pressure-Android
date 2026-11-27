@@ -227,6 +227,7 @@ public final class SpeedSession {
         String was = saiTitle;
         if (title.equals(was)) return;
         saiTitle = title;
+        Log.i(TAG, "SAI title: " + title);
         CanvasTime ct = canvas;
         if (ct != null) ct.titleChanged(CanvasTime.key(was), CanvasTime.key(title), System.currentTimeMillis());
     }

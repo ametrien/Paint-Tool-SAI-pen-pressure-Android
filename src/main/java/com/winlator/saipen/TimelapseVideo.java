@@ -211,6 +211,14 @@ public final class TimelapseVideo {
 
             String name = s.name.isEmpty() && live.isDirectory() ? TimelapseLive.name(live) : s.name;
             String title = titleOf(name, startOf(s), names);
+            if (DrawingLibrary.isDefaultTitle(title)) {
+                /* saved under a name no frame saw: the file that looks like the end */
+                String saved = savedByLook(closing, startOf(s));
+                if (saved != null) {
+                    Log.i(TAG, "timelapse: " + title + " was saved as " + saved + " (by how it looks)");
+                    title = saved;
+                }
+            }
             DrawingLibrary.Drawing d = TimelapseShelf.add(lib, out, title, startOf(s), frameCount, s.width, s.height,
                                                           opening, closing, b, last.header.stride);
             made.filed.add(d.pieces.get(d.pieces.size() - 1).file);
@@ -236,6 +244,36 @@ public final class TimelapseVideo {
         if (names == null || !DrawingLibrary.isDefaultTitle(name)) return name;
         String saved = names.savedAs(name, startedAt);
         return saved != null ? saved : name;
+    }
+
+    /** The drawing in SAI Drawings saved since `since` (a minute's grace)
+     *  whose small picture looks like `closing` (SavedAsMatch); null if none. */
+    static String savedByLook(DrawingLibrary.Signature closing, long since) {
+        try {
+            List<SavedAsMatch.Candidate> cands = new ArrayList<>();
+            for (DrawingIndex.Entry e : DrawingIndex.all(SaiPenSetup.drawingsFolder())) {
+                if (e.modified < since - 60_000) continue;
+                android.graphics.Bitmap bm = SaiLauncherActivity.thumbnail(e.file, 96);
+                if (bm == null) continue;
+                android.graphics.Bitmap argb = bm.getConfig() == android.graphics.Bitmap.Config.ARGB_8888
+                    ? bm : bm.copy(android.graphics.Bitmap.Config.ARGB_8888, false);
+                int w = argb.getWidth(), h = argb.getHeight();
+                java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocate(w * h * 4);
+                argb.copyPixelsToBuffer(buf);
+                byte[] px = buf.array();
+                for (int i = 0; i < px.length; i += 4) {   /* RGBA in memory: swap to BGRA */
+                    byte r = px[i];
+                    px[i] = px[i + 2];
+                    px[i + 2] = r;
+                }
+                cands.add(new SavedAsMatch.Candidate(e.file.getName(), DrawingLibrary.Signature.of(px, w, h, w * 4)));
+            }
+            return SavedAsMatch.pick(closing, cands);
+        }
+        catch (Throwable t) {
+            Log.w(TAG, "timelapse: matching the saved file by look: " + t);
+            return null;
+        }
     }
 
     static long startOf(TimelapseFrames.Segment s) {
