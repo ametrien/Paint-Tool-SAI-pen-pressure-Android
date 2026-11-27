@@ -130,6 +130,28 @@ final class DrawingsDialog {
     private boolean reversed = false;
     /** The drawing whose page is open; null on the cards. */
     private Entry shown;
+    /** A timelapse was filed while this window is open: match the drawings
+     *  to the timelapses again and show it on the card and the open page. */
+    private final Runnable onTimelapses = this::timelapsesChanged;
+    private void timelapsesChanged() { run(io, () -> {
+        if (closed) return;
+        List<Drawing> videos;
+        try { videos = TimelapseShelf.load().newestFirst(); }
+        catch (RuntimeException e) { Log.w(TAG, "drawings: no timelapse list", e); return; }
+        List<Entry> f = all;
+        Map<File, Drawing> v = new HashMap<>();
+        for (Entry e : f) {
+            Drawing d = DrawingIndex.timelapseFor(e, videos);
+            if (d != null) v.put(e.file, d);
+        }
+        activity.runOnUiThread(() -> {
+            if (closed || all != f) return;
+            videoOf = v;
+            Log.i(TAG, "drawings: timelapses matched again, " + v.size() + " drawing(s) have one");
+            if (shown != null) showDrawing(shown, 0);
+            else if (adapter != null) adapter.notifyDataSetChanged();   /* keeps the scroll and a selection */
+        });
+    }); }
     /** Cards held to be deleted; selecting while not empty. */
     private final Set<File> selected = new LinkedHashSet<>();
     private boolean deleting;
@@ -184,8 +206,10 @@ final class DrawingsDialog {
             }
             return true;
         });
+        TimelapseShelf.listen(onTimelapses);
         dialog.setOnDismissListener(d -> {
             closed = true;
+            TimelapseShelf.unlisten(onTimelapses);
             io.shutdown();   /* a Share copy already started still finishes */
         });
         /* turned the device: the page is laid out again for the new width

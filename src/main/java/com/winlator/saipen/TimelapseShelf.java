@@ -43,6 +43,19 @@ public final class TimelapseShelf {
     private static final String TAG = "SaiPen";
     private TimelapseShelf() {}
 
+    /* Windows showing timelapses (All drawings) hear when one is filed, so a
+       timelapse that finishes while the window is open shows at once. Called
+       on the filing thread, after the joined video is ready. */
+    private static final List<Runnable> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    public static void listen(Runnable r) { listeners.add(r); }
+    public static void unlisten(Runnable r) { listeners.remove(r); }
+    static void changed() {
+        for (Runnable r : listeners) {
+            try { r.run(); }
+            catch (RuntimeException e) { Log.w(TAG, "timelapse: a listener failed", e); }
+        }
+    }
+
     public static File root() {
         return SaiPenSetup.timelapseFolder();
     }
@@ -107,6 +120,7 @@ public final class TimelapseShelf {
         if (lastIs(d, piece)) writeStill(still(d), lastPixels, width, height, stride);
         save(lib);
         rebuild(d);
+        changed();
         return d;
     }
 
@@ -161,6 +175,7 @@ public final class TimelapseShelf {
         }
         save(lib);
         rebuild(to);
+        changed();
         return to;
     }
 
