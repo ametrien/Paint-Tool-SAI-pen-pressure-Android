@@ -74,7 +74,7 @@
     <string name="saipen_video_skipped">No video, nothing was drawn: %1$s</string>
     <string name="saipen_frame_when">A new frame:</string>
     <string name="saipen_frame_every_stroke">after every stroke</string>
-    <string name="saipen_tl_space_auto">Room for frames while drawing: Auto, %1$s now (a quarter of the %2$s free)</string>
+    <string name="saipen_tl_space_auto">Room for frames while drawing: Auto, the most that fits, %1$s now (a quarter of the %2$s free)</string>
     <string name="saipen_tl_space_fixed">Room for frames while drawing: %1$s (%2$s free)</string>
     <string name="saipen_tl_space_low">Only %1$s free: a very long drawing may lose timelapse frames. Freeing some space helps.</string>
     <string name="saipen_frame_short_pause">after a short pause</string>

@@ -999,21 +999,20 @@ public class SaiLauncherActivity extends AppCompatActivity {
         });
     }
 
-    /** "Room for frames": a slider, Auto then 2 to 20 GB (TimelapseBudget),
+    /** "Room for frames": a slider, 2 GB up in half-GB steps, Auto at the right end (TimelapseBudget),
      *  with what is free, and a yellow note when that is too little. */
     private void setUpTimelapseSpace() {
         android.widget.SeekBar bar = findViewById(R.id.SaiPenTlSpace);
         TextView label = findViewById(R.id.SaiPenTlSpaceLabel);
         TextView warn = findViewById(R.id.SaiPenTlSpaceWarn);
-        /* step 0 is Auto, step n is n + 1 GB: 2 GB up to a quarter of the
-           free space, so the right end is all that safely fits */
-        int maxGb = TimelapseBudget.maxGb(getFilesDir().getUsableSpace());
-        bar.setMax(maxGb - TimelapseBudget.MIN_GB + 1);
-        int saved = TimelapseBudget.choice(prefs.getInt(TimelapseBudget.PREF_GB, TimelapseBudget.AUTO));
-        bar.setProgress(saved == TimelapseBudget.AUTO ? 0 : Math.min(saved, maxGb) - TimelapseBudget.MIN_GB + 1);
+        /* 2 GB up in half-GB steps, the last step is Auto: all that safely
+           fits, a quarter of the free space */
+        long free0 = getFilesDir().getUsableSpace();
+        bar.setMax(TimelapseBudget.lastStep(free0));
+        bar.setProgress(TimelapseBudget.stepOf(timelapseRoomChoice(), free0));
         java.util.function.IntConsumer show = step -> {
-            int gb = step == 0 ? TimelapseBudget.AUTO : step + TimelapseBudget.MIN_GB - 1;
             long free = getFilesDir().getUsableSpace();
+            int gb = TimelapseBudget.mbAt(step, free);
             long mb = TimelapseBudget.megabytes(free, gb);
             String size = String.format(java.util.Locale.ROOT, "%.1f GB", mb / 1024.0);
             String freeText = String.format(java.util.Locale.ROOT, "%.1f GB", free / (1024.0 * 1024 * 1024));
@@ -1030,10 +1029,16 @@ public class SaiLauncherActivity extends AppCompatActivity {
             @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
             @Override public void onStopTrackingTouch(android.widget.SeekBar s) {
                 int v = s.getProgress();
-                prefs.edit().putInt(TimelapseBudget.PREF_GB,
-                    v == 0 ? TimelapseBudget.AUTO : v + TimelapseBudget.MIN_GB - 1).apply();
+                prefs.edit().putInt(TimelapseBudget.PREF_MB,
+                    TimelapseBudget.mbAt(v, getFilesDir().getUsableSpace())).apply();
             }
         });
+    }
+
+    /** The saved room for frames, megabytes or AUTO; an old whole-GB choice carries over. */
+    private int timelapseRoomChoice() {
+        if (prefs.contains(TimelapseBudget.PREF_MB)) return prefs.getInt(TimelapseBudget.PREF_MB, TimelapseBudget.AUTO);
+        return TimelapseBudget.fromGb(prefs.getInt(TimelapseBudget.PREF_GB, TimelapseBudget.AUTO));
     }
 
     /** "Fast cores: Drawing / All of SAI / Off" (SaiCores), one
@@ -2155,7 +2160,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         String env = EnvVarsEdit.set(container.getEnvVars(), "WT_TIMELAPSE", record ? "1" : null);
         /* room for frames before the DLL thins them: a quarter of the free space (TimelapseBudget) */
         long budgetMb = TimelapseBudget.megabytes(getFilesDir().getUsableSpace(),
-                                                  prefs.getInt(TimelapseBudget.PREF_GB, TimelapseBudget.AUTO));
+                                                  timelapseRoomChoice());
         env = EnvVarsEdit.set(env, "WT_TIMELAPSE_BUDGET_MB", record ? String.valueOf(budgetMb) : null);
         /* the same room for the app's packed frames (TimelapseRecorder) */
         TimelapseRecorder.budgetBytes = budgetMb << 20;
