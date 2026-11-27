@@ -4,7 +4,9 @@ commit d050548 (2026-11-27), folder wintab-src/
 (the timelapse records the document SAI's window title names, not the one
 opened last, and notes in C:\sai-timelapse\documents.txt which file each
 document was opened from and saved to; on top of c26c44c, the rereads that
-read every tile). That commit is not on GitHub yet.
+read every tile). That commit is not on GitHub yet: its wintab-src/ folder is
+in SAI-Pen-0.5.1-sources.tar, attached to the 0.5.1 release, as
+SAI-Pen-0.5.1-sources/wintab-src/.
 
 The DLL is an x86-64 Windows DLL. It runs inside Wine in the app and reads pen
 samples on UDP 127.0.0.1:47800.

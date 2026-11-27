@@ -64,7 +64,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.5.0</summary>
+> <summary>What's new, 0.4.19 to 0.5.1</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -116,6 +116,11 @@ On a Mac? The same, also by me:
 >   drawing by how it looks even after a rename. A *Pen pressure* slider for a lighter touch.
 >   SD cards and USB drives as H: and on in SAI. *Try it* draws a line, S-curve or heart with
 >   every brush, texture and shape. A red *Exit SAI* key, and less processor use while idle.
+> - **0.5.1:** the timelapse records the drawing you are drawing on, also with a reference picture
+>   open as a second document, and knows each drawing by its file: open it again and the new
+>   session joins its timelapse. Statistics by day for each drawing, with *Export CSV*. Every
+>   brush, texture and shape previews with a line, S-curve or heart. Loading tips follow your
+>   gestures. The timelapse is still experimental: ⚠ by its name.
 >
 > </details>
 
@@ -834,11 +839,11 @@ on SAI Pen's screen under **Palm rejection**, before starting SAI. Each works on
 > as usual and don't rely on the timelapse as the only record of your work.
 
 > [!WARNING]
-> **Tested with one open canvas only.** In 0.5.0 and earlier, having a second document open in
-> SAI, for example a reference picture opened next to your drawing, can break the timelapse:
-> it may record the other document instead and save almost nothing of your drawing, even if
-> you switch back to it. Until this is fixed, paste references into a layer of your drawing,
-> or keep Android's screen recorder running as a backup.
+> **Experimental: please don't rely on it yet.** In 0.5.0 and earlier, a second document open in
+> SAI, for example a reference picture next to your drawing, could break the timelapse: it
+> recorded the other document and saved almost nothing of your drawing. 0.5.1 records the
+> document you are drawing on, but the timelapse is still new: for a drawing that matters, keep
+> Android's screen recorder running as a backup.
 
 **Record a timelapse** on SAI Pen's screen is on from the start. When the pen rests after a
 stroke, the app saves a frame of the canvas view you drew in, exactly as it looks on the screen.
