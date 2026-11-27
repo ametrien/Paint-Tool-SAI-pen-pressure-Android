@@ -39,7 +39,7 @@ import java.util.List;
  *
  * A small dot floats over SAI. Drag it anywhere; tap it and it opens into
  * the buttons each person picked on SAI Pen's screen (FloatingKeysSettings,
- * Shortcut), up to Shortcut.MAX (10), of two kinds:
+ * Shortcut), up to Shortcut.MAX (12), of two kinds:
  * - pressed once per tap: Ctrl+Z, Ctrl+T…;
  * - held: a tap keeps the keys down (the button lit) for the pen until the
  *   next tap, or they stay down while a finger is on the button
@@ -126,7 +126,7 @@ public final class FloatingKeys {
     }
 
     public static List<Shortcut> buttons(SharedPreferences prefs) {
-        return Shortcut.parseList(prefs.getString(PREF_BUTTONS, Shortcut.DEFAULTS));
+        return Shortcut.buttonsOf(prefs.getString(PREF_BUTTONS, null));
     }
 
     /* shows or hides the keys over SAI now; null when there are none */

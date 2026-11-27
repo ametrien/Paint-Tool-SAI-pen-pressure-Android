@@ -32,17 +32,31 @@ public final class Shortcut {
     public static final int CTRL = 1, ALT = 2, SHIFT = 4;
 
     /** Buttons at most: one or two rows on a tablet (Shortcut.columns),
-     *  more on a phone. */
-    public static final int MAX = 10;
+     *  more on a phone. 12 since copy and paste joined the first buttons
+     *  (the owner, 2026-11-27): two rows of six. */
+    public static final int MAX = 12;
 
     /** The Exit SAI button, as kept in the list and as its label. */
     public static final String EXIT_SAI = "Exit SAI";
 
-    /** The first time: Ctrl to hold, undo and redo next to it, transform,
-     *  select all and deselect, Hue and Saturation, Enter to finish a
-     *  transform, and Exit SAI. One under MAX, so a button of one's own can
-     *  be added straight away. */
-    public static final String DEFAULTS = "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+    /** The first time: Ctrl to hold, undo and redo next to it, copy and
+     *  paste, transform, select all and deselect, Hue and Saturation, Enter
+     *  to finish a transform, and Exit SAI. One under MAX, so a button of
+     *  one's own can be added straight away. */
+    public static final String DEFAULTS =
+        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+
+    /** The first buttons before copy and paste (0.5.1 and earlier). A saved
+     *  list that is exactly these was never changed by hand: it gets the new
+     *  first buttons (buttonsOf). */
+    static final String DEFAULTS_0_5_1 = "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+
+    /** The buttons from the saved list (null: never saved): the first ones
+     *  when it was never changed by hand. */
+    public static List<Shortcut> buttonsOf(String saved) {
+        if (saved == null || saved.trim().equals(DEFAULTS_0_5_1)) return parseList(DEFAULTS);
+        return parseList(saved);
+    }
 
     private static final String HOLD = "hold ";
 
