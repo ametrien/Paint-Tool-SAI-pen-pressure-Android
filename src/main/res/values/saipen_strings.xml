@@ -399,4 +399,11 @@
     <string name="saipen_drawing_previous">Previous drawing</string>
     <string name="saipen_drawing_next">Next drawing</string>
     <string name="saipen_wait_for_video">The timelapse video is being made. Start SAI when it is done.</string>
+    <string name="saipen_pressure_title">Pen pressure</string>
+    <string name="saipen_pressure_normal">Normal</string>
+    <string name="saipen_pressure_soft">Softer, %1$d of 10</string>
+    <string name="saipen_pressure">How hard the pen has to press for a full line. Softer: a light press already gives a strong line, so the hand tires less. A full press stays full. Applies from the next start of SAI.</string>
+    <string name="saipen_pressure_light">A light press gives %1$d %%, a medium one %2$d %%</string>
+    <string name="saipen_pressure_firm">Normal</string>
+    <string name="saipen_pressure_softest">Very soft</string>
 </resources>

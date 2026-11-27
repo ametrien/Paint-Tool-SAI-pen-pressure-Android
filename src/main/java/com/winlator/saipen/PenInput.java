@@ -328,7 +328,7 @@ public final class PenInput {
      *  (or nothing at all): report it as hovering so SAI does not ink. */
     private int pressureAt(Event e, int pos) {
         if (heldButton != BUTTON_LEFT) return 0;
-        return PenWire.pressureLevel(e.pressure(pos), true, pmax);
+        return PenWire.pressureLevel(PenPressure.apply(e.pressure(pos)), true, pmax);
     }
 
     /** The sample's X screen point into lastX/lastY, cursor untouched. */

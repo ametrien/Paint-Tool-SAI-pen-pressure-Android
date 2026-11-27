@@ -357,7 +357,7 @@ index 18acd68..e328ed3 100644
              if (container.getHUDMode() == FrameRating.Mode.FULL.ordinal()) envVars.put("X11_WND_GPU_INFO", "1");
  
              String desktopName = shortcut != null || getIntent().hasExtra("exec_path") ? "nogui" : "shell";
-@@ -595,7 +622,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -595,7 +622,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
          capturePointerOnExternalMouse = preferences.getBoolean("capture_pointer_on_external_mouse", true);
          touchpadView = new TouchpadView(this, xServer, capturePointerOnExternalMouse);
          touchpadView.setSensitivity(globalCursorSpeed);
@@ -369,6 +369,8 @@ index 18acd68..e328ed3 100644
 +            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_ANDROID, com.winlator.saipen.FirstRun.PALM_ANDROID),
 +            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_PEN_NEAR, com.winlator.saipen.FirstRun.PALM_PEN_NEAR),
 +            preferences.getBoolean(com.winlator.saipen.PalmFilter.PREF_PALM_BIG, com.winlator.saipen.FirstRun.PALM_BIG));
++        /* SAI Pen: how hard the pen presses for a full line (PenPressure) */
++        com.winlator.saipen.PenPressure.setSoftness(preferences.getInt(com.winlator.saipen.PenPressure.PREF_SOFTNESS, com.winlator.saipen.FirstRun.PEN_SOFTNESS));
 +        /* SAI Pen: testing only, an S Pen that behaves like a pen with no hover
 +         * (issue #1): adb shell setprop debug.saipen.test_no_hover 1 */
 +        touchpadView.setPenIgnoreHover("1".equals(com.winlator.saipen.PenInput.systemProperty(
@@ -376,7 +378,7 @@ index 18acd68..e328ed3 100644
          touchpadView.setFourFingersTapCallback(() -> {
              if (!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(GravityCompat.START);
          });
-@@ -629,6 +666,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -629,6 +668,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
          if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
          AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
@@ -401,7 +403,7 @@ index 18acd68..e328ed3 100644
      }
  
      private void showInputControlsDialog() {
-@@ -797,6 +852,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -797,6 +854,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
      @Override
      public boolean dispatchKeyEvent(KeyEvent event) {
@@ -423,7 +425,7 @@ index 18acd68..e328ed3 100644
          return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
                 (!ExternalController.isGameController(event.getDevice()) && super.dispatchKeyEvent(event));
      }
-@@ -972,6 +1042,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -972,6 +1044,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                      execPath = null;
                  }
              }

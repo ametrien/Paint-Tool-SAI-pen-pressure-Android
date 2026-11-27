@@ -23,6 +23,8 @@ public final class FirstRun {
     public static final boolean PALM_ANDROID = false;
     public static final boolean PALM_PEN_NEAR = false;
     public static final boolean PALM_BIG = false;
+    /** Pen pressure (PenPressure): 0, Normal, the pen as it is. */
+    public static final int PEN_SOFTNESS = 0;
     /** Screen drawing (FrontBuffer.Mode's word): "off", Standard (the
      *  owner, 0.4.30): the front buffer is a choice to try on SAI Pen's
      *  screen, not the default. 0.4.29 had "on". */

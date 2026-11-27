@@ -273,6 +273,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         fold(R.id.SaiPenCoresRow, R.id.SaiPenCoresBody, R.id.SaiPenCoresArrow);
         fold(R.id.SaiPenProcessorsRow, R.id.SaiPenProcessorsBody, R.id.SaiPenProcessorsArrow);
         fold(R.id.SaiPenBufferRow, R.id.SaiPenBufferBody, R.id.SaiPenBufferArrow);
+        fold(R.id.SaiPenPressureRow, R.id.SaiPenPressureBody, R.id.SaiPenPressureArrow);
         fold(R.id.SaiPenPalmRow, R.id.SaiPenPalmBody, R.id.SaiPenPalmArrow);
         fold(R.id.SaiPenHomeRow, R.id.SaiPenHomeBody, R.id.SaiPenHomeArrow);
         fold(R.id.SaiPenKeysRow, R.id.SaiPenKeysBody, R.id.SaiPenKeysArrow);
@@ -1077,6 +1078,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
         logs.setChecked(prefs.getBoolean(SpeedSession.PREF_SPEED_LOG, FirstRun.SPEED_LOG));
         logs.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(SpeedSession.PREF_SPEED_LOG, on).apply());
 
+        setUpPenPressure();
+
         /* palm rejection: three checks, each on its own, all off by default */
         palmSwitch(R.id.SaiPenPalmAndroid, PalmFilter.PREF_PALM_ANDROID, FirstRun.PALM_ANDROID);
         palmSwitch(R.id.SaiPenPalmBig, PalmFilter.PREF_PALM_BIG, FirstRun.PALM_BIG);
@@ -1109,6 +1112,31 @@ public class SaiLauncherActivity extends AppCompatActivity {
         Runnable gesturesChanged = () -> gesturesValue.setText(GesturesSettings.summary(this, prefs));
         GesturesSettings.build(this, findViewById(R.id.SaiPenGesturesBody), prefs, DIALOG_THEME, gesturesChanged);
         gesturesChanged.run();
+    }
+
+    /** "Pen pressure": a slider, Normal then softer up to 10 (PenPressure),
+     *  with what a light and a medium press give, and the step next to the
+     *  row's title so it shows without opening it. */
+    private void setUpPenPressure() {
+        android.widget.SeekBar bar = findViewById(R.id.SaiPenPressure);
+        TextView value = findViewById(R.id.SaiPenPressureValue);
+        TextView what = findViewById(R.id.SaiPenPressureWhat);
+        bar.setMax(PenPressure.MAX_SOFTNESS);
+        bar.setProgress(PenPressure.clamp(prefs.getInt(PenPressure.PREF_SOFTNESS, FirstRun.PEN_SOFTNESS)));
+        java.util.function.IntConsumer show = step -> {
+            value.setText(step == 0 ? getString(R.string.saipen_pressure_normal)
+                : getString(R.string.saipen_pressure_soft, step));
+            what.setText(getString(R.string.saipen_pressure_light,
+                PenPressure.percentFor(0.25f, step), PenPressure.percentFor(0.5f, step)));
+        };
+        show.accept(bar.getProgress());
+        bar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar s, int v, boolean user) { show.accept(v); }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar s) {}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar s) {
+                prefs.edit().putInt(PenPressure.PREF_SOFTNESS, s.getProgress()).apply();
+            }
+        });
     }
 
     /** "1 of 3 on" next to Palm rejection, so it shows without opening the row. */

@@ -807,6 +807,57 @@
 
             <View style="@style/SaiPenDivider" />
 
+            <!-- how hard the pen presses for a full line (PenPressure) -->
+            <LinearLayout android:id="@+id/SaiPenPressureRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_pressure_title" />
+                <TextView android:id="@+id/SaiPenPressureValue" style="@style/SaiPenRowValue" />
+                <TextView android:id="@+id/SaiPenPressureArrow" style="@style/SaiPenArrow" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/SaiPenPressureBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/SaiPenNote"
+                    android:layout_marginTop="0dp"
+                    android:text="@string/saipen_pressure" />
+
+                <SeekBar
+                    android:id="@+id/SaiPenPressure"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="6dp" />
+
+                <!-- the slider's two ends -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        style="@style/SaiPenNote"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_marginTop="0dp"
+                        android:text="@string/saipen_pressure_firm" />
+                    <TextView
+                        style="@style/SaiPenNote"
+                        android:layout_width="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:text="@string/saipen_pressure_softest" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/SaiPenPressureWhat"
+                    style="@style/SaiPenNote" />
+            </LinearLayout>
+
+            <View style="@style/SaiPenDivider" />
+
             <!-- palm rejection -->
             <LinearLayout android:id="@+id/SaiPenPalmRow" style="@style/SaiPenRow" android:clickable="true" android:focusable="true">
                 <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_palm_title" />

@@ -381,4 +381,11 @@
     <string name="saipen_drawing_previous">Предыдущий рисунок</string>
     <string name="saipen_drawing_next">Следующий рисунок</string>
     <string name="saipen_wait_for_video">Сейчас делается видео таймлапса. Запустите SAI, когда оно будет готово.</string>
+    <string name="saipen_pressure_title">Нажим пера</string>
+    <string name="saipen_pressure_normal">Обычный</string>
+    <string name="saipen_pressure_soft">Мягче, %1$d из 10</string>
+    <string name="saipen_pressure">Как сильно нужно давить пером для полной линии. Мягче: уже лёгкое касание даёт насыщенную линию, рука меньше устаёт. Полный нажим остаётся полным. Действует со следующего запуска SAI.</string>
+    <string name="saipen_pressure_light">Лёгкое касание даёт %1$d %%, среднее %2$d %%</string>
+    <string name="saipen_pressure_firm">Обычный</string>
+    <string name="saipen_pressure_softest">Очень мягкий</string>
 </resources>
