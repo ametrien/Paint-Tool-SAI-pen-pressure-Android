@@ -351,7 +351,8 @@ folder. Or copy the picture into Documents/SAI Drawings and open it from `F:\`.
 <details>
 <summary><b>Are my drawings, brushes and licence safe when I update or uninstall?</b></summary>
 
-- **Updating:** install the new APK over the old one. Everything stays.
+- **Updating:** install the new APK over the old one. Everything stays. **Save your drawing and
+  close SAI first:** installing closes SAI at once, and what you haven't saved is lost.
 - **Uninstalling** deletes everything inside the app: drawings on `C:\` and the installed licence.
   Drawings on `F:\`, your brushes and the `.slc` in Downloads stay.
 
@@ -434,6 +435,9 @@ settings when it is closed properly. What helps:
   about notifications: tap **Allow**, the protection runs through a notification.
 - Settings > Apps > SAI Pen > **Battery**: **Unrestricted**. Take SAI Pen off the **Sleeping apps**
   lists.
+  Since 0.5.2 **Ready to draw** above **Start SAI** shows whether it is (*In the background*), and
+  after SAI was closed from outside SAI Pen's screen says what closed it: Android to free memory,
+  a swipe in the recent apps, an update or an error.
 - After setting up your brushes, press SAI's **save tool settings** button, or close SAI once with
   **File > Exit**.
 
@@ -1146,8 +1150,13 @@ instead, and check the [FAQ](#faq) first.
 **Please give as many details as you can.** I can only fix what I can reproduce, and a short
 "it doesn't work" usually isn't enough:
 
-- **Device** and **Android version** (Settings → About tablet / About phone);
-- **SAI Pen version** (bottom of SAI Pen's screen) and **SAI version** (SAI's title bar);
+**Since 0.5.2: Report a problem**, at the bottom of SAI Pen's screen, shows everything that
+helps in one text: the device, Android, its processor cores, SAI's build, SAI Pen's and
+Winlator's settings (Box64 too), free memory and storage, battery and temperature, and how fast
+SAI drew on your device. Tap **Copy** and paste it into your comment. There is no licence, System
+ID or file name in it, and nothing is sent: it is only copied. Then add:
+
+- **SAI's version** (SAI's title bar), if the text says it isn't known;
 - **your pen or keyboard**, if the problem is about them;
 - **what you did, step by step**, what you expected, and what happened instead;
 - **how often** it happens (always, sometimes, once) and **since when** (after an update, from
