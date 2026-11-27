@@ -641,6 +641,10 @@ devices myself. What I can tell from my own:
   sets it by default (*Settings > Processors SAI sees*).
 - **Galaxy S24 Ultra:** SAI flies.
 
+I keep making SAI Pen faster wherever I can in the code, so that older devices work better too.
+But there is a limit to what the code can do: SAI runs in an emulator, and a slow processor stays
+slow.
+
 I'm not telling anyone to buy a tablet, or anything else: what you buy is your own choice and at
 your own risk. But if I were picking a new tablet for myself, I'd look at:
 
