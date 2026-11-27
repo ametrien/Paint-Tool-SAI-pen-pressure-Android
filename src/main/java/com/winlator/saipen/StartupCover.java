@@ -127,8 +127,36 @@ public final class StartupCover {
         }, 150);
     }
 
-    /** The loading screen's tip: the keyboard, or the on-screen keys. */
-    static final int[] TIPS = {R.string.saipen_tip_keyboard, R.string.saipen_tip_keys};
+    /** One loading-screen tip, picked at random from those true for the
+     *  gestures as they are set now (LoadingTips). */
+    static String tip(Activity activity) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        Gestures.Action[] actions = Gestures.actions(prefs.getAll());
+        boolean keysGesture = prefs.getBoolean(FloatingKeys.PREF_GESTURE, FloatingKeys.GESTURE_BY_DEFAULT);
+        java.util.List<LoadingTips.Tip> tips = LoadingTips.tips(actions, keysGesture);
+        LoadingTips.Tip t = tips.get(new java.util.Random().nextInt(tips.size()));
+        switch (t.kind) {
+            case KEYBOARD:
+                /* the standard gesture keeps its own, smoother sentence */
+                return t.input == Gestures.Input.THREE_TAP ? activity.getString(R.string.saipen_tip_keyboard)
+                    : activity.getString(R.string.saipen_tip_keyboard_any, gestureName(activity, t.input));
+            case KEYS_HOLD:
+                return activity.getString(R.string.saipen_tip_keys);
+            case KEYS:
+                return activity.getString(R.string.saipen_tip_keys_any, gestureName(activity, t.input));
+            case CHANGE_GESTURES:
+            default:
+                return activity.getString(R.string.saipen_tip_change_gestures);
+        }
+    }
+
+    /** A gesture's name inside a sentence: "two-finger double tap". */
+    private static String gestureName(Activity activity, Gestures.Input in) {
+        String n = activity.getString(GesturesSettings.inputName(in));
+        if (n.isEmpty()) return n;
+        java.util.Locale l = activity.getResources().getConfiguration().getLocales().get(0);
+        return n.substring(0, 1).toLowerCase(l) + n.substring(1);
+    }
 
     private static View build(Activity activity) {
         float dp = activity.getResources().getDisplayMetrics().density;
@@ -176,9 +204,9 @@ public final class StartupCover {
         sp.topMargin = (int) (12 * dp);
         box.addView(stage, sp);
 
-        /* one of the two three-finger gestures, picked at random each start */
+        /* a gesture worth knowing, as it is set now, picked at random each start */
         TextView tip = new TextView(activity);
-        tip.setText(TIPS[new java.util.Random().nextInt(TIPS.length)]);
+        tip.setText(tip(activity));
         tip.setTextColor(TEXT);
         tip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         tip.setGravity(Gravity.CENTER);
@@ -196,6 +224,10 @@ public final class StartupCover {
         int shown = prefs.getInt(PREF_MENU_HINTS, 0);
         if (shown >= MENU_HINTS) return;
         prefs.edit().putInt(PREF_MENU_HINTS, shown + 1).apply();
-        Toast.makeText(activity, R.string.saipen_menu_hint, Toast.LENGTH_LONG).show();
+        /* the menu's gestures cannot be changed; the keyboard's can */
+        String hint = activity.getString(R.string.saipen_menu_hint);
+        Gestures.Input keyboard = LoadingTips.first(Gestures.actions(prefs.getAll()), Gestures.Type.KEYBOARD);
+        if (keyboard != null) hint += " " + activity.getString(R.string.saipen_menu_hint_keyboard, gestureName(activity, keyboard));
+        Toast.makeText(activity, hint, Toast.LENGTH_LONG).show();
     }
 }

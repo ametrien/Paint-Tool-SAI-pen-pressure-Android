@@ -35,7 +35,8 @@
     <string name="saipen_starting">Starting SAI</string>
     <string name="saipen_menu">SAI Pen: licence and settings</string>
     <string name="saipen_menu_confirm">SAI will close and unsaved work will be lost. Open the SAI Pen screen?</string>
-    <string name="saipen_menu_hint">Menu: tap with four fingers, or the back gesture. Keyboard: tap with three fingers.</string>
+    <string name="saipen_menu_hint">Menu: tap with four fingers, or the back gesture.</string>
+    <string name="saipen_menu_hint_keyboard">Keyboard: %1$s.</string>
     <string name="saipen_gestures">Gestures</string>
     <string name="saipen_gestures_text">These are the standard gestures; change them under Gestures on this screen, or hold four fingers still over SAI. Every gesture as it is set now: About SAI Pen at the bottom of this screen.\n\nPen: draws, with pressure. The pen\'s side button held while touching: right click.\n\nOne finger: puts the cursor under it; a short tap clicks.\n\nTwo fingers: move them to scroll the canvas, spread or pinch them to zoom, turn them to rotate the canvas. A short tap: right click.\n\nThree fingers, a short tap: the keyboard, to type a file name. Held still for a moment: show or hide the on-screen keys.\n\nFour fingers, a short tap, or the back gesture from the screen edge: the menu, with the keyboard, \"SAI Pen: licence and settings\" and Exit. Held still for a moment: the gesture settings, right over SAI.\n\nClosing SAI with its cross brings you back to this screen.</string>
     <string name="saipen_closing">SAI closed. Back to SAI Pen</string>
@@ -56,6 +57,9 @@
     <string name="saipen_sharpness_native">%1$d, the display\'s own</string>
     <string name="saipen_tip_keyboard">Tip: a short tap with three fingers opens the keyboard, and another one closes it.</string>
     <string name="saipen_tip_keys">Tip: hold three fingers still for a moment to show or hide the on-screen keys.</string>
+    <string name="saipen_tip_keyboard_any">Tip: to open the keyboard, and to close it again: %1$s.</string>
+    <string name="saipen_tip_keys_any">Tip: to show or hide the on-screen keys: %1$s.</string>
+    <string name="saipen_tip_change_gestures">Tip: hold four fingers still over SAI to choose what each gesture does.</string>
     <string name="saipen_starting_wine">SAI is starting, %1$d s</string>
     <string name="saipen_starting_wine_first">SAI is starting, %1$d s. The first start takes longer.</string>
     <string name="saipen_starting_drawing">SAI is drawing its window, %1$d s</string>
