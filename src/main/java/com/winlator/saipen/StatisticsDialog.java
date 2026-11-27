@@ -51,6 +51,10 @@ final class StatisticsDialog {
     private final Activity activity;
     private final Map<String, DrawingStats.Day> days;
     private final Exporter exporter;
+    /** One drawing's days (DrawingDays) instead of all drawing: its name, else null. */
+    private final String drawing;
+    /** That drawing's time counted before sittings were kept: in no day. */
+    private final double earlierSeconds;
     private final TextView[] cardValue = new TextView[4], cardDetail = new TextView[4];
     private final StatsChartView chart;
     private final TextView footer;
@@ -61,13 +65,24 @@ final class StatisticsDialog {
     private int year = LocalDate.now().getYear();
 
     static void show(Activity activity, Map<String, DrawingStats.Day> days, Exporter exporter) {
-        new StatisticsDialog(activity, days, exporter).open();
+        new StatisticsDialog(activity, days, exporter, null, 0).open();
     }
 
-    private StatisticsDialog(Activity activity, Map<String, DrawingStats.Day> days, Exporter exporter) {
+    /** One drawing's statistics: the same window over its days only. */
+    static void showDrawing(Activity activity, String name, Map<String, DrawingStats.Day> days, double earlierSeconds) {
+        StatisticsDialog d = new StatisticsDialog(activity, days, null, name, earlierSeconds);
+        /* a drawing's days are few: all of them, not the last month */
+        d.period = Period.ALL;
+        d.open();
+    }
+
+    private StatisticsDialog(Activity activity, Map<String, DrawingStats.Day> days, Exporter exporter,
+                             String drawing, double earlierSeconds) {
         this.activity = activity;
         this.days = days;
         this.exporter = exporter;
+        this.drawing = drawing;
+        this.earlierSeconds = earlierSeconds;
         chart = new StatsChartView(activity);
         footer = text(13, false, TEXT2);
         periods = segmented();
@@ -88,13 +103,15 @@ final class StatisticsDialog {
         // Header: title on the left, close on the right.
         LinearLayout head = new LinearLayout(activity);
         head.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = text(24, true, TEXT); title.setText("Statistics");
+        TextView title = text(24, true, TEXT); title.setText(drawing == null ? "Statistics" : drawing);
+        title.setSingleLine(); title.setEllipsize(TextUtils.TruncateAt.END);
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
         TextView close = pill("Close", false); close.setOnClickListener(v -> dialog.dismiss());
         head.addView(close);
         root.addView(head);
         TextView intro = text(13, false, TEXT2);
-        intro.setText("Counted while SAI is in front, whether or not you record.");
+        intro.setText(drawing == null ? "Counted while SAI is in front, whether or not you record."
+            : "This drawing only: counted while SAI showed it, since SAI Pen 0.5.0.");
         root.addView(intro, lp(-1, -2, 0, 2, 0, 16));
 
         for (Period p : Period.values()) addSegment(periods, p.label, p, p == period, () -> { period = p; refresh(); });
@@ -108,7 +125,8 @@ final class StatisticsDialog {
         root.addView(yearBox, lp(-1, -2, 0, 0, 0, 10));
 
         GridLayout grid = new GridLayout(activity); grid.setColumnCount(2);
-        String[] names = {"TOTAL", "DAYS DRAWN", "AVERAGE DAY", "STREAK"};
+        String[] names = drawing == null ? new String[] {"TOTAL", "DAYS DRAWN", "AVERAGE DAY", "STREAK"}
+                                         : new String[] {"TOTAL", "DAYS DRAWN", "AVERAGE DAY", "LAST DRAWN"};
         for (int i = 0; i < 4; i++) {
             LinearLayout card = new LinearLayout(activity); card.setOrientation(LinearLayout.VERTICAL);
             card.setBackground(round(SURFACE, 14)); card.setPadding(dp(14), dp(12), dp(14), dp(12));
@@ -138,9 +156,11 @@ final class StatisticsDialog {
         TextView note = text(12, false, TEXT3);
         note.setText("Short pauses count as drawing. A pause over a minute is a break.");
         root.addView(note);
-        TextView export = pill("Export CSV…", true);
-        export.setOnClickListener(v -> exporter.export(DrawingStats.csv(days)));
-        root.addView(export, lp(-2, -2, 0, 16, 0, 0));
+        if (exporter != null) {
+            TextView export = pill("Export CSV…", true);
+            export.setOnClickListener(v -> exporter.export(DrawingStats.csv(days)));
+            root.addView(export, lp(-2, -2, 0, 16, 0, 0));
+        }
 
         dialog.setContentView(scroll);
         Window w = dialog.getWindow();
@@ -175,14 +195,26 @@ final class StatisticsDialog {
         int span = DrawingStats.countedDays(days, from, to, today), drawn = 0;
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) if (get(d).strokes > 0) drawn++;
         card(0, duration(sum.activeSeconds), strokes(sum.strokes));
-        card(1, drawn + " of " + span, drawn == 0 ? "No strokes yet" : "days with drawing");
-        card(2, duration(span == 0 ? 0 : sum.activeSeconds / span), "including days off");
-        int streak = DrawingStats.streak(days, today);
-        card(3, streak + (streak == 1 ? " day" : " days"), "current run");
+        if (drawing == null) {
+            card(1, drawn + " of " + span, drawn == 0 ? "No strokes yet" : "days with drawing");
+            card(2, duration(span == 0 ? 0 : sum.activeSeconds / span), "including days off");
+            int streak = DrawingStats.streak(days, today);
+            card(3, streak + (streak == 1 ? " day" : " days"), "current run");
+        }
+        else {
+            /* a drawing has days on it and days on other things, not days off */
+            card(1, drawn + (drawn == 1 ? " day" : " days"), drawn == 0 ? "No strokes yet" : "with work on it");
+            card(2, duration(drawn == 0 ? 0 : sum.activeSeconds / drawn), "on a day worked on it");
+            LocalDate last = last(days);
+            card(3, last == null ? "—" : StatsChartView.shortDate(last),
+                 last == null ? "" : last.equals(today) ? "today" : (today.toEpochDay() - last.toEpochDay()) + " days ago");
+        }
         chart.set(days, page, from, to, year);
         DrawingStats.Day all = DrawingStats.total(days);
-        footer.setText(all.strokes == 0 ? "Nothing counted yet. Draw in SAI and it will show up here."
-            : "All time: " + duration(all.activeSeconds) + " · " + strokes(all.strokes) + " · since " + first(days, today));
+        String earlier = earlierSeconds > 0 ? " · " + duration(earlierSeconds) + " before days were kept" : "";
+        footer.setText(all.strokes == 0 && earlierSeconds == 0 ? "Nothing counted yet. Draw in SAI and it will show up here."
+            : all.strokes == 0 ? "Earlier: " + duration(earlierSeconds) + ", from before days were kept."
+            : "All time: " + duration(all.activeSeconds) + " · " + strokes(all.strokes) + " · since " + first(days, today) + earlier);
     }
 
     private void card(int i, String value, String detail) { cardValue[i].setText(value); cardDetail[i].setText(detail); }
@@ -230,6 +262,14 @@ final class StatisticsDialog {
         LocalDate first = fallback;
         for (String key : days.keySet()) try { first = LocalDate.parse(key); break; } catch (RuntimeException ignored) {}
         return first;
+    }
+    private static LocalDate last(Map<String, DrawingStats.Day> days) {
+        LocalDate last = null;
+        for (Map.Entry<String, DrawingStats.Day> e : days.entrySet()) {
+            if (e.getValue().strokes <= 0) continue;
+            try { LocalDate d = LocalDate.parse(e.getKey()); if (last == null || d.isAfter(last)) last = d; } catch (RuntimeException ignored) {}
+        }
+        return last;
     }
     private static String duration(double seconds) { int m = (int) (seconds / 60); return m < 60 ? m + " min" : m / 60 + " h" + (m % 60 == 0 ? "" : " " + m % 60 + " min"); }
     private static String strokes(int n) { return String.format(Locale.getDefault(), "%,d stroke%s", n, n == 1 ? "" : "s"); }

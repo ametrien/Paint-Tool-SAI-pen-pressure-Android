@@ -359,6 +359,9 @@
     <string name="saipen_drawing_time">Time drawing</string>
     <string name="saipen_drawing_when">Drawn</string>
     <string name="saipen_drawing_time_none">Not counted yet</string>
+    <string name="saipen_drawing_days">Days worked on</string>
+    <string name="saipen_drawing_stats_open">Statistics by day</string>
+    <string name="saipen_drawing_last">last drawn %1$s</string>
     <string name="saipen_under_a_minute">under a minute</string>
     <string name="saipen_minutes_short">%1$d min</string>
     <string name="saipen_hours_minutes_short">%1$d h %2$d min</string>
