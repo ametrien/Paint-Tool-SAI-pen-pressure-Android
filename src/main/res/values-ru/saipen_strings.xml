@@ -37,7 +37,8 @@
     <string name="saipen_starting">Запускаю SAI</string>
     <string name="saipen_menu">SAI Pen: лицензия и настройки</string>
     <string name="saipen_menu_confirm">SAI закроется, несохранённое пропадёт. Открыть экран SAI Pen?</string>
-    <string name="saipen_menu_hint">Меню: тап четырьмя пальцами или жест «назад». Клавиатура: тап тремя пальцами.</string>
+    <string name="saipen_menu_hint">Меню: тап четырьмя пальцами или жест «назад».</string>
+    <string name="saipen_menu_hint_keyboard">Клавиатура: %1$s.</string>
     <string name="saipen_gestures">Жесты</string>
     <string name="saipen_gestures_text">Это стандартные жесты; поменять их можно в «Жестах» на этом экране или подержав четыре пальца над SAI. Все жесты, как они выставлены сейчас: «О SAI Pen» внизу этого экрана.\n\nПеро: рисует, с силой нажатия. Боковая кнопка пера, зажатая при касании: правый клик.\n\nОдин палец: курсор встаёт под палец, короткое касание: клик.\n\nДва пальца: двигать, чтобы листать холст, развести или свести, чтобы менять масштаб, повернуть, чтобы вращать холст. Короткое касание: правый клик.\n\nТри пальца, короткое касание: клавиатура, например чтобы ввести имя файла. Подержать неподвижно: спрятать или показать экранные кнопки.\n\nЧетыре пальца, короткое касание, или жест «назад» от края экрана: меню. В нём клавиатура, «SAI Pen: лицензия и настройки» и выход. Подержать неподвижно: настройки жестов прямо поверх SAI.\n\nЕсли закрыть SAI крестиком, вернёшься на этот экран.</string>
     <string name="saipen_closing">SAI закрыта. Возвращаюсь в SAI Pen</string>
@@ -58,6 +59,9 @@
     <string name="saipen_sharpness_native">%1$d, как у экрана</string>
     <string name="saipen_tip_keyboard">Совет: короткое касание тремя пальцами открывает клавиатуру, ещё одно закрывает её.</string>
     <string name="saipen_tip_keys">Совет: задержите три пальца на экране, чтобы показать или спрятать кнопки на экране.</string>
+    <string name="saipen_tip_keyboard_any">Совет: открыть клавиатуру и закрыть её снова: %1$s.</string>
+    <string name="saipen_tip_keys_any">Совет: показать или спрятать кнопки на экране: %1$s.</string>
+    <string name="saipen_tip_change_gestures">Совет: задержите четыре пальца над SAI, чтобы выбрать, что делает каждый жест.</string>
     <string name="saipen_starting_wine">SAI запускается, %1$d с</string>
     <string name="saipen_starting_wine_first">SAI запускается, %1$d с. Первый запуск дольше.</string>
     <string name="saipen_starting_drawing">SAI рисует окно, %1$d с</string>
