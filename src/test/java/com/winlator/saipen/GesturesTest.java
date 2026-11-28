@@ -29,12 +29,58 @@ public class GesturesTest {
             assertEquals(in.id, Gestures.Type.NONE, all[in.ordinal()].type);
         }
         assertEquals(0, Gestures.changed(all));
+        /* three fingers held still: the keys, as the keys' own switch did */
+        assertEquals(Gestures.Type.ON_SCREEN_KEYS, all[Gestures.Input.THREE_HOLD.ordinal()].type);
+        assertTrue(Gestures.usesOnScreenKeys(all));
+        assertTrue(Gestures.holdShowsKeys(all));
+    }
+
+    @Test
+    public void theHoldSwitchedOffUnderTheKeysStaysOff() {
+        Map<String, Object> saved = new HashMap<>();
+        saved.put(Gestures.OLD_KEYS_HOLD_PREF, false);
+        Gestures.Action[] all = Gestures.actions(saved);
+        assertEquals(Gestures.Type.NONE, all[Gestures.Input.THREE_HOLD.ordinal()].type);
         assertFalse(Gestures.usesOnScreenKeys(all));
+        saved.put(Gestures.OLD_KEYS_HOLD_PREF, true);
+        assertTrue(Gestures.holdShowsKeys(Gestures.actions(saved)));
+        /* set under Gestures since: that wins */
+        saved.put(Gestures.OLD_KEYS_HOLD_PREF, false);
+        saved.put(Gestures.Input.THREE_HOLD.pref(), "sai_keyboard");
+        assertEquals(Gestures.Type.PAD_KEYBOARD, Gestures.actions(saved)[Gestures.Input.THREE_HOLD.ordinal()].type);
+    }
+
+    @Test
+    public void theHoldClicksNothing() {
+        assertFalse(Gestures.choices(Gestures.Input.THREE_HOLD).contains(Gestures.Type.LEFT_CLICK));
+        assertFalse(Gestures.choices(Gestures.Input.THREE_HOLD).contains(Gestures.Type.RIGHT_CLICK));
+        assertTrue(Gestures.choices(Gestures.Input.THREE_HOLD).contains(Gestures.Type.PAD_KEYBOARD));
+        Map<String, Object> saved = new HashMap<>();
+        saved.put(Gestures.Input.THREE_HOLD.pref(), "right");
+        assertEquals("not offered: the default", Gestures.Type.ON_SCREEN_KEYS,
+            Gestures.actions(saved)[Gestures.Input.THREE_HOLD.ordinal()].type);
+    }
+
+    @Test
+    public void everyGestureCanOpenSaiPensKeyboard() {
+        for (Gestures.Input in : Gestures.Input.values()) {
+            assertTrue(in.id, Gestures.choices(in).contains(Gestures.Type.PAD_KEYBOARD));
+        }
+    }
+
+    @Test
+    public void theGesturesSetToTheKeysInTheSettingsOrder() {
+        Map<String, Object> saved = new HashMap<>();
+        saved.put(Gestures.Input.TWO_DOUBLE_TAP.pref(), "keys");
+        saved.put(Gestures.Input.PEN_HOVER_BUTTON.pref(), "keys");
+        assertEquals(java.util.Arrays.asList(Gestures.Input.TWO_DOUBLE_TAP, Gestures.Input.THREE_HOLD,
+                Gestures.Input.PEN_HOVER_BUTTON),
+            Gestures.inputsDoing(Gestures.actions(saved), Gestures.Type.ON_SCREEN_KEYS));
     }
 
     @Test
     public void parsesAndWritesBack() {
-        for (String s : new String[]{"none", "draw", "left", "right", "keyboard", "keys", "menu",
+        for (String s : new String[]{"none", "draw", "left", "right", "keyboard", "sai_keyboard", "keys", "menu",
                 "key:Ctrl+Z", "key:hold E", "key:Ctrl+Shift+Z"}) {
             assertEquals(s, a(s).toString());
         }

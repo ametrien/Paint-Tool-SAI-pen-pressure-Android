@@ -298,8 +298,6 @@
     <string name="saipen_cheat_one_does">Puts the cursor under it; a short tap clicks</string>
     <string name="saipen_cheat_two">Two fingers</string>
     <string name="saipen_cheat_two_does">Move: scroll. Spread or pinch: zoom. Turn: rotate</string>
-    <string name="saipen_cheat_three_hold">Three fingers held still</string>
-    <string name="saipen_cheat_three_hold_does">Show or hide the on-screen keys (a long press on their dot hides them too)</string>
     <string name="saipen_cheat_four_tap">Four-finger tap</string>
     <string name="saipen_cheat_four_tap_does">Menu: keyboard, \"SAI Pen: licence and settings\", Exit</string>
     <string name="saipen_cheat_four_hold">Four fingers held still</string>

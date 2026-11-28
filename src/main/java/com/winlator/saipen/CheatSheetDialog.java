@@ -102,8 +102,7 @@ public final class CheatSheetDialog {
 
             heading(R.string.saipen_cheat_gestures);
             Gestures.Action[] actions = Gestures.actions(prefs.getAll());
-            boolean keysGesture = prefs.getBoolean(FloatingKeys.PREF_GESTURE, FloatingKeys.GESTURE_BY_DEFAULT);
-            for (CheatSheet.Row r : CheatSheet.rows(actions, keysGesture)) {
+            for (CheatSheet.Row r : CheatSheet.rows(actions)) {
                 if (r.fixed != null) row(fixedName(r.fixed), fixedDoes(r.fixed));
                 else row(a.getString(GesturesSettings.inputName(r.input)),
                          GesturesSettings.label(a, actions[r.input.ordinal()]));
@@ -148,7 +147,6 @@ public final class CheatSheetDialog {
                 case PEN: return a.getString(R.string.saipen_cheat_pen);
                 case ONE_FINGER: return a.getString(R.string.saipen_cheat_one);
                 case TWO_FINGERS: return a.getString(R.string.saipen_cheat_two);
-                case THREE_HOLD: return a.getString(R.string.saipen_cheat_three_hold);
                 case FOUR_TAP: return a.getString(R.string.saipen_cheat_four_tap);
                 default: return a.getString(R.string.saipen_cheat_four_hold);
             }
@@ -159,7 +157,6 @@ public final class CheatSheetDialog {
                 case PEN: return a.getString(R.string.saipen_cheat_pen_does);
                 case ONE_FINGER: return a.getString(R.string.saipen_cheat_one_does);
                 case TWO_FINGERS: return a.getString(R.string.saipen_cheat_two_does);
-                case THREE_HOLD: return a.getString(R.string.saipen_cheat_three_hold_does);
                 case FOUR_TAP: return a.getString(R.string.saipen_cheat_four_tap_does);
                 default: return a.getString(R.string.saipen_cheat_four_hold_does);
             }

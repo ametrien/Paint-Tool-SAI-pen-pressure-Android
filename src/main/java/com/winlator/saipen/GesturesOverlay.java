@@ -27,9 +27,18 @@ import com.winlator.R;
  * moment (FingersHold) open them. A four-finger TAP is Winlator's menu; a
  * hold is no tap, so the menu does not open as well. Changes are in use at
  * once (GestureActions listens to the preferences).
+ *
+ * Two tabs: Gestures, and the On-screen keys (FloatingKeysSettings), which
+ * the ⚙ on the keys' panel opens straight away. The keys are built again
+ * with each change (FloatingKeys.attach listens), so they change while the
+ * window is open.
+ *
+ * The three-finger hold is watched here too: it does what it is set to
+ * under Gestures (Gestures.Input.THREE_HOLD), the keys by default.
  */
 public final class GesturesOverlay {
     public static final int FINGERS = 4;
+    public static final int TAB_GESTURES = 0, TAB_KEYS = 1;
 
     private GesturesOverlay() {}
 
@@ -43,7 +52,16 @@ public final class GesturesOverlay {
             if (open[0] != null && open[0].isShowing()) return;
             activity.getWindow().getDecorView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
                 HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
-            open[0] = show(activity);
+            open[0] = show(activity, TAB_GESTURES);
+        };
+        final FingersHold three = new FingersHold(24 * dp, FingersHold.FINGERS);
+        final Runnable checkThree = () -> {
+            if (!three.due(SystemClock.uptimeMillis())) return;
+            GestureActions g = GestureActions.current();
+            if (g == null || !g.isSet(Gestures.Input.THREE_HOLD)) return;
+            activity.getWindow().getDecorView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
+                HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+            g.run(Gestures.Input.THREE_HOLD, 0, 0, false, false);
         };
         FloatingKeys.watchTouches(activity, e -> {
             int n = e.getPointerCount();
@@ -58,15 +76,21 @@ public final class GesturesOverlay {
                 ys[j] = e.getY(i);
                 j++;
             }
+            long now = SystemClock.uptimeMillis();
             long before = hold.when();
-            hold.onTouch(count, xs, ys, SystemClock.uptimeMillis());
+            hold.onTouch(count, xs, ys, now);
             long when = hold.when();
             if (when >= 0 && when != before) ui.postAtTime(check, when);
+            long beforeThree = three.when();
+            three.onTouch(count, xs, ys, now);
+            long whenThree = three.when();
+            if (whenThree >= 0 && whenThree != beforeThree) ui.postAtTime(checkThree, whenThree);
         });
     }
 
-    /** The settings in a dark window over SAI, as on SAI Pen's screen. */
-    static Dialog show(Activity activity) {
+    /** The settings in a dark window over SAI, as on SAI Pen's screen,
+     *  open at `tab` (TAB_GESTURES, TAB_KEYS). */
+    static Dialog show(Activity activity, int tab) {
         final float dp = activity.getResources().getDisplayMetrics().density;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         Dialog d = new Dialog(activity);
@@ -81,18 +105,56 @@ public final class GesturesOverlay {
         bg.setCornerRadius(16 * dp);
         box.setBackground(bg);
 
-        TextView title = new TextView(activity);
-        title.setText(R.string.saipen_gestures_title);
-        title.setTextColor(attrColor(activity, R.attr.colorPrimaryText, Color.WHITE));
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        box.addView(title);
+        /* the tabs: the chosen one bright and underlined */
+        final int textColor = attrColor(activity, R.attr.colorPrimaryText, Color.WHITE);
+        final int dim = attrColor(activity, R.attr.colorSecondaryText, Color.GRAY);
+        LinearLayout tabs = new LinearLayout(activity);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        final TextView[] tabViews = {
+            tab(activity, dp, R.string.saipen_gestures_title), tab(activity, dp, R.string.saipen_keys_title)};
+        for (TextView t : tabViews) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMarginEnd((int) (24 * dp));
+            tabs.addView(t, lp);
+        }
+        box.addView(tabs);
 
-        ScrollView scroll = new ScrollView(activity);
-        LinearLayout body = new LinearLayout(activity);
+        final ScrollView scroll = new ScrollView(activity);
+        final LinearLayout body = new LinearLayout(activity);
         body.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(body);
         box.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        GesturesSettings.build(activity, body, prefs, SaiLauncherActivity.DIALOG_THEME, () -> {});
+        final Runnable[] select = new Runnable[1];
+        final int[] chosen = {tab};
+        select[0] = () -> {
+            for (int i = 0; i < tabViews.length; i++) {
+                boolean on = i == chosen[0];
+                tabViews[i].setTextColor(on ? textColor : dim);
+                GradientDrawable line = new GradientDrawable();
+                line.setColor(on ? FloatingKeys.COLORS_LIT[0] : Color.TRANSPARENT);
+                android.graphics.drawable.LayerDrawable under = new android.graphics.drawable.LayerDrawable(
+                    new android.graphics.drawable.Drawable[] {line});
+                under.setLayerGravity(0, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
+                under.setLayerHeight(0, (int) (2 * dp));
+                tabViews[i].setBackground(under);
+            }
+            body.removeAllViews();
+            if (chosen[0] == TAB_KEYS) {
+                FloatingKeysSettings.build(activity, body, prefs, SaiLauncherActivity.DIALOG_THEME, () -> {});
+            } else {
+                GesturesSettings.build(activity, body, prefs, SaiLauncherActivity.DIALOG_THEME, () -> {});
+            }
+            scroll.scrollTo(0, 0);
+        };
+        for (int i = 0; i < tabViews.length; i++) {
+            final int index = i;
+            tabViews[i].setOnClickListener(v -> {
+                chosen[0] = index;
+                select[0].run();
+            });
+        }
+        select[0].run();
 
         TextView done = new TextView(activity);
         done.setText(R.string.saipen_gestures_done);
@@ -114,6 +176,16 @@ public final class GesturesOverlay {
         }
         d.show();
         return d;
+    }
+
+    private static TextView tab(Activity a, float dp, int text) {
+        TextView t = new TextView(a);
+        t.setText(text);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        t.setGravity(Gravity.CENTER_VERTICAL);
+        t.setMinHeight((int) (44 * dp));
+        t.setPadding(0, 0, 0, (int) (4 * dp));
+        return t;
     }
 
     private static int attrColor(Activity a, int attr, int fallback) {

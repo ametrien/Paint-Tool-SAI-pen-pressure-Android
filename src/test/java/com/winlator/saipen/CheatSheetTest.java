@@ -27,7 +27,7 @@ public class CheatSheetTest {
     public void theStandardGesturesInOrderPenFirst() {
         assertEquals(java.util.Arrays.asList("PEN", "PEN_BUTTON", "PEN_HOVER_BUTTON", "ONE_FINGER", "TWO_FINGERS", "TWO_TAP",
                 "THREE_TAP", "THREE_HOLD", "FOUR_TAP", "FOUR_HOLD"),
-            names(CheatSheet.rows(standard(), true)));
+            names(CheatSheet.rows(standard())));
     }
 
     @Test
@@ -35,7 +35,7 @@ public class CheatSheetTest {
         Gestures.Action[] a = standard();
         a[Gestures.Input.TWO_TAP.ordinal()] = Gestures.Action.of(Gestures.Type.NONE);
         a[Gestures.Input.PEN_BUTTON.ordinal()] = Gestures.Action.of(Gestures.Type.DRAW);
-        List<String> n = names(CheatSheet.rows(a, true));
+        List<String> n = names(CheatSheet.rows(a));
         assertFalse(n.contains("TWO_TAP"));
         assertFalse(n.contains("PEN_BUTTON"));
         assertTrue("the menu cannot be changed", n.contains("FOUR_TAP"));
@@ -47,15 +47,17 @@ public class CheatSheetTest {
         Gestures.Action[] a = standard();
         a[Gestures.Input.TWO_DOUBLE_TAP.ordinal()] = Gestures.Action.parse("key:Ctrl+Z");
         a[Gestures.Input.EDGE_RIGHT.ordinal()] = Gestures.Action.of(Gestures.Type.MENU);
-        List<String> n = names(CheatSheet.rows(a, true));
+        List<String> n = names(CheatSheet.rows(a));
         assertEquals(n.indexOf("TWO_TAP") + 1, n.indexOf("TWO_DOUBLE_TAP"));
         assertEquals(n.size() - 1, n.indexOf("EDGE_RIGHT"));
     }
 
     @Test
-    public void theThreeFingerHoldOnlyWhileItShowsTheKeys() {
-        assertTrue(names(CheatSheet.rows(standard(), true)).contains("THREE_HOLD"));
-        assertFalse(names(CheatSheet.rows(standard(), false)).contains("THREE_HOLD"));
+    public void theThreeFingerHoldIsLeftOutWhenItDoesNothing() {
+        assertTrue(names(CheatSheet.rows(standard())).contains("THREE_HOLD"));
+        Gestures.Action[] a = standard();
+        a[Gestures.Input.THREE_HOLD.ordinal()] = Gestures.Action.of(Gestures.Type.NONE);
+        assertFalse(names(CheatSheet.rows(a)).contains("THREE_HOLD"));
     }
 
     /** What Android reports is a little under the size on the box. */

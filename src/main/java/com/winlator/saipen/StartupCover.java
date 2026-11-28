@@ -120,7 +120,9 @@ public final class StartupCover {
                 cover.animate().alpha(0f).setDuration(250).withEndAction(() -> root.removeView(cover)).start();
                 showMenuHint(activity);
                 /* Ctrl, Alt and Shift for SAI without a keyboard, once SAI is up */
-                FloatingKeys.show(activity, root, xServer);
+                FloatingKeys.attach(activity, root, xServer);
+                /* SAI Pen's own keyboard, shown by a gesture or the ⌨ key */
+                PadKeyboard.attach(activity, root, xServer);
                 /* four fingers held still: the gestures' settings over SAI */
                 GesturesOverlay.attach(activity);
             }
@@ -132,8 +134,7 @@ public final class StartupCover {
     static String tip(Activity activity) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         Gestures.Action[] actions = Gestures.actions(prefs.getAll());
-        boolean keysGesture = prefs.getBoolean(FloatingKeys.PREF_GESTURE, FloatingKeys.GESTURE_BY_DEFAULT);
-        java.util.List<LoadingTips.Tip> tips = LoadingTips.tips(actions, keysGesture);
+        java.util.List<LoadingTips.Tip> tips = LoadingTips.tips(actions);
         LoadingTips.Tip t = tips.get(new java.util.Random().nextInt(tips.size()));
         switch (t.kind) {
             case KEYBOARD:

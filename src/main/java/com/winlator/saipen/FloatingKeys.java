@@ -49,10 +49,14 @@ import java.util.List;
  * apart from the dot (top right at first, dragged like the dot, hidden and
  * shown with it). Either one: two taps (ExitTaps) close SAI the way its red
  * cross does (SaiPenRequests.closeSai).
- * Open, the grip on the left drags the buttons and × in the top corner
- * closes them back into the dot; a key still down keeps the dot lit. A long
- * press on the dot hides it, and three fingers held still for a moment
- * (FingersHold) show or hide it, if that is switched on.
+ * A Keyboard button (Shortcut.KEYBOARD) shows or hides SAI Pen's own
+ * keyboard (PadKeyboard), lit while it is shown.
+ * Open, the grip on the left drags the buttons, ⚙ opens their settings over
+ * SAI (GesturesOverlay, On-screen keys tab) and × in the top corner closes
+ * them back into the dot; a key still down keeps the dot lit. A long press
+ * on the dot hides it; any gesture set to the keys shows or hides them
+ * (Gestures.Type.ON_SCREEN_KEYS), three fingers held still at first.
+ * Changed in their settings over SAI, they are built again at once (attach).
  *
  * Why not another tap: two fingers are the right click, three the keyboard,
  * four the menu. Why not Winlator's own on-screen controls
@@ -71,9 +75,9 @@ public final class FloatingKeys {
     public static final String PREF_BUTTONS = "saipen_keys_buttons";
     /** An index into COLORS_BACK / COLORS_LIT. */
     public static final String PREF_COLOR = "saipen_keys_color";
-    /** Three fingers held still show or hide the dot. */
-    public static final String PREF_GESTURE = "saipen_keys_gesture";
-    public static final boolean GESTURE_BY_DEFAULT = true;
+    /* Three fingers held still showing or hiding the dot was a switch here
+     * until 0.5.2 ("saipen_keys_gesture"); it is a gesture now
+     * (Gestures.Input.THREE_HOLD, Gestures.OLD_KEYS_HOLD_PREF). */
 
     /** Exit SAI as a red button of its own, apart from the dot. */
     public static final String PREF_EXIT_OWN = "saipen_keys_exit_own";
@@ -138,17 +142,59 @@ public final class FloatingKeys {
         if (toggle != null) toggle.run();
     }
 
+    /* what show() put over SAI, to take it away before building again */
+    private static Runnable teardown;
+    /* kept: SharedPreferences holds its listeners weakly */
+    private static SharedPreferences.OnSharedPreferenceChangeListener rebuild;
+    /* the keyboard button's light, when PadKeyboard shows or hides */
+    private static Runnable repaint;
+
+    /** Repaints the buttons (the keyboard button follows PadKeyboard). */
+    static void repaint() {
+        if (repaint != null) repaint.run();
+    }
+
+    /**
+     * Once per SAI session, when SAI is up (StartupCover): the keys as set,
+     * and built again whenever their settings change, so a change over SAI
+     * (GesturesOverlay) shows at once. Where they were dragged to is no
+     * change of settings.
+     */
+    public static void attach(Activity activity, FrameLayout root, XServer xServer) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        final Handler ui = new Handler(Looper.getMainLooper());
+        final Runnable again = () -> {
+            if (teardown != null) teardown.run();
+            teardown = null;
+            /* being set up: shown, whether they were shown or not */
+            show(activity, root, xServer, true);
+        };
+        rebuild = (p, key) -> {
+            if (key == null) return;
+            boolean keys = key.startsWith("saipen_keys_") && !key.equals(PREF_X) && !key.equals(PREF_Y)
+                && !key.equals(PREF_EXIT_X) && !key.equals(PREF_EXIT_Y)
+                && !key.equals(Gestures.OLD_KEYS_HOLD_PREF);
+            if (!keys && !key.equals(KeysOpacity.PREF) && !key.equals(ExitLook.PREF_DARK)
+                && !key.equals(ExitLook.PREF_OPACITY)) return;
+            /* a few changes at once (a reset): built once */
+            ui.removeCallbacks(again);
+            ui.postDelayed(again, 100);
+        };
+        prefs.registerOnSharedPreferenceChangeListener(rebuild);
+        show(activity, root, xServer, prefs.getBoolean(PREF_ON, ON_BY_DEFAULT));
+    }
+
+    /** The keys over SAI; `onAtStart`: shown now, else hidden until a gesture. */
     @SuppressLint("ClickableViewAccessibility")
-    public static void show(Activity activity, FrameLayout root, XServer xServer) {
+    private static void show(Activity activity, FrameLayout root, XServer xServer, boolean onAtStart) {
         final float dp = activity.getResources().getDisplayMetrics().density;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        final boolean onAtStart = prefs.getBoolean(PREF_ON, ON_BY_DEFAULT);
-        final boolean gesture = prefs.getBoolean(PREF_GESTURE, GESTURE_BY_DEFAULT);
         final List<Shortcut> buttons = buttons(prefs);
-        /* a finger or pen gesture may show them too (Gestures) */
+        /* a finger or pen gesture may show them (Gestures): three fingers
+         * held still, at first */
         final boolean byGesture = Gestures.usesOnScreenKeys(Gestures.actions(prefs.getAll()));
         final boolean ownExit = prefs.getBoolean(PREF_EXIT_OWN, EXIT_OWN_BY_DEFAULT);
-        if ((!onAtStart && !gesture && !byGesture) || (buttons.isEmpty() && !ownExit)) return;
+        if ((!onAtStart && !byGesture) || (buttons.isEmpty() && !ownExit)) return;
         /* no buttons, only the red Exit SAI: the dot stays away */
         final boolean hasKeys = !buttons.isEmpty();
         final int color = colorIndex(prefs);
@@ -208,7 +254,9 @@ public final class FloatingKeys {
         final String exitLabel = activity.getString(R.string.saipen_keys_exit);
         final String exitAsk = activity.getString(R.string.saipen_keys_exit_ask);
         float widest = 0;
-        for (Shortcut s : buttons) widest = Math.max(widest, paintText.measureText(s.exitSai ? exitLabel : s.label()));
+        final String keyboardLabel = activity.getString(R.string.saipen_keys_keyboard);
+        for (Shortcut s : buttons) widest = Math.max(widest, paintText.measureText(
+            s.exitSai ? exitLabel : s.keyboard ? keyboardLabel : s.label()));
         final int cellWidth = (int) Math.max(44 * dp, widest + 16 * dp);
         /* the buttons may take half the screen's width */
         int screenW = activity.getResources().getDisplayMetrics().widthPixels;
@@ -225,10 +273,18 @@ public final class FloatingKeys {
                 grid.addView(row);
             }
             Shortcut s = buttons.get(i);
-            TextView t = button(activity, dp, s.exitSai ? exitLabel : s.label(), cellWidth);
+            TextView t = button(activity, dp, s.exitSai ? exitLabel : s.keyboard ? keyboardLabel : s.label(), cellWidth);
             row.addView(t, new LinearLayout.LayoutParams(cellWidth, (int) (40 * dp)));
             views.add(t);
         }
+        /* ⚙ and × side by side in the top corner */
+        final TextView settings = new TextView(activity);
+        settings.setText("⚙");
+        settings.setContentDescription(activity.getString(R.string.saipen_keys_settings_over_sai));
+        settings.setTextColor(TEXT_DIM);
+        settings.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+        settings.setGravity(Gravity.CENTER);
+        open.addView(settings, new LinearLayout.LayoutParams((int) (32 * dp), (int) (40 * dp)));
         final TextView close = new TextView(activity);
         close.setText("×");
         close.setTextColor(TEXT_DIM);
@@ -242,6 +298,10 @@ public final class FloatingKeys {
                 if (buttons.get(i).exitSai) {
                     boolean asking = exitTaps.asking(SystemClock.uptimeMillis());
                     views.get(i).setBackground(rounded(asking ? lit : Color.TRANSPARENT, 9 * dp));
+                    continue;
+                }
+                if (buttons.get(i).keyboard) {
+                    views.get(i).setBackground(rounded(PadKeyboard.isShown() ? lit : Color.TRANSPARENT, 9 * dp));
                     continue;
                 }
                 int c = !held.isDown(i) ? Color.TRANSPARENT : held.isLatched(i) ? lit : pressed;
@@ -327,16 +387,26 @@ public final class FloatingKeys {
         /* the dot drags, opens on a tap and hides on a long press; the grip drags */
         dot.setOnTouchListener(dragger(activity, root, panel, prefs, keepInside, openButtons, () -> {
             hide.run();
-            Toast.makeText(activity, gesture ? R.string.saipen_keys_hidden_gesture
-                : R.string.saipen_keys_hidden, Toast.LENGTH_LONG).show();
+            /* how to bring them back, as the gestures are set now */
+            List<Gestures.Input> back = Gestures.inputsDoing(Gestures.actions(prefs.getAll()),
+                Gestures.Type.ON_SCREEN_KEYS);
+            Toast.makeText(activity, back.isEmpty() ? activity.getString(R.string.saipen_keys_hidden)
+                : activity.getString(R.string.saipen_keys_hidden_by,
+                    activity.getString(GesturesSettings.inputName(back.get(0)))), Toast.LENGTH_LONG).show();
         }));
         grip.setOnTouchListener(dragger(activity, root, panel, prefs, keepInside, null, null));
         close.setOnClickListener(v -> closeButtons.run());
+        settings.setOnClickListener(v -> GesturesOverlay.show(activity, GesturesOverlay.TAB_KEYS));
 
         for (int i = 0; i < buttons.size(); i++) {
             final int index = i;
             final TextView t = views.get(i);
-            if (buttons.get(i).exitSai) {
+            if (buttons.get(i).keyboard) {
+                t.setOnClickListener(v -> {
+                    PadKeyboard.toggle();
+                    paint.run();
+                });
+            } else if (buttons.get(i).exitSai) {
                 Runnable tap = exitTap(ui, exitTaps, t, exitLabel, exitAsk,
                     rounded(Color.TRANSPARENT, 9 * dp), rounded(lit, 9 * dp), closeSai);
                 t.setOnClickListener(v -> tap.run());
@@ -367,43 +437,21 @@ public final class FloatingKeys {
             }
         }
 
-        /* three fingers held still: show or hide */
-        if (gesture) {
-            final FingersHold hold = new FingersHold(24 * dp);
-            final Runnable check = () -> {
-                if (!hold.due(SystemClock.uptimeMillis())) return;
-                flip.run();
-                panel.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
-                    HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
-            };
-            watchTouches(activity, e -> {
-                int n = e.getPointerCount();
-                int action = e.getActionMasked();
-                boolean allUp = action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL;
-                int lifted = action == MotionEvent.ACTION_POINTER_UP ? e.getActionIndex() : -1;
-                int count = allUp ? 0 : lifted >= 0 ? n - 1 : n;
-                float[] xs = new float[count], ys = new float[count];
-                for (int i = 0, j = 0; i < n && j < count; i++) {
-                    if (i == lifted) continue;
-                    xs[j] = e.getX(i);
-                    ys[j] = e.getY(i);
-                    j++;
-                }
-                long before = hold.when();
-                hold.onTouch(count, xs, ys, SystemClock.uptimeMillis());
-                long when = hold.when();
-                if (when >= 0 && when != before) ui.postAtTime(check, when);
-            });
-        }
-
         /* no key stays down in SAI once the buttons are gone */
         panel.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override public void onViewAttachedToWindow(View v) {}
             @Override public void onViewDetachedFromWindow(View v) {
                 held.releaseAll();
-                toggle = null;
+                if (toggle == flip) toggle = null;
+                if (repaint == paint) repaint = null;
             }
         });
+        repaint = paint;
+        teardown = () -> {
+            held.releaseAll();
+            root.removeView(panel);
+            if (exitOwn != null) root.removeView(exitOwn);
+        };
 
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);

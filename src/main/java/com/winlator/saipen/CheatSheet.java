@@ -10,9 +10,8 @@ import java.util.List;
  * itself the first time SAI Pen's screen opens, and again from the link at
  * the bottom of that screen.
  *
- * A gesture set to "nothing" (or a pen input set to just draw) is left out;
- * the three-finger hold only while it shows the floating keys
- * (FloatingKeys.PREF_GESTURE). The four-finger tap (the menu) and hold (the
+ * A gesture set to "nothing" (or a pen input set to just draw) is left out,
+ * the three-finger hold too (a gesture like the others since 0.5.2). The four-finger tap (the menu) and hold (the
  * gestures' settings) cannot be changed, so they are always there.
  *
  * No Android types: the JVM tests check the rows and the memory line.
@@ -24,7 +23,7 @@ public final class CheatSheet {
     public static final String PREF_CHEAT_SHEET_SEEN = "saipen_cheat_sheet_seen";
 
     /** The rows that are always the same, whatever the settings. */
-    public enum Fixed { PEN, ONE_FINGER, TWO_FINGERS, THREE_HOLD, FOUR_TAP, FOUR_HOLD }
+    public enum Fixed { PEN, ONE_FINGER, TWO_FINGERS, FOUR_TAP, FOUR_HOLD }
 
     /** One line of the gestures: a fixed one, or a settable input. */
     public static final class Row {
@@ -48,17 +47,16 @@ public final class CheatSheet {
         Fixed.PEN, Gestures.Input.PEN_BUTTON, Gestures.Input.PEN_HOVER_BUTTON, Gestures.Input.PEN_ERASER,
         Fixed.ONE_FINGER, Gestures.Input.LONG_PRESS,
         Fixed.TWO_FINGERS, Gestures.Input.TWO_TAP, Gestures.Input.TWO_DOUBLE_TAP,
-        Gestures.Input.THREE_TAP, Gestures.Input.THREE_DOUBLE_TAP, Fixed.THREE_HOLD,
+        Gestures.Input.THREE_TAP, Gestures.Input.THREE_DOUBLE_TAP, Gestures.Input.THREE_HOLD,
         Fixed.FOUR_TAP, Fixed.FOUR_HOLD,
         Gestures.Input.EDGE_LEFT, Gestures.Input.EDGE_RIGHT,
     };
 
     /** The gesture rows for these settings (actions: Gestures.actions). */
-    public static List<Row> rows(Gestures.Action[] actions, boolean keysGesture) {
+    public static List<Row> rows(Gestures.Action[] actions) {
         List<Row> l = new ArrayList<>();
         for (Object o : ORDER) {
             if (o instanceof Fixed) {
-                if (o == Fixed.THREE_HOLD && !keysGesture) continue;
                 l.add(new Row((Fixed) o, null));
             }
             else {

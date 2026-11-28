@@ -65,6 +65,7 @@ public final class GesturesSettings {
             reset.setOnClickListener(v -> {
                 SharedPreferences.Editor e = prefs.edit();
                 for (Gestures.Input in : Gestures.Input.values()) e.remove(in.pref());
+                e.remove(Gestures.OLD_KEYS_HOLD_PREF);
                 e.apply();
                 fill[0].run();
                 changed.run();
@@ -77,7 +78,7 @@ public final class GesturesSettings {
     /** One gesture: its name, and what it does now in the accent colour. */
     private static LinearLayout row(Activity a, float dp, int textColor, SharedPreferences prefs, int dialogTheme,
                                     Gestures.Input in, Runnable changed) {
-        Gestures.Action now = Gestures.action(in, prefs.getString(in.pref(), null));
+        Gestures.Action now = Gestures.actions(prefs.getAll())[in.ordinal()];
         LinearLayout row = new LinearLayout(a);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setMinimumHeight((int) (48 * dp));
@@ -107,7 +108,7 @@ public final class GesturesSettings {
     private static void pick(Activity a, SharedPreferences prefs, int dialogTheme, Gestures.Input in,
                              Runnable changed) {
         final List<Gestures.Type> types = Gestures.choices(in);
-        Gestures.Action now = Gestures.action(in, prefs.getString(in.pref(), null));
+        Gestures.Action now = Gestures.actions(prefs.getAll())[in.ordinal()];
         String[] labels = new String[types.size()];
         int checked = -1;
         for (int i = 0; i < types.size(); i++) {
@@ -145,8 +146,12 @@ public final class GesturesSettings {
     }
 
     private static void save(SharedPreferences prefs, Gestures.Input in, Gestures.Action action) {
-        if (action.equals(in.byDefault)) prefs.edit().remove(in.pref()).apply();
-        else prefs.edit().putString(in.pref(), action.toString()).apply();
+        SharedPreferences.Editor e = prefs.edit();
+        /* the hold's old switch (Gestures.actions) gives way to what is set here */
+        if (in == Gestures.Input.THREE_HOLD) e.remove(Gestures.OLD_KEYS_HOLD_PREF);
+        if (action.equals(in.byDefault)) e.remove(in.pref());
+        else e.putString(in.pref(), action.toString());
+        e.apply();
     }
 
     /** What an action reads as: "Right click (picks a colour)", "Ctrl+Z". */
@@ -162,6 +167,7 @@ public final class GesturesSettings {
             case LEFT_CLICK: return a.getString(R.string.saipen_action_left);
             case RIGHT_CLICK: return a.getString(R.string.saipen_action_right);
             case KEYBOARD: return a.getString(R.string.saipen_action_keyboard);
+            case PAD_KEYBOARD: return a.getString(R.string.saipen_action_pad_keyboard);
             case ON_SCREEN_KEYS: return a.getString(R.string.saipen_action_keys);
             case MENU: return a.getString(R.string.saipen_action_menu);
             case KEY: return a.getString(R.string.saipen_action_key);
@@ -176,6 +182,7 @@ public final class GesturesSettings {
             case TWO_DOUBLE_TAP: return R.string.saipen_gesture_two_double_tap;
             case THREE_TAP: return R.string.saipen_gesture_three_tap;
             case THREE_DOUBLE_TAP: return R.string.saipen_gesture_three_double_tap;
+            case THREE_HOLD: return R.string.saipen_gesture_three_hold;
             case LONG_PRESS: return R.string.saipen_gesture_long_press;
             case EDGE_LEFT: return R.string.saipen_gesture_edge_left;
             case EDGE_RIGHT: return R.string.saipen_gesture_edge_right;

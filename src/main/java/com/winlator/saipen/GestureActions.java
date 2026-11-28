@@ -29,6 +29,14 @@ public final class GestureActions {
     private final Runnable keyboard, menu;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
+    /** The one of this SAI session, for gestures not seen by TouchpadView:
+     *  the three-finger hold (GesturesOverlay). */
+    private static GestureActions current;
+
+    static GestureActions current() {
+        return current;
+    }
+
     /** keyboard: shows the tablet's keyboard; menu: opens Winlator's menu. */
     public GestureActions(XServer xServer, SharedPreferences prefs, Runnable keyboard, Runnable menu) {
         this.xServer = xServer;
@@ -42,6 +50,7 @@ public final class GestureActions {
             if (onChanged != null) onChanged.run();
         };
         prefs.registerOnSharedPreferenceChangeListener(reload);
+        current = this;
     }
 
     /** Runs after the gestures changed (TouchpadView: the edges' share). */
@@ -76,6 +85,9 @@ public final class GestureActions {
                 break;
             case KEYBOARD:
                 if (keyboard != null) keyboard.run();
+                break;
+            case PAD_KEYBOARD:
+                PadKeyboard.toggle();
                 break;
             case ON_SCREEN_KEYS:
                 FloatingKeys.toggle();

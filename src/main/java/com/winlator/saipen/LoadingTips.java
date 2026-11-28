@@ -11,7 +11,7 @@ import java.util.List;
  *
  * The keyboard tip names the first input set to the keyboard (fingers come
  * first in Input's order); none set, no tip. The on-screen keys tip names the
- * three-finger hold while it is on (FloatingKeys.PREF_GESTURE), else the
+ * three-finger hold while it is set to the keys (Gestures.holdShowsKeys), else the
  * first input set to show or hide them. With neither tip left, the
  * four-finger hold (the gestures' settings), which cannot be changed.
  * Always one more: gestures, on-screen keys and pen pressure can be changed
@@ -63,7 +63,8 @@ public final class LoadingTips {
     }
 
     /** The tips to pick from for these settings: never empty. */
-    public static List<Tip> tips(Gestures.Action[] actions, boolean keysGesture) {
+    public static List<Tip> tips(Gestures.Action[] actions) {
+        boolean keysGesture = Gestures.holdShowsKeys(actions);
         List<Tip> l = new ArrayList<>();
         Gestures.Input keyboard = first(actions, Gestures.Type.KEYBOARD);
         if (keyboard != null) l.add(new Tip(Kind.KEYBOARD, keyboard));

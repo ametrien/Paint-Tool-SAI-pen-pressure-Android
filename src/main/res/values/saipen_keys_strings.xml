@@ -6,7 +6,15 @@
     <string name="saipen_keys_value_off">Off</string>
     <string name="saipen_keys_note">A dot over SAI: tap it for your buttons, ⋮ drags them, × closes them.</string>
     <string name="saipen_keys_switch">Show the keys when SAI starts</string>
-    <string name="saipen_keys_gesture">Hold three fingers still for a moment to show or hide them</string>
+    <!-- the gestures set to the keys (Gestures), named: "Three fingers held still" -->
+    <string name="saipen_keys_by_gesture">%s: shows or hides them. Change this under Gestures (hold four fingers still over SAI, or Gestures on SAI Pen\'s screen).</string>
+    <!-- two or more gestures: "Two-finger tap, Three-finger tap or Three fingers held still" -->
+    <string name="saipen_keys_by_gesture_or">%1$s or %2$s</string>
+    <string name="saipen_keys_by_no_gesture">No gesture shows or hides them now. Pick one under Gestures (hold four fingers still over SAI, or Gestures on SAI Pen\'s screen): Show or hide the on-screen keys.</string>
+    <string name="saipen_keys_keyboard">⌨</string>
+    <string name="saipen_keys_keyboard_long">⌨ SAI Pen\'s keyboard</string>
+    <string name="saipen_keys_add_keyboard">+ ⌨ SAI Pen\'s keyboard (shows or hides it)</string>
+    <string name="saipen_keys_settings_over_sai">The on-screen keys\' settings</string>
     <string name="saipen_keys_none">No buttons.</string>
     <string name="saipen_keys_add">+ Add a button</string>
     <string name="saipen_keys_reset">Back to the first ones</string>
@@ -25,7 +33,8 @@
     <string name="saipen_keys_dot">Keys</string>
     <!-- a long press on the dot hides it -->
     <string name="saipen_keys_hidden">The keys are hidden until SAI starts again.</string>
-    <string name="saipen_keys_hidden_gesture">The keys are hidden. Hold three fingers still for a moment to bring them back.</string>
+    <!-- "The keys are hidden. To bring them back: Three fingers held still." -->
+    <string name="saipen_keys_hidden_by">The keys are hidden. To bring them back: %s.</string>
     <string name="saipen_keys_buttons_note">Buttons, up to %d:</string>
     <string name="saipen_keys_kind_once">Once</string>
     <string name="saipen_keys_kind_held">Held</string>

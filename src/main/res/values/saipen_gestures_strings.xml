@@ -19,6 +19,7 @@
     <string name="saipen_gesture_two_double_tap">Two-finger double tap</string>
     <string name="saipen_gesture_three_tap">Three-finger tap</string>
     <string name="saipen_gesture_three_double_tap">Three-finger double tap</string>
+    <string name="saipen_gesture_three_hold">Three fingers held still</string>
     <string name="saipen_gesture_long_press">One finger held still</string>
     <string name="saipen_gesture_edge_left">Swipe in from the left edge</string>
     <string name="saipen_gesture_edge_right">Swipe in from the right edge</string>
@@ -30,7 +31,8 @@
     <string name="saipen_action_draw">Draw</string>
     <string name="saipen_action_left">Left click</string>
     <string name="saipen_action_right">Right click (picks a colour)</string>
-    <string name="saipen_action_keyboard">Keyboard</string>
+    <string name="saipen_action_keyboard">The tablet\'s keyboard</string>
+    <string name="saipen_action_pad_keyboard">Show or hide SAI Pen\'s keyboard</string>
     <string name="saipen_action_keys">Show or hide the on-screen keys</string>
     <string name="saipen_action_menu">Menu</string>
     <string name="saipen_action_key">A key…</string>

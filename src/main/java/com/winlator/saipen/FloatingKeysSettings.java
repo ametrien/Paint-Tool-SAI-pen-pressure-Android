@@ -36,7 +36,7 @@ public final class FloatingKeysSettings {
     /** The short line next to the row's title: "On" / "Off". */
     public static String summary(Activity a, SharedPreferences prefs) {
         boolean on = prefs.getBoolean(FloatingKeys.PREF_ON, FloatingKeys.ON_BY_DEFAULT)
-            || prefs.getBoolean(FloatingKeys.PREF_GESTURE, FloatingKeys.GESTURE_BY_DEFAULT);
+            || Gestures.usesOnScreenKeys(Gestures.actions(prefs.getAll()));
         return a.getString(on ? R.string.saipen_keys_value_on : R.string.saipen_keys_value_off);
     }
 
@@ -51,8 +51,8 @@ public final class FloatingKeysSettings {
         body.addView(note(a, R.string.saipen_keys_note));
         body.addView(toggle(a, textColor, R.string.saipen_keys_switch, prefs,
             FloatingKeys.PREF_ON, FloatingKeys.ON_BY_DEFAULT, changed));
-        body.addView(toggle(a, textColor, R.string.saipen_keys_gesture, prefs,
-            FloatingKeys.PREF_GESTURE, FloatingKeys.GESTURE_BY_DEFAULT, changed));
+        /* which gestures show or hide them: set under Gestures, named here */
+        body.addView(note(a, gesturesLine(a, prefs)));
 
         /* the buttons */
         body.addView(note(a, a.getString(R.string.saipen_keys_buttons_note, Shortcut.MAX)));
@@ -69,6 +69,9 @@ public final class FloatingKeysSettings {
         /* Exit SAI: a button of its own kind, so a link of its own */
         final TextView addExit = link(a, dp, R.string.saipen_keys_add_exit);
         body.addView(addExit);
+        /* SAI Pen's keyboard: a button of its own kind too */
+        final TextView addKeyboard = link(a, dp, R.string.saipen_keys_add_keyboard);
+        body.addView(addKeyboard);
         Switch exitOwn = toggle(a, textColor, R.string.saipen_keys_exit_own, prefs,
             FloatingKeys.PREF_EXIT_OWN, FloatingKeys.EXIT_OWN_BY_DEFAULT, changed);
         body.addView(exitOwn);
@@ -171,7 +174,8 @@ public final class FloatingKeysSettings {
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setMinimumHeight((int) (40 * dp));
                 TextView name = new TextView(a);
-                name.setText(s.exitSai ? a.getString(R.string.saipen_keys_exit) : s.label());
+                name.setText(s.exitSai ? a.getString(R.string.saipen_keys_exit)
+                    : s.keyboard ? a.getString(R.string.saipen_keys_keyboard_long) : s.label());
                 name.setTextColor(textColor);
                 name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                 row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
@@ -197,7 +201,7 @@ public final class FloatingKeysSettings {
                 }
                 /* once / held: a tap switches, unless it can only be held */
                 TextView kind = link(a, dp, s.held ? R.string.saipen_keys_kind_held : R.string.saipen_keys_kind_once);
-                if (s.exitSai) kind.setVisibility(View.INVISIBLE);   /* two taps, neither once nor held */
+                if (s.special()) kind.setVisibility(View.INVISIBLE);   /* neither once nor held */
                 else if (s.key == null) kind.setTextColor(dimColor);
                 else kind.setOnClickListener(v -> {
                     List<Shortcut> l = FloatingKeys.buttons(prefs);
@@ -227,6 +231,11 @@ public final class FloatingKeysSettings {
             addExit.setVisibility(hasExit ? View.GONE : View.VISIBLE);
             addExit.setEnabled(room);
             addExit.setAlpha(room ? 1f : 0.4f);
+            boolean hasKeyboard = false;
+            for (Shortcut s : now) hasKeyboard |= s.keyboard;
+            addKeyboard.setVisibility(hasKeyboard ? View.GONE : View.VISIBLE);
+            addKeyboard.setEnabled(room);
+            addKeyboard.setAlpha(room ? 1f : 0.4f);
         };
         fill[0].run();
 
@@ -245,6 +254,15 @@ public final class FloatingKeysSettings {
             boolean repeat = false;
             for (Shortcut o : l) repeat |= o.exitSai;
             if (!repeat && l.size() < Shortcut.MAX) l.add(Shortcut.exitSai());
+            save(prefs, l);
+            fill[0].run();
+            changed.run();
+        });
+        addKeyboard.setOnClickListener(v -> {
+            List<Shortcut> l = FloatingKeys.buttons(prefs);
+            boolean repeat = false;
+            for (Shortcut o : l) repeat |= o.keyboard;
+            if (!repeat && l.size() < Shortcut.MAX) l.add(Shortcut.keyboard());
             save(prefs, l);
             fill[0].run();
             changed.run();
@@ -295,6 +313,19 @@ public final class FloatingKeysSettings {
     }
 
     interface OnButton { void picked(Shortcut s); }
+
+    /** "Three fingers held still shows or hides them. Change this under
+     *  Gestures." — the gestures as set now. */
+    static String gesturesLine(Activity a, SharedPreferences prefs) {
+        List<Gestures.Input> l = Gestures.inputsDoing(Gestures.actions(prefs.getAll()), Gestures.Type.ON_SCREEN_KEYS);
+        if (l.isEmpty()) return a.getString(R.string.saipen_keys_by_no_gesture);
+        List<String> names = new ArrayList<>();
+        for (Gestures.Input in : l) names.add(a.getString(GesturesSettings.inputName(in)));
+        String joined = names.size() == 1 ? names.get(0)
+            : a.getString(R.string.saipen_keys_by_gesture_or,
+                String.join(", ", names.subList(0, names.size() - 1)), names.get(names.size() - 1));
+        return a.getString(R.string.saipen_keys_by_gesture, joined);
+    }
 
     /**
      * A slider from `min` to 100 percent with the percent beside it, which

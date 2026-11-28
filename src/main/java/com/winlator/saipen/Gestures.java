@@ -14,7 +14,11 @@ import java.util.Map;
  *
  * Every input has a default that is what SAI Pen did before, so nothing
  * changes for anyone who never opens the settings; the one new default is
- * the side button pressed in the air, a right click like touching with it. The four-finger tap
+ * the side button pressed in the air, a right click like touching with it.
+ * The three-finger hold was the on-screen keys' own switch until 0.5.2
+ * (FloatingKeys.PREF_GESTURE); it is a gesture like the others now, the
+ * keys by default, and off for anyone who had switched it off (actions).
+ * The four-finger tap
  * (Winlator's menu) is not here: changed, it could lock a person out.
  * Two-finger drags (scroll, zoom, rotate) are not either: they are
  * continuous, not one action.
@@ -39,6 +43,8 @@ public final class Gestures {
         RIGHT_CLICK("right"),
         /** the tablet's on-screen keyboard */
         KEYBOARD("keyboard"),
+        /** SAI Pen's own keyboard, shown or hidden (PadKeyboard) */
+        PAD_KEYBOARD("sai_keyboard"),
         /** show or hide the on-screen keys (FloatingKeys) */
         ON_SCREEN_KEYS("keys"),
         /** Winlator's side menu */
@@ -62,6 +68,8 @@ public final class Gestures {
         TWO_DOUBLE_TAP("two_double_tap", Kind.EVENT, "none"),
         THREE_TAP("three_tap", Kind.EVENT, "keyboard"),
         THREE_DOUBLE_TAP("three_double_tap", Kind.EVENT, "none"),
+        /** three fingers held still for a moment (FingersHold) */
+        THREE_HOLD("three_hold", Kind.EVENT, "keys"),
         LONG_PRESS("long_press", Kind.EVENT, "none"),
         EDGE_LEFT("edge_left", Kind.EVENT, "none"),
         EDGE_RIGHT("edge_right", Kind.EVENT, "none"),
@@ -91,10 +99,16 @@ public final class Gestures {
     public static List<Type> choices(Input in) {
         if (in.kind == Kind.PEN_TOUCH) {
             return Collections.unmodifiableList(Arrays.asList(
-                Type.DRAW, Type.RIGHT_CLICK, Type.KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.KEY));
+                Type.DRAW, Type.RIGHT_CLICK, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.KEY));
+        }
+        /* a hold is no click: the fingers are not on one point */
+        if (in == Input.THREE_HOLD) {
+            return Collections.unmodifiableList(Arrays.asList(
+                Type.NONE, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.KEY));
         }
         return Collections.unmodifiableList(Arrays.asList(
-            Type.NONE, Type.LEFT_CLICK, Type.RIGHT_CLICK, Type.KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.KEY));
+            Type.NONE, Type.LEFT_CLICK, Type.RIGHT_CLICK, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS,
+            Type.MENU, Type.KEY));
     }
 
     /** Whether a key may be held: only while a pen touch lasts. A finger
@@ -169,6 +183,10 @@ public final class Gestures {
         return a;
     }
 
+    /** The on-screen keys' old switch for the three-finger hold
+     *  (FloatingKeys.PREF_GESTURE, 0.5.2 and earlier). */
+    public static final String OLD_KEYS_HOLD_PREF = "saipen_keys_gesture";
+
     /** All inputs' actions from the saved strings (pref name -> value). */
     public static Action[] actions(Map<String, ?> saved) {
         Input[] all = Input.values();
@@ -177,7 +195,26 @@ public final class Gestures {
             Object v = saved == null ? null : saved.get(all[i].pref());
             out[i] = action(all[i], v instanceof String ? (String) v : null);
         }
+        /* the hold switched off under On-screen keys before it was a gesture:
+         * off it stays, until it is set under Gestures */
+        if (saved != null && !(saved.get(Input.THREE_HOLD.pref()) instanceof String)
+                && Boolean.FALSE.equals(saved.get(OLD_KEYS_HOLD_PREF))) {
+            out[Input.THREE_HOLD.ordinal()] = Action.of(Type.NONE);
+        }
         return out;
+    }
+
+    /** The inputs set to this type, in the settings' order. */
+    public static List<Input> inputsDoing(Action[] actions, Type type) {
+        List<Input> l = new ArrayList<>();
+        for (Input in : fingerInputs()) if (actions[in.ordinal()].type == type) l.add(in);
+        for (Input in : penInputs()) if (actions[in.ordinal()].type == type) l.add(in);
+        return l;
+    }
+
+    /** Whether three fingers held still show or hide the on-screen keys. */
+    public static boolean holdShowsKeys(Action[] actions) {
+        return actions[Input.THREE_HOLD.ordinal()].type == Type.ON_SCREEN_KEYS;
     }
 
     /** How many inputs differ from their default (the settings row's summary). */
