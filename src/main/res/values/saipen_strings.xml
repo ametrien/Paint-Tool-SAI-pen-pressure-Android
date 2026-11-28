@@ -264,6 +264,7 @@ Save your drawing now. Closing and starting SAI again brings back the fast cores
     <string name="saipen_all_timelapses">All timelapses</string>
     <string name="saipen_close">Close</string>
     <string name="saipen_timelapses_intro">One video per drawing, every session of it in order. Tap a picture to play it.</string>
+    <string name="saipen_timelapses_loading">Loading the timelapses…</string>
     <string name="saipen_timelapses_summary">%1$d drawings · %2$d sessions · %3$s</string>
     <string name="saipen_timelapses_empty">No timelapses yet. Draw in SAI with Record a timelapse on, then tap Make a timelapse video.</string>
     <string name="saipen_timelapses_hint">Videos made before 0.4.31 are in the folder.</string>

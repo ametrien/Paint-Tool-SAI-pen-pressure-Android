@@ -78,10 +78,35 @@ final class TimelapsesDialog {
     }
     private final List<LazyStill> stills = new java.util.ArrayList<>();
 
-    /** sizes: sizes(), read on the worker with the library. */
-    static void show(SaiLauncherActivity activity, DrawingLibrary lib, java.util.Map<String, Long> sizes,
-                     ExecutorService worker) {
-        new TimelapsesDialog(activity, lib, sizes, worker).open();
+    /** The window's own thread for its list, sizes and pictures, so they
+     *  never wait behind the start screen's work on the launcher's worker. */
+    private static final ExecutorService LOADER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "sai-timelapses-window");
+        t.setDaemon(true);
+        return t;
+    });
+    /** Cards built at once; the rest follow CHUNK at a time, a frame apart. */
+    static final int FIRST_CARDS = 9, CHUNK = 12;
+
+    /** When the tap came (uptimeMillis), for the log's times. */
+    private long tappedAt;
+    private boolean closed, timed;
+    /** Each fill() a new one: chunks of an older fill stop. */
+    private int generation;
+    private TextView summary;
+    /** Each card's size line, set again once the sizes are read. */
+    private final List<Runnable> sizeLines = new java.util.ArrayList<>();
+
+    /**
+     * Opens the window at once, with "Loading" in it, and fills it as the
+     * list, the cards, the sizes and the pictures come: waiting for them
+     * before opening felt like a frozen app (2 s with 68 drawings on a Tab S6
+     * Lite, 2026-11-28). The log says how long each step took after the tap.
+     */
+    static void open(SaiLauncherActivity activity, ExecutorService worker, long tappedAt) {
+        TimelapsesDialog t = new TimelapsesDialog(activity, worker);
+        t.tappedAt = tappedAt;
+        t.openNow();
     }
 
     /** The timelapse folder's videos and their sizes, in one look at the
@@ -93,11 +118,8 @@ final class TimelapsesDialog {
         return m;
     }
 
-    private TimelapsesDialog(SaiLauncherActivity activity, DrawingLibrary lib, java.util.Map<String, Long> sizes,
-                             ExecutorService worker) {
+    private TimelapsesDialog(SaiLauncherActivity activity, ExecutorService worker) {
         this.activity = activity;
-        this.lib = lib;
-        this.sizes = sizes;
         this.worker = worker;
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -105,6 +127,7 @@ final class TimelapsesDialog {
         selection = new CardSelection<>(activity, new CardSelection.Host<String>() {
             @Override public List<String> cards() {
                 List<String> ids = new java.util.ArrayList<>();
+                if (TimelapsesDialog.this.lib == null) return ids;
                 for (Drawing d : TimelapsesDialog.this.lib.newestFirst()) ids.add(d.id);
                 return ids;
             }
@@ -118,8 +141,9 @@ final class TimelapsesDialog {
         }, R.plurals.saipen_timelapses_delete_q, R.string.saipen_timelapses_delete_what);
     }
 
-    private void open() {
+    private void openNow() {
         dialog = new Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar);
+        dialog.setOnDismissListener(d -> closed = true);
         scroll = new ScrollView(activity);
         scroll.setBackgroundColor(BG);
         scroll.addView(root);
@@ -142,24 +166,59 @@ final class TimelapsesDialog {
         });
         fill();
         dialog.show();
+        scroll.post(() -> android.util.Log.i("SaiPen", "All timelapses: window up "
+            + (android.os.SystemClock.uptimeMillis() - tappedAt) + " ms after the tap"));
+        load();
     }
 
-    private void reload() {
-        worker.execute(() -> {
+    /** The list, then the cards, then the sizes; each shows as it comes. */
+    private void load() {
+        LOADER.execute(() -> {
             DrawingLibrary fresh = TimelapseShelf.load();
-            java.util.Map<String, Long> freshSizes = sizes();
+            long listAt = android.os.SystemClock.uptimeMillis();
             activity.runOnUiThread(() -> {
+                if (closed) return;
                 lib = fresh;
-                sizes = freshSizes;
                 fill();
+                if (!timed) android.util.Log.i("SaiPen", "All timelapses: " + fresh.drawings.size()
+                    + " drawing(s) read " + (listAt - tappedAt) + " ms after the tap, the first cards up at "
+                    + (android.os.SystemClock.uptimeMillis() - tappedAt) + " ms");
+            });
+            java.util.Map<String, Long> freshSizes = sizes();
+            long sizesAt = android.os.SystemClock.uptimeMillis();
+            activity.runOnUiThread(() -> {
+                if (closed) return;
+                sizes = freshSizes;
+                if (summary != null) summary.setText(summaryText());
+                for (Runnable r : sizeLines) r.run();
+                if (!timed) android.util.Log.i("SaiPen", "All timelapses: sizes read " + (sizesAt - tappedAt)
+                    + " ms after the tap");
+                timed = true;
             });
         });
     }
 
+    private void reload() {
+        load();
+    }
+
     private void fill() {
+        final int gen = ++generation;
         root.removeAllViews();
         stills.clear();
         showOnCards.clear();
+        sizeLines.clear();
+        summary = null;
+        if (lib == null) {
+            /* the window first, the list in a moment (load()) */
+            head = new LinearLayout(activity);
+            root.addView(head, lp(-1, -2, 0, 0, 0, 0));
+            fillHead();
+            TextView wait = text(15, false, TEXT2);
+            wait.setText(R.string.saipen_timelapses_loading);
+            root.addView(wait, lp(-1, -2, 0, 12, 0, 0));
+            return;
+        }
         List<Drawing> drawings = lib.newestFirst();
         /* only what is there stays selected */
         java.util.Set<String> ids = new java.util.HashSet<>();
@@ -173,16 +232,8 @@ final class TimelapsesDialog {
         intro.setText(R.string.saipen_timelapses_intro);
         root.addView(intro, lp(-1, -2, 0, 2, 0, 6));
 
-        int sessions = 0;
-        long bytes = 0;
-        for (Drawing d : drawings) {
-            sessions += d.pieces.size();
-            bytes += sizeOf(d);
-        }
-        TextView summary = text(13, false, TEXT3);
-        summary.setText(activity.getString(R.string.saipen_timelapses_summary, drawings.size(), sessions,
-                                           Formatter.formatShortFileSize(activity, bytes))
-                        + (drawings.isEmpty() ? "" : " · " + activity.getString(R.string.saipen_drawings_hold_hint)));
+        summary = text(13, false, TEXT3);
+        summary.setText(summaryText());
         root.addView(summary, lp(-1, -2, 0, 0, 0, 14));
 
         if (drawings.isEmpty()) {
@@ -196,8 +247,11 @@ final class TimelapsesDialog {
             GridLayout grid = new GridLayout(activity);
             int cols = activity.getResources().getConfiguration().screenWidthDp >= 600 ? 3 : 2;
             grid.setColumnCount(cols);
-            for (int i = 0; i < drawings.size(); i++) grid.addView(card(drawings.get(i)), cell(i, cols));
+            /* the first screenful now, the rest a chunk a frame, so the window never stalls */
+            int first = Math.min(FIRST_CARDS, drawings.size());
+            for (int i = 0; i < first; i++) grid.addView(card(drawings.get(i)), cell(i, cols));
             root.addView(grid);
+            addCards(grid, drawings, first, cols, gen);
         }
 
         TextView hint = text(12, false, TEXT3);
@@ -206,6 +260,31 @@ final class TimelapsesDialog {
         TextView folder = pill(activity.getString(R.string.saipen_timelapses_folder), true);
         folder.setOnClickListener(v -> activity.openTimelapseFolder());
         root.addView(folder, lp(-2, -2, 0, 14, 0, 0));
+    }
+
+    /** Cards `from` on, CHUNK a frame, until another fill() or the window closes. */
+    private void addCards(GridLayout grid, List<Drawing> drawings, int from, int cols, int gen) {
+        if (from >= drawings.size()) return;
+        root.post(() -> {
+            if (closed || gen != generation) return;
+            int to = Math.min(drawings.size(), from + CHUNK);
+            for (int i = from; i < to; i++) grid.addView(card(drawings.get(i)), cell(i, cols));
+            addCards(grid, drawings, to, cols, gen);
+        });
+    }
+
+    /** "68 drawings · 96 sessions · 3.2 GB · hold…", the size as "…" until read. */
+    private String summaryText() {
+        List<Drawing> drawings = lib.newestFirst();
+        int sessions = 0;
+        long bytes = 0;
+        for (Drawing d : drawings) {
+            sessions += d.pieces.size();
+            bytes += Math.max(0, size(d));
+        }
+        return activity.getString(R.string.saipen_timelapses_summary, drawings.size(), sessions,
+                                  sizes == null ? "…" : Formatter.formatShortFileSize(activity, bytes))
+               + (drawings.isEmpty() ? "" : " · " + activity.getString(R.string.saipen_drawings_hold_hint));
     }
 
     /** "All timelapses" and Close; while selecting, how many, Select all,
@@ -264,8 +343,11 @@ final class TimelapsesDialog {
         card.addView(line1, lp(-1, -2, 0, 2, 0, 0));
 
         TextView line2 = text(12, false, TEXT3);
-        line2.setText(Formatter.formatShortFileSize(activity, sizeOf(d)) + " · "
-                      + DateFormat.getDateInstance(DateFormat.MEDIUM).format(new Date(DrawingLibrary.lastDrawn(d))));
+        final String day = DateFormat.getDateInstance(DateFormat.MEDIUM).format(new Date(DrawingLibrary.lastDrawn(d)));
+        Runnable sizeLine = () -> line2.setText(
+            (sizes == null ? "…" : Formatter.formatShortFileSize(activity, size(d))) + " · " + day);
+        sizeLines.add(sizeLine);
+        sizeLine.run();
         line2.setSingleLine();
         card.addView(line2);
 
@@ -383,7 +465,7 @@ final class TimelapsesDialog {
             if (y < 0 || y > to || y + s.card.getHeight() < from) continue;
             s.asked = true;
             final int cardPx = Math.max(1, s.view.getHeight());
-            worker.execute(() -> {
+            LOADER.execute(() -> {
                 Bitmap b = s.file.isFile() ? stillBitmap(s.file, cardPx) : null;
                 if (b != null) activity.runOnUiThread(() -> s.view.setImageBitmap(b));
             });
@@ -402,11 +484,9 @@ final class TimelapsesDialog {
         return at == root ? y : -1;
     }
 
-    private long sizeOf(Drawing d) {
-        return size(d);
-    }
-
+    /** The drawing's videos' size, -1 while the sizes are not read yet. */
     private long size(Drawing d) {
+        if (sizes == null) return -1;
         long n = 0;
         for (int i = 0; i < 8; i++) {
             Long len = sizes.get(DrawingLibrary.joinedName(d, i));

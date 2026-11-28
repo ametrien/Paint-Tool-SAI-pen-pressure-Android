@@ -232,6 +232,7 @@
     <string name="saipen_all_timelapses">Все таймлапсы</string>
     <string name="saipen_close">Закрыть</string>
     <string name="saipen_timelapses_intro">Одно видео на рисунок, все его сеансы по порядку. Нажмите на картинку, чтобы посмотреть.</string>
+    <string name="saipen_timelapses_loading">Загружаю таймлапсы…</string>
     <string name="saipen_timelapses_summary">Рисунков: %1$d · сеансов: %2$d · %3$s</string>
     <string name="saipen_timelapses_empty">Таймлапсов пока нет. Порисуйте в SAI с включённой записью таймлапса, потом нажмите «Сделать видео таймлапса».</string>
     <string name="saipen_timelapses_hint">Видео, сделанные до версии 0.4.31, лежат в папке.</string>

@@ -1025,20 +1025,10 @@ public class SaiLauncherActivity extends AppCompatActivity {
             .show();
     }
 
-    /** Every drawing's timelapse, as the Mac's Videos tab. */
+    /** Every drawing's timelapse, as the Mac's Videos tab: the window at
+     *  once, its contents as they are read (TimelapsesDialog.open). */
     private void openTimelapses() {
-        final long asked = android.os.SystemClock.uptimeMillis();
-        worker.execute(() -> {
-            DrawingLibrary lib = TimelapseShelf.load();
-            java.util.Map<String, Long> sizes = TimelapsesDialog.sizes();
-            long read = android.os.SystemClock.uptimeMillis();
-            ui.post(() -> {
-                if (isFinishing()) return;
-                TimelapsesDialog.show(this, lib, sizes, worker);
-                Log.i(TAG, "All timelapses: " + lib.drawings.size() + " drawing(s), read in " + (read - asked)
-                    + " ms, on the screen " + (android.os.SystemClock.uptimeMillis() - asked) + " ms after the tap");
-            });
-        });
+        TimelapsesDialog.open(this, worker, android.os.SystemClock.uptimeMillis());
     }
 
     @Override
