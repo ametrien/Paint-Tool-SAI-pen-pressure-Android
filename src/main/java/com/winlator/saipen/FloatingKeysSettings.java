@@ -72,6 +72,10 @@ public final class FloatingKeysSettings {
         /* SAI Pen's keyboard: a button of its own kind too */
         final TextView addKeyboard = link(a, dp, R.string.saipen_keys_add_keyboard);
         body.addView(addKeyboard);
+        /* Tab, which shows or hides all of SAI's panels: a link of its own,
+         * as it is easy to miss in the key list of "Add a button" */
+        final TextView addTab = link(a, dp, R.string.saipen_keys_add_tab);
+        body.addView(addTab);
         Switch exitOwn = toggle(a, textColor, R.string.saipen_keys_exit_own, prefs,
             FloatingKeys.PREF_EXIT_OWN, FloatingKeys.EXIT_OWN_BY_DEFAULT, changed);
         body.addView(exitOwn);
@@ -236,6 +240,11 @@ public final class FloatingKeysSettings {
             addKeyboard.setVisibility(hasKeyboard ? View.GONE : View.VISIBLE);
             addKeyboard.setEnabled(room);
             addKeyboard.setAlpha(room ? 1f : 0.4f);
+            boolean hasTab = false;
+            for (Shortcut s : now) hasTab |= s.sameKeys(TAB);
+            addTab.setVisibility(hasTab ? View.GONE : View.VISIBLE);
+            addTab.setEnabled(room);
+            addTab.setAlpha(room ? 1f : 0.4f);
         };
         fill[0].run();
 
@@ -263,6 +272,15 @@ public final class FloatingKeysSettings {
             boolean repeat = false;
             for (Shortcut o : l) repeat |= o.keyboard;
             if (!repeat && l.size() < Shortcut.MAX) l.add(Shortcut.keyboard());
+            save(prefs, l);
+            fill[0].run();
+            changed.run();
+        });
+        addTab.setOnClickListener(v -> {
+            List<Shortcut> l = FloatingKeys.buttons(prefs);
+            boolean repeat = false;
+            for (Shortcut o : l) repeat |= o.sameKeys(TAB);
+            if (!repeat && l.size() < Shortcut.MAX) l.add(TAB);
             save(prefs, l);
             fill[0].run();
             changed.run();
@@ -311,6 +329,9 @@ public final class FloatingKeysSettings {
                 changed.run();
             }));
     }
+
+    /** Tab alone, pressed once: SAI's show / hide all panels. */
+    static final Shortcut TAB = new Shortcut(0, "Tab", false);
 
     interface OnButton { void picked(Shortcut s); }
 
@@ -396,6 +417,12 @@ public final class FloatingKeysSettings {
             mods.addView(c, lp);
         }
         box.addView(mods);
+
+        /* the key list is a spinner, which looked like a note: named */
+        TextView keyLabel = new TextView(a);
+        keyLabel.setText(R.string.saipen_keys_key_label);
+        keyLabel.setPadding(0, (int) (8 * dp), 0, 0);
+        box.addView(keyLabel);
 
         final String none = a.getString(R.string.saipen_keys_no_key);
         List<String> choices = new ArrayList<>();

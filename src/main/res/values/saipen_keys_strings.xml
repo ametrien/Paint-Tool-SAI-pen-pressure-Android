@@ -48,7 +48,9 @@
     <string name="saipen_keys_exit_small">Small</string>
     <string name="saipen_keys_exit_medium">Medium</string>
     <string name="saipen_keys_exit_large">Large</string>
-    <string name="saipen_keys_no_key">(no key, only Ctrl / Alt / Shift)</string>
+    <string name="saipen_keys_no_key">none, only Ctrl / Alt / Shift</string>
+    <string name="saipen_keys_key_label">Key (tap to choose, Tab is here too):</string>
+    <string name="saipen_keys_add_tab">+ Tab (shows or hides all of SAI\'s panels)</string>
     <!-- SaiLocator.exeBits: a 32-bit sai2.exe -->
     <string name="saipen_32bit">SAI Pen needs the 64bit SAI. Download it from SYSTEMAX (its file name ends in 64bit-en.zip), unzip it, then tap Change SAI…</string>
     <string name="saipen_32bit_title">This SAI is 32-bit and won\'t work</string>

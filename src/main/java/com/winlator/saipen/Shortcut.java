@@ -37,8 +37,9 @@ public final class Shortcut {
 
     /** Buttons at most: one or two rows on a tablet (Shortcut.columns),
      *  more on a phone. 12 since copy and paste joined the first buttons
-     *  (the owner, 2026-11-27): two rows of six. */
-    public static final int MAX = 12;
+     *  (the owner, 2026-11-27): two rows of six; 14 since Tab joined them
+     *  (the owner, 2026-11-28): two rows of seven, one left for one's own. */
+    public static final int MAX = 14;
 
     /** The Exit SAI button, as kept in the list and as its label. */
     public static final String EXIT_SAI = "Exit SAI";
@@ -47,24 +48,27 @@ public final class Shortcut {
 
     /** The first time: Ctrl to hold, undo and redo next to it, copy and
      *  paste, transform, select all and deselect, Hue and Saturation, Enter
-     *  to finish a transform, SAI Pen's keyboard and Exit SAI: MAX, two rows
-     *  of six. The keyboard joined them (the owner, 2026-11-28); a button of
-     *  one's own takes the place of one of these. */
+     *  to finish a transform, Tab to show or hide all panels, SAI Pen's
+     *  keyboard and Exit SAI: 13, one under MAX. The keyboard joined them
+     *  (the owner, 2026-11-28), then Tab (the same day). */
     public static final String DEFAULTS =
-        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + KEYBOARD + "\n" + EXIT_SAI;
+        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\nTab\n" + KEYBOARD + "\n" + EXIT_SAI;
 
     /** The first buttons of earlier versions. A saved list that is exactly
      *  one of these was never changed by hand: it gets the new first buttons
      *  (buttonsOf). 0.5.1 and earlier: before copy and paste; 0.5.2: before
-     *  the keyboard. */
+     *  the keyboard; DEFAULTS_KEYBOARD: with the keyboard, before Tab. */
     static final String DEFAULTS_0_5_1 = "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
     static final String DEFAULTS_0_5_2 =
         "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+    static final String DEFAULTS_KEYBOARD =
+        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + KEYBOARD + "\n" + EXIT_SAI;
 
     /** The buttons from the saved list (null: never saved): the first ones
      *  when it was never changed by hand. */
     public static List<Shortcut> buttonsOf(String saved) {
-        if (saved == null || saved.trim().equals(DEFAULTS_0_5_1) || saved.trim().equals(DEFAULTS_0_5_2))
+        if (saved == null || saved.trim().equals(DEFAULTS_0_5_1) || saved.trim().equals(DEFAULTS_0_5_2)
+                || saved.trim().equals(DEFAULTS_KEYBOARD))
             return parseList(DEFAULTS);
         return parseList(saved);
     }

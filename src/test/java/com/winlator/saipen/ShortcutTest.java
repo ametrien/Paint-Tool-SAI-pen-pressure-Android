@@ -65,22 +65,24 @@ public class ShortcutTest {
     @Test
     public void theDefaults() {
         List<Shortcut> d = Shortcut.parseList(Shortcut.DEFAULTS);
-        assertEquals("[hold Ctrl, Ctrl+Z, Ctrl+Y, Ctrl+C, Ctrl+V, Ctrl+T, Ctrl+A, Ctrl+D, Ctrl+U, Enter, Keyboard, Exit SAI]",
+        assertEquals("[hold Ctrl, Ctrl+Z, Ctrl+Y, Ctrl+C, Ctrl+V, Ctrl+T, Ctrl+A, Ctrl+D, Ctrl+U, Enter, Tab, Keyboard, Exit SAI]",
                      d.toString());
         assertTrue(d.get(0).held);
-        assertTrue(d.get(10).keyboard);
-        assertTrue(d.get(11).exitSai);
-        assertEquals("two rows of six", Shortcut.MAX, d.size());
+        assertEquals("Tab", d.get(10).key);
+        assertEquals(0, d.get(10).modifiers);
+        assertTrue(d.get(11).keyboard);
+        assertTrue(d.get(12).exitSai);
+        assertEquals("one left for one's own", Shortcut.MAX - 1, d.size());
     }
 
     @Test
     public void theListSkipsJunkAndRepeatedKeysAndStopsAtMax() {
         List<Shortcut> l = Shortcut.parseList(
             "hold Ctrl\nnonsense\nctrl\nCtrl+A\nhold ctrl+a\n\nCtrl+B\nCtrl+C\nCtrl+D\nCtrl+E\nCtrl+F\nCtrl+G\nCtrl+H\nCtrl+I\nCtrl+J"
-            + "\nCtrl+K\nCtrl+L\nCtrl+M");
-        assertEquals(12, Shortcut.MAX);
+            + "\nCtrl+K\nCtrl+L\nCtrl+M\nCtrl+N\nCtrl+O");
+        assertEquals(14, Shortcut.MAX);
         assertEquals(Shortcut.MAX, l.size());
-        assertEquals("[hold Ctrl, Ctrl+A, Ctrl+B, Ctrl+C, Ctrl+D, Ctrl+E, Ctrl+F, Ctrl+G, Ctrl+H, Ctrl+I, Ctrl+J, Ctrl+K]",
+        assertEquals("[hold Ctrl, Ctrl+A, Ctrl+B, Ctrl+C, Ctrl+D, Ctrl+E, Ctrl+F, Ctrl+G, Ctrl+H, Ctrl+I, Ctrl+J, Ctrl+K, Ctrl+L, Ctrl+M]",
                      l.toString());
         assertEquals(l, Shortcut.parseList(Shortcut.joinList(l)));
         assertTrue(Shortcut.parseList(null).isEmpty());
@@ -133,6 +135,9 @@ public class ShortcutTest {
         assertEquals("0.5.2's first buttons, untouched, get the keyboard",
                      Shortcut.parseList(Shortcut.DEFAULTS).toString(),
                      Shortcut.buttonsOf(Shortcut.DEFAULTS_0_5_2).toString());
+        assertEquals("the keyboard's first buttons, untouched, get Tab",
+                     Shortcut.parseList(Shortcut.DEFAULTS).toString(),
+                     Shortcut.buttonsOf(Shortcut.DEFAULTS_KEYBOARD).toString());
         assertEquals("buttons changed by hand stay as they are",
                      "[Ctrl+Z, Exit SAI]", Shortcut.buttonsOf("Ctrl+Z\nExit SAI").toString());
     }

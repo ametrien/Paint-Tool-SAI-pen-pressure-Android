@@ -847,6 +847,7 @@ anywhere, and tap it to open your keys:
 | **Ctrl+A**, **Ctrl+D** | select all, deselect |
 | **Ctrl+U** | Hue and Saturation |
 | **Enter** | finishes a transform |
+| **Tab** | shows or hides all of SAI's panels (0.5.3) |
 | **⌨** | shows or hides [SAI Pen's keyboard](#sai-pens-keyboard) (0.5.2) |
 
 - **Move** the open buttons by the **⋮** on the left, **close** them with **×**.
@@ -855,7 +856,7 @@ anywhere, and tap it to open your keys:
 - **Hide** them: press and hold the small button, or hold **three fingers still** on the screen for
   a moment. The same three fingers bring them back. Since 0.5.2 the three-finger hold is a gesture
   like the others: change it under **Gestures**.
-- **Make them your own** on SAI Pen's screen, under **On-screen keys**: up to 12 buttons, each
+- **Make them your own** on SAI Pen's screen, under **On-screen keys**: up to 14 buttons (12 before 0.5.3), each
   *Once* (a tap presses it once) or *Held* (a tap keeps it down until the next tap), any of Ctrl,
   Alt, Shift with a letter, a number, F1–F12, Enter, Space and more. Also the colour, and
   switches to turn the button and the three-finger gesture off.
