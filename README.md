@@ -450,7 +450,9 @@ open.
 3. Type. To close the keyboard, use Android's **Back** gesture or button.
 
 If three fingers don't work, **tap with four fingers** and choose **Keyboard** in the menu on the
-left. The keyboard can cover a lot of the screen, on phones most of all.
+left. The keyboard can cover a lot of the screen, on phones most of all: since 0.5.2,
+[SAI Pen's keyboard](#sai-pens-keyboard) (the **⌨** among the on-screen keys) floats over SAI
+instead.
 
 </details>
 
@@ -833,14 +835,32 @@ anywhere, and tap it to open your keys:
 | **Ctrl+A**, **Ctrl+D** | select all, deselect |
 | **Ctrl+U** | Hue and Saturation |
 | **Enter** | finishes a transform |
+| **⌨** | shows or hides [SAI Pen's keyboard](#sai-pens-keyboard) (0.5.2) |
 
 - **Move** the open buttons by the **⋮** on the left, **close** them with **×**.
+- **⚙** (0.5.2) opens their settings right over SAI: a change shows at once, and the open keys
+  stay open.
 - **Hide** them: press and hold the small button, or hold **three fingers still** on the screen for
-  a moment. The same three fingers bring them back.
-- **Make them your own** on SAI Pen's screen, under **On-screen keys**: up to 8 buttons, each
+  a moment. The same three fingers bring them back. Since 0.5.2 the three-finger hold is a gesture
+  like the others: change it under **Gestures**.
+- **Make them your own** on SAI Pen's screen, under **On-screen keys**: up to 12 buttons, each
   *Once* (a tap presses it once) or *Held* (a tap keeps it down until the next tap), any of Ctrl,
   Alt, Shift with a letter, a number, F1–F12, Enter, Space and more. Also the colour, and
   switches to turn the button and the three-finger gesture off.
+
+### SAI Pen's keyboard
+
+**Since 0.5.2.** A keyboard of SAI Pen's own, in the colour and opacity of your on-screen keys.
+Unlike Android's keyboard it floats over SAI, so the picture does not jump up: drag it anywhere by
+the bar on top, and hide it with **×**.
+
+<img src="docs/images/issues/sai-pen-keyboard.png" width="600" alt="SAI with the on-screen keys open at the top, the keyboard button lit, and SAI Pen's keyboard below: a PC layout with Esc, Tab, Shift, Ctrl, Alt, the arrows and Del">
+
+- **Open it** with the **⌨** among the on-screen keys, or put it on any gesture under **Gestures**
+  (*Show or hide SAI Pen's keyboard*).
+- **A PC layout for SAI**: Esc, Tab, Ctrl, Alt, Shift, the arrows and Del. Ctrl, Alt and Shift: one
+  tap for the next key, a second tap keeps it on, a third turns it off.
+- **⌫, Del and the arrows** repeat while you hold them.
 
 ## Palm rejection
 
