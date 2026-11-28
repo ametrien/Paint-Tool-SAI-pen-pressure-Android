@@ -299,7 +299,11 @@ public class SaiLauncherActivity extends AppCompatActivity {
         if (savedInstanceState == null && !autoLaunch
                 && !prefs.getBoolean(CheatSheet.PREF_CHEAT_SHEET_SEEN, FirstRun.CHEAT_SHEET_SEEN))
             CheatSheetDialog.show(this, prefs);
-        if (savedInstanceState == null) SaiEndedNotice.showIfPending(this, prefs, DIALOG_THEME, this::showBugReport);
+        if (savedInstanceState == null) {
+            SaiEnded.catchAppErrors(getFilesDir());
+            SaiEndedNotice.showIfPending(this, prefs, DIALOG_THEME, this::showBugReport);
+            SaiEndedNotice.collectCrashes(this, prefs);
+        }
 
         startup();
     }
@@ -679,6 +683,15 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
         r.heading("Last time SAI did not close by itself");
         r.item("What", prefs.getString(SaiEndedNotice.PREF_LAST, "never noticed"));
+
+        java.util.List<String> crashes = CrashLog.entries(getFilesDir());
+        r.heading("Last crashes (newest first, up to " + CrashLog.MAX + ")");
+        if (crashes.isEmpty()) r.line(2, "none noted");
+        for (int i = 0; i < crashes.size(); i++) {
+            String[] lines = crashes.get(i).split("\n");
+            r.line(2, (i + 1) + ". " + lines[0]);
+            for (int k = 1; k < lines.length; k++) r.line(5, lines[k]);
+        }
         return r.text();
     }
 

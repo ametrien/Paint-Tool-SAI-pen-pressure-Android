@@ -210,13 +210,15 @@ public final class SaiEnded {
 
     private static volatile boolean handlerOn;
 
-    /** From now on an uncaught error in SAI Pen writes APP_ERROR first, then
-     *  goes on as before (Android's own crash). Once per process. */
+    /** From now on an uncaught error in SAI Pen writes APP_ERROR first (if
+     *  SAI is open) and the error with its stack (CrashLog, for the report),
+     *  then goes on as before (Android's own crash). Once per process. */
     public static synchronized void catchAppErrors(File filesDir) {
         if (handlerOn) return;
         handlerOn = true;
         final Thread.UncaughtExceptionHandler before = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            try { CrashLog.saveError(filesDir, t, e, System.currentTimeMillis()); } catch (Throwable ignored) {}
             try { appError(filesDir, e); } catch (Throwable ignored) {}
             if (before != null) before.uncaughtException(t, e);
         });
