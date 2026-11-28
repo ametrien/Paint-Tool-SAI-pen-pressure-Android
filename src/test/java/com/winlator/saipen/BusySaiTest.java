@@ -57,8 +57,9 @@ public class BusySaiTest {
         BusySai b = new BusySai(2, 2);
         run(b, 0, 8, 199);
         b.tick(8_000, 120);
-        assertEquals(0, count(run(b, 9, 9, 199), BusySai.Step.OPEN_ALL));
-        assertEquals(BusySai.Step.OPEN_ALL, b.tick(18_000, 199));
+        /* full again from 9 s: ten seconds later, at 19 s */
+        assertEquals(0, count(run(b, 9, 10, 199), BusySai.Step.OPEN_ALL));
+        assertEquals(BusySai.Step.OPEN_ALL, b.tick(19_000, 199));
     }
 
     @Test
@@ -81,7 +82,7 @@ public class BusySaiTest {
         BusySai b = new BusySai(2, 2);
         run(b, 0, 5, 199);
         b.tick(5_000, -1);
-        assertEquals(0, count(run(b, 6, 9, 199), BusySai.Step.OPEN_ALL));
-        assertEquals(BusySai.Step.OPEN_ALL, b.tick(15_000, 199));
+        assertEquals(0, count(run(b, 6, 10, 199), BusySai.Step.OPEN_ALL));
+        assertEquals(BusySai.Step.OPEN_ALL, b.tick(16_000, 199));
     }
 }

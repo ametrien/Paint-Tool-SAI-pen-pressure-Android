@@ -66,7 +66,8 @@ public final class BusySai {
     /** Once a second. saiPercent: percent of one core, -1 if not known. */
     public Step tick(long now, int saiPercent) {
         if (saiPercent < 0) {
-            lastAt = -1;
+            /* not known (SAI starting or gone): no stretch goes on over it */
+            lastAt = fullSince = calmSince = -1;
             return Step.NONE;
         }
         double s = share(saiPercent);
