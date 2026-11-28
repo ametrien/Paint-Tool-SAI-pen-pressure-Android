@@ -90,7 +90,6 @@
     <string name="saipen_palm_pen_near">Ignore fingers while the pen is near, and 1.5 s after</string>
     <string name="saipen_palm_big">Ignore large touches, like the side of a hand</string>
     <string name="saipen_palm_pen_near_warn">This one can get in the way of two-finger gestures (zoom, move, rotate): while the pen is near, fingers are not noticed at all. Turn it on only if the other two did not help.</string>
-    <string name="saipen_cpu_meter">Show over SAI how busy its cores are (drag it anywhere)</string>
     <string name="saipen_speed_log">Keep speed logs, to compare the choices</string>
     <string name="saipen_buffer">Screen drawing</string>
     <string name="saipen_buffer_warn">With a front buffer, bits of the picture can stay on the screen (for example the brush circle while the pen hovers), more often on slower devices. If you see them, choose Standard.</string>
@@ -105,6 +104,8 @@
     <string name="saipen_cores_all">All of SAI</string>
     <string name="saipen_cores_off">Off</string>
     <string name="saipen_cores_drawing_what">The threads that draw get the fast cores. Menus and the rest of SAI stay as before.</string>
+    <string name="saipen_busy_still_title">SAI may stop answering soon</string>
+    <string name="saipen_busy_still">SAI has used everything it can for %1$d seconds more, and there are no other cores left to give it. Save your drawing now and close SAI, then start it again.</string>
     <string name="saipen_busy_title">SAI is using every core it has</string>
     <string name="saipen_busy_all_cores">For 10 seconds SAI has used all %1$d of the cores it may use, and a SAI that busy can stop answering. So SAI Pen now lets it use every core of this device, out of necessity. It may draw a little slower until it calms down.
 

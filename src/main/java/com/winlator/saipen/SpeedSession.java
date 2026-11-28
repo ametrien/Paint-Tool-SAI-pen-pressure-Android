@@ -61,7 +61,8 @@ public final class SpeedSession {
     private CpuSamples samples;
     private java.util.function.Consumer<String> onBusy;
     private String busyWords;
-    private boolean busyTold;
+    private boolean busyTold, stillTold;
+    private String stillWords;
     private AppCores appCores;         /* speed test only (AppCores.PROP), usually null */
     private PowerWatch power;           /* battery saver and heat: both slow SAI down */
     /** How much you draw (DrawingStats), counted with the speed log on or off. */
@@ -164,9 +165,10 @@ public final class SpeedSession {
             /* told, not only done: SAI may be slower now, and saving is wise */
             s.onBusy = text -> activity.runOnUiThread(() -> {
                 if (activity.isFinishing() || activity.isDestroyed()) return;
+                boolean still = text.equals(s.stillWords);
                 try {
                     new android.app.AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                        .setTitle(com.winlator.R.string.saipen_busy_title)
+                        .setTitle(still ? com.winlator.R.string.saipen_busy_still_title : com.winlator.R.string.saipen_busy_title)
                         .setMessage(text)
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
@@ -177,6 +179,7 @@ public final class SpeedSession {
             });
             s.busyWords = activity.getString(s.cores.mode() == SaiCores.Mode.OFF
                 ? com.winlator.R.string.saipen_busy_no_pin : com.winlator.R.string.saipen_busy_all_cores, s.busy.cores());
+            s.stillWords = activity.getString(com.winlator.R.string.saipen_busy_still, (int) (BusySai.STILL_FULL_MS / 1000));
         }
         s.appCores = AppCores.create(PenInput.systemProperty(AppCores.PROP), new File("/proc/self/task"),
                                      FastCores.find(new File("/sys/devices/system/cpu")), SaiCores::taskset, s::header);
@@ -277,6 +280,13 @@ public final class SpeedSession {
             /* once a session: a second time it would only be in the way */
             if (onBusy != null && !busyTold) onBusy.accept(busyWords);
             busyTold = true;
+        }
+        else if (step == BusySai.Step.STILL_FULL) {
+            log.note(now, "SAI still uses all it can (" + sai + "%), every core or not: nothing more to give");
+            if (samples != null) samples.note(clock(), now, "SAI still full (" + sai + "%) "
+                + BusySai.STILL_FULL_MS / 1000 + " s later: save and close SAI");
+            if (onBusy != null && !stillTold) onBusy.accept(stillWords);
+            stillTold = true;
         }
         else if (step == BusySai.Step.BACK) {
             log.note(now, "SAI calm again (" + sai + "%)");

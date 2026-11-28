@@ -27,6 +27,8 @@ package com.winlator.saipen;
 public final class BusySai {
     public static final long FULL_FOR_MS = 10_000;
     public static final long CALM_FOR_MS = 30_000;
+    /** Still full this long after OPEN_ALL: no more cores to give (STILL_FULL). */
+    public static final long STILL_FULL_MS = 30_000;
     static final double FULL_SHARE = 0.9;
     static final double CALM_SHARE = 0.6;
     /** A speed test's lower "full" (adb shell setprop debug.saipen.busy_share 0.2),
@@ -35,12 +37,15 @@ public final class BusySai {
 
     private final double fullShare, calmShare;
 
-    public enum Step { NONE, OPEN_ALL, BACK }
+    /** STILL_FULL: SAI uses all it can even with every core: only saving
+     *  and closing SAI is left (told once until BACK). */
+    public enum Step { NONE, OPEN_ALL, BACK, STILL_FULL }
 
     /** Cores' worth SAI can use at once (2 = 200%). */
     private final int cores;
     private long fullSince = -1, calmSince = -1;
-    private boolean open;
+    private boolean open, stillTold;
+    private long openAt = -1;
     /** Seconds' worth of time SAI spent full (at least FULL_SHARE), and the longest stretch. */
     private long fullMs, longestFullMs, lastAt = -1;
 
@@ -101,6 +106,8 @@ public final class BusySai {
 
         if (!open && fullSince >= 0 && now - fullSince >= FULL_FOR_MS) {
             open = true;
+            openAt = now;
+            stillTold = false;
             calmSince = -1;
             return Step.OPEN_ALL;
         }
@@ -109,7 +116,16 @@ public final class BusySai {
             fullSince = -1;
             return Step.BACK;
         }
+        if (open && !stillTold && fullSince >= 0 && now - Math.max(fullSince, openAt) >= STILL_FULL_MS) {
+            stillTold = true;
+            return Step.STILL_FULL;
+        }
         return Step.NONE;
+    }
+
+    /** The red line: percent of one core from which SAI counts as full (180 with 2 cores). */
+    public static int limitPercent(int cores) {
+        return (int) Math.round(FULL_SHARE * 100 * Math.max(1, cores));
     }
 
     /** How long SAI was full in all, ms. */

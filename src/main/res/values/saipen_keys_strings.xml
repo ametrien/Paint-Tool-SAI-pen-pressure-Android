@@ -5,6 +5,9 @@
     <string name="saipen_keys_value_on">On</string>
     <string name="saipen_keys_value_off">Off</string>
     <string name="saipen_keys_note">A dot over SAI: tap it for your buttons, ⋮ drags them, × closes them.</string>
+    <string name="saipen_cores_tab">Cores</string>
+    <string name="saipen_cpu_meter">Show how busy SAI's cores are (drag it anywhere)</string>
+    <string name="saipen_cpu_meter_note">The bar's mark is the limit, %1$d%% of the %2$d%% SAI can use. When SAI stays at it for %3$d seconds, SAI Pen lets it onto the device's other cores, if it can, and says so. If it can't, or SAI stays full even then, save your drawing and close SAI yourself: it may stop answering soon. The keys' gesture hides and shows the meter with them.</string>
     <string name="saipen_keys_switch">Show the keys when SAI starts</string>
     <!-- the gestures set to the keys (Gestures), named: "Three fingers held still" -->
     <string name="saipen_keys_by_gesture">%s: shows or hides them. Change this under Gestures (hold four fingers still over SAI, or Gestures on SAI Pen\'s screen).</string>

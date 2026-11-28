@@ -28,8 +28,9 @@ import com.winlator.R;
  * hold is no tap, so the menu does not open as well. Changes are in use at
  * once (GestureActions listens to the preferences).
  *
- * Two tabs: Gestures, and the On-screen keys (FloatingKeysSettings), which
- * the ⚙ on the keys' panel opens straight away. The keys are built again
+ * Three tabs: Gestures, the On-screen keys (FloatingKeysSettings), and Cores,
+ * the processor meter (CpuMeterSettings). The ⚙ on the keys' panel opens
+ * the keys' tab straight away. The keys are built again
  * with each change (FloatingKeys.attach listens), so they change while the
  * window is open.
  *
@@ -38,7 +39,7 @@ import com.winlator.R;
  */
 public final class GesturesOverlay {
     public static final int FINGERS = 4;
-    public static final int TAB_GESTURES = 0, TAB_KEYS = 1;
+    public static final int TAB_GESTURES = 0, TAB_KEYS = 1, TAB_CORES = 2;
 
     private GesturesOverlay() {}
 
@@ -89,7 +90,7 @@ public final class GesturesOverlay {
     }
 
     /** The settings in a dark window over SAI, as on SAI Pen's screen,
-     *  open at `tab` (TAB_GESTURES, TAB_KEYS). */
+     *  open at `tab` (TAB_GESTURES, TAB_KEYS, TAB_CORES). */
     static Dialog show(Activity activity, int tab) {
         final float dp = activity.getResources().getDisplayMetrics().density;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
@@ -111,7 +112,8 @@ public final class GesturesOverlay {
         LinearLayout tabs = new LinearLayout(activity);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         final TextView[] tabViews = {
-            tab(activity, dp, R.string.saipen_gestures_title), tab(activity, dp, R.string.saipen_keys_title)};
+            tab(activity, dp, R.string.saipen_gestures_title), tab(activity, dp, R.string.saipen_keys_title),
+            tab(activity, dp, R.string.saipen_cores_tab)};
         for (TextView t : tabViews) {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -142,6 +144,8 @@ public final class GesturesOverlay {
             body.removeAllViews();
             if (chosen[0] == TAB_KEYS) {
                 FloatingKeysSettings.build(activity, body, prefs, SaiLauncherActivity.DIALOG_THEME, () -> {});
+            } else if (chosen[0] == TAB_CORES) {
+                CpuMeterSettings.build(activity, body, prefs, () -> {});
             } else {
                 GesturesSettings.build(activity, body, prefs, SaiLauncherActivity.DIALOG_THEME, () -> {});
             }

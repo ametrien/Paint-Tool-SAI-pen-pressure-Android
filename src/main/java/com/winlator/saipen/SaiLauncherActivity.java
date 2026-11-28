@@ -1315,9 +1315,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         android.widget.CompoundButton logs = findViewById(R.id.SaiPenSpeedLog);
         logs.setChecked(prefs.getBoolean(SpeedSession.PREF_SPEED_LOG, FirstRun.SPEED_LOG));
         logs.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(SpeedSession.PREF_SPEED_LOG, on).apply());
-        android.widget.CompoundButton meter = findViewById(R.id.SaiPenCpuMeter);
-        meter.setChecked(prefs.getBoolean(CpuMeter.PREF_ON, CpuMeter.ON_BY_DEFAULT));
-        meter.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(CpuMeter.PREF_ON, on).apply());
+        CpuMeterSettings.build(this, findViewById(R.id.SaiPenCpuMeterBody), prefs, () -> {});
 
         setUpPenPressure();
 

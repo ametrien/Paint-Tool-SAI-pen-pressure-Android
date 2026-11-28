@@ -4,6 +4,9 @@
     <string name="saipen_keys_value_on">Вкл.</string>
     <string name="saipen_keys_value_off">Выкл.</string>
     <string name="saipen_keys_note">Точка поверх SAI: тап открывает кнопки, ⋮ двигает их, × закрывает.</string>
+    <string name="saipen_cores_tab">Ядра</string>
+    <string name="saipen_cpu_meter">Показывать, насколько заняты ядра SAI (можно перетащить)</string>
+    <string name="saipen_cpu_meter_note">Отметка на полоске — предел: %1$d%% из %2$d%%, которые может занять SAI. Если SAI держится на нём %3$d секунд, SAI Pen отдаёт ему остальные ядра устройства, если может, и сообщает об этом. Если не может или SAI и тогда забит, сохраните рисунок и закройте SAI сами: он может скоро перестать отвечать. Жест клавиш прячет и показывает индикатор вместе с ними.</string>
     <string name="saipen_keys_switch">Показывать клавиши при запуске SAI</string>
     <string name="saipen_keys_gesture">Подержать три пальца на экране, чтобы показать или скрыть их</string>
     <string name="saipen_keys_none">Кнопок нет.</string>

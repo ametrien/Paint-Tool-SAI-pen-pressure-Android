@@ -109,7 +109,8 @@
     <string name="saipen_cores_all">Весь SAI</string>
     <string name="saipen_cores_off">Выключено</string>
     <string name="saipen_cores_drawing_what">Быстрые ядра получают потоки, которые рисуют. Меню и всё остальное в SAI как раньше.</string>
-    <string name="saipen_cpu_meter">Показывать поверх SAI, насколько заняты его ядра (можно перетащить)</string>
+    <string name="saipen_busy_still_title">SAI может скоро перестать отвечать</string>
+    <string name="saipen_busy_still">SAI ещё %1$d секунд занимает всё, что может, а других ядер больше нет. Сохраните рисунок сейчас, закройте SAI и запустите его снова.</string>
     <string name="saipen_busy_title">SAI занял все свои ядра</string>
     <string name="saipen_busy_all_cores">Уже 10 секунд SAI занимает все %1$d ядра, которые ему можно, а так занятый SAI может перестать отвечать. Поэтому SAI Pen по необходимости отдал ему все ядра устройства. Пока он не успокоится, рисование может быть чуть медленнее.
 

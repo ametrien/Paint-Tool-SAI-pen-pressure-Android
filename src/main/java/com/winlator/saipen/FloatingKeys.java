@@ -371,9 +371,12 @@ public final class FloatingKeys {
             if (isOpen[0]) closeButtons.run();
             panel.setVisibility(View.GONE);
             if (exitOwn != null) exitOwn.setVisibility(View.GONE);
+            /* the processor meter goes and comes with them */
+            CpuMeter.setHidden(true);
         };
         final Runnable unhide = () -> {
             shown[0] = true;
+            CpuMeter.setHidden(false);
             if (hasKeys) {
                 panel.setVisibility(View.VISIBLE);
                 panel.post(keepInside);

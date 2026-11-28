@@ -95,4 +95,29 @@ public class BusySaiTest {
         /* nonsense falls back to the normal share */
         assertEquals(0, count(run(new BusySai(2, 2, 7), 0, 20, 150), BusySai.Step.OPEN_ALL));
     }
+
+    @Test
+    public void stillFullThirtySecondsAfterOpeningSaysSaveAndClose() {
+        BusySai b = new BusySai(2, 2);
+        run(b, 0, 11, 199);                                  /* opened at 10 s */
+        BusySai.Step[] s = run(b, 11, 30, 199);              /* 11 to 40 s */
+        assertEquals(1, count(s, BusySai.Step.STILL_FULL));
+        assertEquals(BusySai.Step.STILL_FULL, s[29]);        /* at 40 s */
+        assertEquals(0, count(run(b, 41, 60, 199), BusySai.Step.STILL_FULL));
+    }
+
+    @Test
+    public void notStillFullWhenItEasedAfterOpening() {
+        BusySai b = new BusySai(2, 2);
+        run(b, 0, 11, 199);
+        run(b, 11, 10, 150);                                  /* better on every core */
+        assertEquals(0, count(run(b, 21, 25, 199), BusySai.Step.STILL_FULL));
+        assertEquals(BusySai.Step.STILL_FULL, b.tick(51_000, 199));   /* 30 s full again, from 21 s */
+    }
+
+    @Test
+    public void theLimitIsNinetyPercentOfWhatSaiCanUse() {
+        assertEquals(180, BusySai.limitPercent(2));
+        assertEquals(720, BusySai.limitPercent(8));
+    }
 }

@@ -24,8 +24,10 @@ import java.util.Locale;
  * A small meter over SAI: how much of what it can use SAI uses now
  * ("SAI 70% of 200%") with a bar, green, yellow near the top, red when
  * full, so an artist sees SAI getting busy before it stops answering
- * (BusySai). Off by default; switched on under Fast cores on SAI Pen's
- * screen (PREF_ON), and on or off over SAI as soon as it changes.
+ * (BusySai). Off by default; switched on with the on-screen keys'
+ * settings (FloatingKeysSettings: on SAI Pen's screen and over SAI), on or
+ * off over SAI as soon as it changes, and hidden and shown with the keys
+ * by their gesture (setHidden). A mark on the bar is BusySai's limit.
  * Bottom right at first; dragged anywhere, it stays there.
  *
  * The speed log's thread gives it SAI's use once a second (update()).
@@ -50,6 +52,8 @@ public final class CpuMeter {
     }
     private static WeakReference<Meter> shown = new WeakReference<>(null);
     private static SharedPreferences.OnSharedPreferenceChangeListener listener;
+    /** Hidden with the keys by their gesture (FloatingKeys), for this session. */
+    private static volatile boolean hidden;
 
     private CpuMeter() {}
 
@@ -76,8 +80,29 @@ public final class CpuMeter {
         return (float) Math.min(1.0, saiPercent / (100.0 * Math.max(1, cores)));
     }
 
+    /** Cores' worth SAI can use as set now (as SpeedSession's BusySai counts
+     *  them), for the settings' note: 2 on a Tab S6 Lite. */
+    public static int coresFor(android.content.Context c) {
+        FastCores fc = FastCores.find(new java.io.File("/sys/devices/system/cpu"));
+        int total = fc.cores.length > 0 ? fc.cores.length : Runtime.getRuntime().availableProcessors();
+        int seen = SaiProcessors.resolve(androidx.preference.PreferenceManager.getDefaultSharedPreferences(c)
+            .getInt(SaiProcessors.PREF, SaiProcessors.AUTO), fc.fast.length, total);
+        SaiCores.Mode mode = fc.hasFast() ? SaiCores.readMode(c.getFilesDir()) : SaiCores.Mode.OFF;
+        return new BusySai(seen, mode == SaiCores.Mode.ALL ? fc.fast.length : total).cores();
+    }
+
+    /** The keys' gesture hid or showed them (FloatingKeys): the meter too. */
+    public static void setHidden(boolean h) {
+        hidden = h;
+        ui().post(() -> {
+            Meter m = shown.get();
+            if (m != null) m.box.setVisibility(h ? View.GONE : View.VISIBLE);
+        });
+    }
+
     /** Once per SAI session, when SAI is up (StartupCover). */
     public static void attach(Activity activity, FrameLayout root) {
+        hidden = false;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         if (listener != null) prefs.unregisterOnSharedPreferenceChangeListener(listener);
         listener = (p, key) -> {
@@ -145,12 +170,20 @@ public final class CpuMeter {
             bar.setScaleX(0);
             track.addView(bar, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                             ViewGroup.LayoutParams.MATCH_PARENT));
+            /* the limit (BusySai): from here SAI counts as full */
+            View mark = new View(activity);
+            mark.setBackgroundColor(0xE0FFFFFF);
+            FrameLayout.LayoutParams ml = new FrameLayout.LayoutParams(Math.max(1, (int) (1.5f * dp)),
+                                                                       ViewGroup.LayoutParams.MATCH_PARENT);
+            ml.leftMargin = (int) (110 * dp * RED_FROM);
+            track.addView(mark, ml);
             LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams((int) (110 * dp), (int) (4 * dp));
             tl.topMargin = (int) (4 * dp);
             box.addView(track, tl);
 
             root.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                                                            ViewGroup.LayoutParams.WRAP_CONTENT));
+            if (hidden) box.setVisibility(View.GONE);
             box.post(() -> {
                 box.setX(prefs.getFloat(PREF_X, DEFAULT_X) * Math.max(0, root.getWidth() - box.getWidth()));
                 box.setY(prefs.getFloat(PREF_Y, DEFAULT_Y) * Math.max(0, root.getHeight() - box.getHeight()));
