@@ -9,7 +9,7 @@ pressure**, and record a **timelapse of your canvas** (experimental). Free and o
 
 > [!IMPORTANT]
 > **I'm on a break for now.** For a while there will probably be no replies on Reddit and no new
-> releases. SAI Pen keeps working as it is: [0.5.3](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)
+> releases. SAI Pen keeps working as it is: [0.5.4](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)
 > is the latest version.
 
 On a Mac? The same, also by me:
@@ -69,7 +69,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.5.3</summary>
+> <summary>What's new, 0.4.19 to 0.5.4</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -139,6 +139,11 @@ On a Mac? The same, also by me:
 >   back, and **⤢ Bring SAI back** puts its window to the whole screen again. Tab among the first
 >   on-screen keys, up to 14, in the order you drag them to. *All timelapses* under *All
 >   drawings*.
+> - **0.5.4:** when SAI uses every core it may use for 10 seconds (180% on a device where it
+>   uses 2), SAI Pen lets it onto all the cores so it can still answer, and says so: save and
+>   restart SAI. A [meter over SAI](#using-sai) shows how busy its cores are, in a Cores tab of
+>   the settings over SAI. *Report a problem* lists SAI's processor use a few times per session.
+>   *All timelapses* opens at once and fills in as it reads.
 >
 > </details>
 
