@@ -588,6 +588,9 @@ faster processor and more RAM lag less.
 If one thing lags much more than the rest, like a certain brush or zooming, please say which in
 [Reporting a problem](#reporting-a-problem).
 
+What has been tried to make SAI faster, what helped and what did not (Box64 flags, cores, Wine on
+ARM): [SPEED.md](SPEED.md).
+
 </details>
 
 <details>
