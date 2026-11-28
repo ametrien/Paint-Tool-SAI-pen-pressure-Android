@@ -61,7 +61,7 @@
     <string name="saipen_tip_keys_any">Tip: to show or hide the on-screen keys: %1$s.</string>
     <string name="saipen_tip_change_gestures">Tip: hold four fingers still over SAI to choose what each gesture does.</string>
     <string name="saipen_tip_settings">Did you know? Gestures, on-screen keys and pen pressure can be changed under Settings at the bottom of SAI Pen\'s screen, before you start SAI.</string>
-    <string name="saipen_tip_drives">Did you know? In SAI, F: is your drawings (Documents/SAI Drawings), G: is the gallery, D: is Download, E: is the whole device, and H:, I:, … are SD cards and USB drives plugged in when SAI starts. Don\'t save to C:, it is deleted with the app.</string>
+    <string name="saipen_tip_drives">Did you know? In SAI, F: is your drawings (Documents/SAI Drawings), G: is the gallery, D: is Download, E: is the whole device, and H:, I:, … are SD cards and USB drives plugged in when SAI starts: SAI can open files from them but on most tablets not save there. Don\'t save to C:, it is deleted with the app.</string>
     <string name="saipen_starting_wine">SAI is starting, %1$d s</string>
     <string name="saipen_starting_wine_first">SAI is starting, %1$d s. The first start takes longer.</string>
     <string name="saipen_starting_drawing">SAI is drawing its window, %1$d s</string>
