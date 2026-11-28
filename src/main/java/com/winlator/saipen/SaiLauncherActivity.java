@@ -1019,8 +1019,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
     private void openTimelapses() {
         worker.execute(() -> {
             DrawingLibrary lib = TimelapseShelf.load();
+            java.util.Map<String, Long> sizes = TimelapsesDialog.sizes();
             ui.post(() -> {
-                if (!isFinishing()) TimelapsesDialog.show(this, lib, worker);
+                if (!isFinishing()) TimelapsesDialog.show(this, lib, sizes, worker);
             });
         });
     }

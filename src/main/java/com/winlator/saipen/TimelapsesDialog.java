@@ -46,6 +46,10 @@ final class TimelapsesDialog {
     private final SaiLauncherActivity activity;
     private final ExecutorService worker;
     private DrawingLibrary lib;
+    /** Each joined video's size by its file name (sizes()), read off the
+     *  main thread: hundreds of single file checks on shared storage held
+     *  the window ~3 s on a Tab S6 Lite (2026-11-28). */
+    private java.util.Map<String, Long> sizes;
     private final LinearLayout root;
     private Dialog dialog;
     /** Held cards, by drawing id (a reload makes new Drawings). */
@@ -55,13 +59,26 @@ final class TimelapsesDialog {
     /** The cards on the screen, to show the selection on them. */
     private final java.util.List<Runnable> showOnCards = new java.util.ArrayList<>();
 
-    static void show(SaiLauncherActivity activity, DrawingLibrary lib, ExecutorService worker) {
-        new TimelapsesDialog(activity, lib, worker).open();
+    /** sizes: sizes(), read on the worker with the library. */
+    static void show(SaiLauncherActivity activity, DrawingLibrary lib, java.util.Map<String, Long> sizes,
+                     ExecutorService worker) {
+        new TimelapsesDialog(activity, lib, sizes, worker).open();
     }
 
-    private TimelapsesDialog(SaiLauncherActivity activity, DrawingLibrary lib, ExecutorService worker) {
+    /** The timelapse folder's videos and their sizes, in one look at the
+     *  folder. Not on the main thread. */
+    static java.util.Map<String, Long> sizes() {
+        java.util.Map<String, Long> m = new java.util.HashMap<>();
+        File[] all = TimelapseShelf.root().listFiles();
+        if (all != null) for (File f : all) if (f.getName().endsWith(".mp4")) m.put(f.getName(), f.length());
+        return m;
+    }
+
+    private TimelapsesDialog(SaiLauncherActivity activity, DrawingLibrary lib, java.util.Map<String, Long> sizes,
+                             ExecutorService worker) {
         this.activity = activity;
         this.lib = lib;
+        this.sizes = sizes;
         this.worker = worker;
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -108,8 +125,10 @@ final class TimelapsesDialog {
     private void reload() {
         worker.execute(() -> {
             DrawingLibrary fresh = TimelapseShelf.load();
+            java.util.Map<String, Long> freshSizes = sizes();
             activity.runOnUiThread(() -> {
                 lib = fresh;
+                sizes = freshSizes;
                 fill();
             });
         });
@@ -205,7 +224,7 @@ final class TimelapsesDialog {
         card.addView(frame, lp(-1, dp(150), 0, 0, 0, 8));
         File f = TimelapseShelf.still(d);
         worker.execute(() -> {
-            Bitmap b = f.isFile() ? BitmapFactory.decodeFile(f.getPath()) : null;
+            Bitmap b = f.isFile() ? stillBitmap(f, dp(150)) : null;
             if (b != null) activity.runOnUiThread(() -> still.setImageBitmap(b));
         });
 
@@ -252,6 +271,24 @@ final class TimelapsesDialog {
         showOnCards.add(show);
         show.run();
         return card;
+    }
+
+    /** A drawing's still, decoded only as big as its card needs (it is the
+     *  drawing's whole size, often 2000 x 1200 or more). */
+    static Bitmap stillBitmap(File f, int height) {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(f.getPath(), o);
+        o.inSampleSize = sampleSize(o.outHeight, height);
+        o.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(f.getPath(), o);
+    }
+
+    /** The largest power of two that keeps the picture at least `want` high. */
+    static int sampleSize(int have, int want) {
+        int s = 1;
+        while (want > 0 && have / (s * 2) >= want) s *= 2;
+        return s;
     }
 
     /** Plays the drawing's joined video on the whole screen, inside the app
@@ -315,9 +352,12 @@ final class TimelapsesDialog {
         });
     }
 
-    private static long size(Drawing d) {
+    private long size(Drawing d) {
         long n = 0;
-        for (int i = 0; i < 8; i++) n += TimelapseShelf.joined(d, i).length();
+        for (int i = 0; i < 8; i++) {
+            Long len = sizes.get(DrawingLibrary.joinedName(d, i));
+            if (len != null) n += len;
+        }
         return n;
     }
 
