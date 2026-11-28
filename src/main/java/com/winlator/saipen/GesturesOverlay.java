@@ -156,14 +156,40 @@ public final class GesturesOverlay {
         }
         select[0].run();
 
+        /* Cancel: everything as it was when the window opened (SettingsUndo);
+         * Done, Back or a tap outside: kept, as before */
+        final java.util.Map<String, Object> before = SettingsUndo.take(prefs.getAll());
+        LinearLayout buttons = new LinearLayout(activity);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        buttons.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        TextView cancel = new TextView(activity);
+        cancel.setText(R.string.saipen_gestures_cancel);
+        cancel.setTextColor(FloatingKeys.COLORS_LIT[0]);
+        cancel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setMinHeight((int) (48 * dp));
+        cancel.setPadding((int) (12 * dp), 0, (int) (12 * dp), 0);
+        cancel.setOnClickListener(v -> {
+            SettingsUndo.Back back = SettingsUndo.back(before, prefs.getAll());
+            if (!back.isEmpty()) {
+                SharedPreferences.Editor e = prefs.edit();
+                for (String k : back.remove) e.remove(k);
+                for (java.util.Map.Entry<String, Object> en : back.put.entrySet()) put(e, en.getKey(), en.getValue());
+                e.apply();
+            }
+            d.dismiss();
+        });
+        buttons.addView(cancel);
         TextView done = new TextView(activity);
         done.setText(R.string.saipen_gestures_done);
         done.setTextColor(FloatingKeys.COLORS_LIT[0]);
         done.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        done.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+        done.setGravity(Gravity.CENTER);
         done.setMinHeight((int) (48 * dp));
+        done.setPadding((int) (12 * dp), 0, 0, 0);
         done.setOnClickListener(v -> d.dismiss());
-        box.addView(done, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+        buttons.addView(done);
+        box.addView(buttons, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT));
 
         d.setContentView(box);
@@ -176,6 +202,16 @@ public final class GesturesOverlay {
         }
         d.show();
         return d;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void put(SharedPreferences.Editor e, String k, Object v) {
+        if (v instanceof Boolean) e.putBoolean(k, (Boolean) v);
+        else if (v instanceof Integer) e.putInt(k, (Integer) v);
+        else if (v instanceof Long) e.putLong(k, (Long) v);
+        else if (v instanceof Float) e.putFloat(k, (Float) v);
+        else if (v instanceof String) e.putString(k, (String) v);
+        else if (v instanceof java.util.Set) e.putStringSet(k, (java.util.Set<String>) v);
     }
 
     private static TextView tab(Activity a, float dp, int text) {
