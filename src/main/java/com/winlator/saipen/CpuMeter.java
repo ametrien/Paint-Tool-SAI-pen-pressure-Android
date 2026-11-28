@@ -41,7 +41,13 @@ public final class CpuMeter {
     /** From this share of all SAI can use the bar is yellow, from FULL red (BusySai's full). */
     static final double YELLOW_FROM = 0.6, RED_FROM = BusySai.FULL_SHARE;
 
-    private static final Handler UI = new Handler(Looper.getMainLooper());
+    /* made on first use: the JVM tests load this class without Android */
+    private static Handler ui;
+
+    private static synchronized Handler ui() {
+        if (ui == null) ui = new Handler(Looper.getMainLooper());
+        return ui;
+    }
     private static WeakReference<Meter> shown = new WeakReference<>(null);
     private static SharedPreferences.OnSharedPreferenceChangeListener listener;
 
@@ -76,7 +82,7 @@ public final class CpuMeter {
         if (listener != null) prefs.unregisterOnSharedPreferenceChangeListener(listener);
         listener = (p, key) -> {
             if (!PREF_ON.equals(key)) return;
-            UI.post(() -> {
+            ui().post(() -> {
                 hide();
                 if (p.getBoolean(PREF_ON, ON_BY_DEFAULT)) show(activity, root, prefs);
             });
@@ -89,7 +95,7 @@ public final class CpuMeter {
     /** SAI's use this second (SpeedSession, its own thread). */
     public static void update(int saiPercent, int cores, boolean everyCore) {
         if (shown.get() == null) return;
-        UI.post(() -> {
+        ui().post(() -> {
             Meter m = shown.get();
             if (m != null) m.set(saiPercent, cores, everyCore);
         });
