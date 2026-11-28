@@ -29,6 +29,14 @@ import java.nio.file.Files;
  * IN_BACKGROUND: nobody closes SAI with its cross while looking at another
  * app.
  *
+ * A SWIPE IS NOT A KILL: swiped away in the recent apps, SAI Pen is not
+ * killed by Android. Its screen is destroyed, which stops Wine, and Wine's
+ * end used to run the same exit as SAI's red cross: the file was removed
+ * and SAI Pen's screen reopened by itself. Now the screen's onDestroy and
+ * the foreground service's onTaskRemoved write REMOVED first, and the exit
+ * does nothing after that. SAI Pen then ends itself, so Android says
+ * EXIT_SELF, not "remove task".
+ *
  * No Android types: the launcher passes Android's numbers in, the JVM tests
  * check the rules.
  */
@@ -58,7 +66,7 @@ public final class SaiEnded {
         REASON_CRASH_NATIVE = 5, REASON_ANR = 6, REASON_EXCESSIVE_RESOURCE_USAGE = 9,
         REASON_USER_REQUESTED = 10, REASON_USER_STOPPED = 11, REASON_PACKAGE_UPDATED = 16;
 
-    static final String OPEN = "open", IN_BACKGROUND = "in-background";
+    static final String OPEN = "open", IN_BACKGROUND = "in-background", REMOVED = "removed";
 
     /** What the file says. */
     public static final class Marker {
@@ -98,7 +106,7 @@ public final class SaiEnded {
                 return null;
             }
         }
-        if (!OPEN.equals(state) && !IN_BACKGROUND.equals(state)) return null;
+        if (!OPEN.equals(state) && !IN_BACKGROUND.equals(state) && !REMOVED.equals(state)) return null;
         if (version < 0 || started < 0) return null;
         return new Marker(state, version, started);
     }
@@ -113,7 +121,17 @@ public final class SaiEnded {
     public static void goneInBackground(File filesDir) {
         File f = new File(filesDir, FILE);
         Marker m = read(f);
-        if (m != null) write(f, text(IN_BACKGROUND, m.versionCode, m.startedMs));
+        /* a swipe that ended SAI stays a swipe */
+        if (m != null && !REMOVED.equals(m.state)) write(f, text(IN_BACKGROUND, m.versionCode, m.startedMs));
+    }
+
+    /** SAI Pen's screen is destroyed, or its task removed, without SAI being
+     *  closed first: swiped away in the recent apps (or ended by Android).
+     *  Kept like IN_BACKGROUND; nothing without a session. */
+    public static void taskRemoved(File filesDir) {
+        File f = new File(filesDir, FILE);
+        Marker m = read(f);
+        if (m != null) write(f, text(REMOVED, m.versionCode, m.startedMs));
     }
 
     /** The session ends on purpose: SAI closed itself, or was closed from the menu. */
@@ -160,6 +178,7 @@ public final class SaiEnded {
      */
     public static Why why(Marker m, long versionNow, long bootMs, int reason, String description) {
         if (m.versionCode != versionNow || reason == REASON_PACKAGE_UPDATED) return Why.UPDATED;
+        if (REMOVED.equals(m.state)) return Why.SWIPED;
         if (IN_BACKGROUND.equals(m.state)) return Why.IN_BACKGROUND;
         switch (reason) {
             case REASON_LOW_MEMORY:

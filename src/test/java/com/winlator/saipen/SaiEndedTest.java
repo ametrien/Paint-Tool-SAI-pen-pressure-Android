@@ -47,6 +47,31 @@ public class SaiEndedTest {
     }
 
     @Test
+    public void aSwipeOutlivesTheSessionsExitAndSaysSwiped() throws Exception {
+        File dir = tmp.newFolder();
+        SaiEnded.started(dir, V, STARTED);
+        SaiEnded.taskRemoved(dir);          /* the screen's onDestroy */
+        SaiEnded.goneInBackground(dir);     /* the session's watch then sees SAI gone */
+        SaiEnded.taskRemoved(dir);          /* the service's onTaskRemoved */
+        SaiEnded.closed(dir);
+        Marker m = SaiEnded.left(dir);
+        assertNotNull(m);
+        assertEquals(SaiEnded.REMOVED, m.state);
+        assertEquals(STARTED, m.startedMs);
+        /* SAI Pen ends itself after a swipe: Android says EXIT_SELF */
+        assertEquals(Why.SWIPED, SaiEnded.why(m, V, BOOT, SaiEnded.REASON_EXIT_SELF, null));
+        assertEquals(Why.SWIPED, SaiEnded.why(m, V, BOOT, -1, null));
+        assertEquals("an update still says updated", Why.UPDATED, SaiEnded.why(m, V + 1, BOOT, -1, null));
+    }
+
+    @Test
+    public void aSwipeWithoutASessionDoesNothing() throws Exception {
+        File dir = tmp.newFolder();
+        SaiEnded.taskRemoved(dir);
+        assertNull(SaiEnded.left(dir));
+    }
+
+    @Test
     public void goneInTheBackgroundWithoutASessionDoesNothing() throws Exception {
         File dir = tmp.newFolder();
         SaiEnded.goneInBackground(dir);
