@@ -14,6 +14,9 @@
     <string name="saipen_keys_keyboard">⌨</string>
     <string name="saipen_keys_keyboard_long">⌨ SAI Pen\'s keyboard</string>
     <string name="saipen_keys_add_keyboard">+ ⌨ SAI Pen\'s keyboard (shows or hides it)</string>
+    <string name="saipen_keys_bring_back">⤢ SAI</string>
+    <string name="saipen_keys_bring_back_long">⤢ Bring SAI back</string>
+    <string name="saipen_keys_add_bring_back">+ ⤢ Bring SAI back (SAI\'s window minimized, made smaller or moved: back to the whole screen)</string>
     <string name="saipen_keys_settings_over_sai">The on-screen keys\' settings</string>
     <string name="saipen_keys_none">No buttons.</string>
     <string name="saipen_keys_add">+ Add a button</string>

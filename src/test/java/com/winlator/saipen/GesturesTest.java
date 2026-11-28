@@ -62,6 +62,18 @@ public class GesturesTest {
     }
 
     @Test
+    public void everyGestureCanBringSaiBack() {
+        for (Gestures.Input in : Gestures.Input.values()) {
+            assertTrue(in.id, Gestures.choices(in).contains(Gestures.Type.BRING_BACK));
+        }
+        java.util.Map<String, Object> saved = new java.util.HashMap<>();
+        saved.put(Gestures.PREF_PREFIX + Gestures.Input.THREE_HOLD.id, "sai_back");
+        assertEquals(Gestures.Type.BRING_BACK, Gestures.actions(saved)[Gestures.Input.THREE_HOLD.ordinal()].type);
+        assertEquals("draws nothing with the pen", Gestures.PEN_NOTHING,
+            Gestures.penTouch(Gestures.actions(saved)[Gestures.Input.THREE_HOLD.ordinal()]));
+    }
+
+    @Test
     public void everyGestureCanOpenSaiPensKeyboard() {
         for (Gestures.Input in : Gestures.Input.values()) {
             assertTrue(in.id, Gestures.choices(in).contains(Gestures.Type.PAD_KEYBOARD));

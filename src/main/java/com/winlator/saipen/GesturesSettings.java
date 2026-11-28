@@ -170,6 +170,7 @@ public final class GesturesSettings {
             case PAD_KEYBOARD: return a.getString(R.string.saipen_action_pad_keyboard);
             case ON_SCREEN_KEYS: return a.getString(R.string.saipen_action_keys);
             case MENU: return a.getString(R.string.saipen_action_menu);
+            case BRING_BACK: return a.getString(R.string.saipen_action_bring_back);
             case KEY: return a.getString(R.string.saipen_action_key);
             case NONE:
             default: return a.getString(R.string.saipen_action_none);

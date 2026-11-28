@@ -207,6 +207,25 @@ static void test_restore_sai(void)
     CHECK(wh_restore_step(1, 1), "SAI minimized: restore");
 }
 
+static void test_bring_back_sai(void)
+{
+    /* SaiPenRequests.bringBackSai: the code alone */
+    struct req q; r_start(&q, WH_BRING_BACK_SAI);
+    CHECK(q.d[0] == 103, "BRING_BACK_SAI: byte 0 is 103");
+    int clash = 0;
+    for (int c = 0; c <= 22; c++) clash |= c == WH_BRING_BACK_SAI;
+    CHECK(!clash && WH_BRING_BACK_SAI != WH_CLOSE_SAI && WH_BRING_BACK_SAI != WH_RESTORE_SAI
+          && WH_BRING_BACK_SAI != WH_PROGRAM_EXIT, "BRING_BACK_SAI: no other code");
+
+    CHECK(wh_bring_back_step(0, 0, 0) == 0, "no SAI window: nothing");
+    CHECK(wh_bring_back_step(1, 0, 1) == WH_BACK_FRONT, "SAI already on the whole screen: only to the front");
+    CHECK(wh_bring_back_step(1, 0, 0) == (WH_BACK_MAXIMIZE | WH_BACK_FRONT), "made smaller or moved: maximized");
+    CHECK(wh_bring_back_step(1, 1, 0) == (WH_BACK_RESTORE | WH_BACK_MAXIMIZE | WH_BACK_FRONT),
+          "minimized: restored, then maximized");
+    CHECK(wh_bring_back_step(1, 1, 1) == (WH_BACK_RESTORE | WH_BACK_MAXIMIZE | WH_BACK_FRONT),
+          "minimized while maximized: restored and maximized anyway");
+}
+
 static void test_close_sai(void)
 {
     /* SaiPenRequests.closeSai: the code alone, the rest of the 256 bytes as left */
@@ -249,6 +268,7 @@ int main(void)
     test_answers();
     test_copy_string();
     test_maximize();
+    test_bring_back_sai();
     test_close_sai();
     test_restore_sai();
     test_program_exit();

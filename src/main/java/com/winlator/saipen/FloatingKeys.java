@@ -263,8 +263,9 @@ public final class FloatingKeys {
         final String exitAsk = activity.getString(R.string.saipen_keys_exit_ask);
         float widest = 0;
         final String keyboardLabel = activity.getString(R.string.saipen_keys_keyboard);
+        final String bringBackLabel = activity.getString(R.string.saipen_keys_bring_back);
         for (Shortcut s : buttons) widest = Math.max(widest, paintText.measureText(
-            s.exitSai ? exitLabel : s.keyboard ? keyboardLabel : s.label()));
+            s.exitSai ? exitLabel : s.keyboard ? keyboardLabel : s.bringBack ? bringBackLabel : s.label()));
         final int cellWidth = (int) Math.max(44 * dp, widest + 16 * dp);
         /* the buttons may take half the screen's width */
         int screenW = activity.getResources().getDisplayMetrics().widthPixels;
@@ -281,7 +282,7 @@ public final class FloatingKeys {
                 grid.addView(row);
             }
             Shortcut s = buttons.get(i);
-            TextView t = button(activity, dp, s.exitSai ? exitLabel : s.keyboard ? keyboardLabel : s.label(), cellWidth);
+            TextView t = button(activity, dp, s.exitSai ? exitLabel : s.keyboard ? keyboardLabel : s.bringBack ? bringBackLabel : s.label(), cellWidth);
             row.addView(t, new LinearLayout.LayoutParams(cellWidth, (int) (40 * dp)));
             views.add(t);
         }
@@ -310,6 +311,10 @@ public final class FloatingKeys {
                 }
                 if (buttons.get(i).keyboard) {
                     views.get(i).setBackground(rounded(PadKeyboard.isShown() ? lit : Color.TRANSPARENT, 9 * dp));
+                    continue;
+                }
+                if (buttons.get(i).bringBack) {
+                    views.get(i).setBackground(rounded(Color.TRANSPARENT, 9 * dp));
                     continue;
                 }
                 int c = !held.isDown(i) ? Color.TRANSPARENT : held.isLatched(i) ? lit : pressed;
@@ -413,6 +418,11 @@ public final class FloatingKeys {
                 t.setOnClickListener(v -> {
                     PadKeyboard.toggle();
                     paint.run();
+                });
+            } else if (buttons.get(i).bringBack) {
+                t.setOnClickListener(v -> {
+                    if (activity instanceof XServerDisplayActivity)
+                        SaiPenRequests.bringBackSai(((XServerDisplayActivity) activity).getWinHandler());
                 });
             } else if (buttons.get(i).exitSai) {
                 Runnable tap = exitTap(ui, exitTaps, t, exitLabel, exitAsk,

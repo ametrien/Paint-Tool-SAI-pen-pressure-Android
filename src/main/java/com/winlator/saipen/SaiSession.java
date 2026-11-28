@@ -91,6 +91,9 @@ public final class SaiSession {
             }
         });
 
+        /* gestures' Bring SAI back reaches this session's winhandler.exe */
+        if (activity instanceof XServerDisplayActivity)
+            SaiPenRequests.setCurrent(((XServerDisplayActivity) activity).getWinHandler());
         /* SAI is open: if nothing removes this, SAI did not close by itself (SaiEnded) */
         SaiEnded.started(activity.getFilesDir(), SaiEndedNotice.versionCode(activity), System.currentTimeMillis());
         SaiEnded.catchAppErrors(activity.getFilesDir());

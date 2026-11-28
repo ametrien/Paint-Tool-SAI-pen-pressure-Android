@@ -11,6 +11,8 @@ public final class SaiPenRequests {
     static final byte CLOSE_SAI = 100;
     /** protocol.h WH_RESTORE_SAI */
     static final byte RESTORE_SAI = 101;
+    /** protocol.h WH_BRING_BACK_SAI */
+    static final byte BRING_BACK_SAI = 103;
     /** WinHandler.CLIENT_PORT: winhandler.exe listens here */
     private static final int CLIENT_PORT = 7946;
 
@@ -33,6 +35,28 @@ public final class SaiPenRequests {
      */
     public static void restoreSai(WinHandler h) {
         send(h, RESTORE_SAI);
+    }
+
+    /**
+     * Bring SAI back: SAI's window to the whole screen, whatever was done to
+     * it (minimized, made smaller, moved with its title bar), and in front.
+     * winhandler.exe does nothing if it is already so.
+     */
+    public static void bringBackSai(WinHandler h) {
+        send(h, BRING_BACK_SAI);
+    }
+
+    /** The same for this SAI session's winhandler.exe (gestures). */
+    public static void bringBackSai() {
+        WinHandler h = current.get();
+        if (h != null) bringBackSai(h);
+    }
+
+    /** This SAI session's: set when the session starts (SaiSession). */
+    private static java.lang.ref.WeakReference<WinHandler> current = new java.lang.ref.WeakReference<>(null);
+
+    public static void setCurrent(WinHandler h) {
+        current = new java.lang.ref.WeakReference<>(h);
     }
 
     private static void send(WinHandler h, byte code) {

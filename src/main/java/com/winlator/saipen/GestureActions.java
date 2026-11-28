@@ -1,5 +1,7 @@
 package com.winlator.saipen;
 
+import com.winlator.winhandler.SaiPenRequests;
+
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
@@ -94,6 +96,9 @@ public final class GestureActions {
                 break;
             case MENU:
                 if (menu != null) menu.run();
+                break;
+            case BRING_BACK:
+                SaiPenRequests.bringBackSai();
                 break;
             case KEY:
                 KeyPresses.pressOnce(xServer, KeyPresses.keys(a.keys), null);

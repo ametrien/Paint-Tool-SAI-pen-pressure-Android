@@ -49,6 +49,9 @@ public final class Gestures {
         ON_SCREEN_KEYS("keys"),
         /** Winlator's side menu */
         MENU("menu"),
+        /** SAI's window back to the whole screen: minimized, made smaller or
+         *  moved with its title bar (SaiPenRequests.bringBackSai) */
+        BRING_BACK("sai_back"),
         /** a key combination (Shortcut) */
         KEY("key:");
 
@@ -99,16 +102,17 @@ public final class Gestures {
     public static List<Type> choices(Input in) {
         if (in.kind == Kind.PEN_TOUCH) {
             return Collections.unmodifiableList(Arrays.asList(
-                Type.DRAW, Type.RIGHT_CLICK, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.KEY));
+                Type.DRAW, Type.RIGHT_CLICK, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU,
+                Type.BRING_BACK, Type.KEY));
         }
         /* a hold is no click: the fingers are not on one point */
         if (in == Input.THREE_HOLD) {
             return Collections.unmodifiableList(Arrays.asList(
-                Type.NONE, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.KEY));
+                Type.NONE, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS, Type.MENU, Type.BRING_BACK, Type.KEY));
         }
         return Collections.unmodifiableList(Arrays.asList(
             Type.NONE, Type.LEFT_CLICK, Type.RIGHT_CLICK, Type.KEYBOARD, Type.PAD_KEYBOARD, Type.ON_SCREEN_KEYS,
-            Type.MENU, Type.KEY));
+            Type.MENU, Type.BRING_BACK, Type.KEY));
     }
 
     /** Whether a key may be held: only while a pen touch lasts. A finger

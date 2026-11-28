@@ -297,6 +297,7 @@ static DWORD WINAPI watch_program(LPVOID process)
 
 static void close_sai(void);
 static void restore_sai(void);
+static void bring_back_sai(void);
 
 static void handle(const unsigned char *d, int n)
 {
@@ -404,6 +405,9 @@ static void handle(const unsigned char *d, int n)
         break;
     case WH_RESTORE_SAI:
         restore_sai();
+        break;
+    case WH_BRING_BACK_SAI:
+        bring_back_sai();
         break;
     default:
         break;
@@ -514,6 +518,19 @@ static void restore_sai(void)
     struct sai_main m = { NULL, 0 };
     EnumWindows(find_sai_main, (LPARAM)&m);
     if (wh_restore_step(m.w != NULL, m.w && IsIconic(m.w))) ShowWindow(m.w, SW_RESTORE);
+}
+
+/* BRING_BACK_SAI (wh_bring_back_step, protocol.h): SAI's window to the whole
+ * screen and in front, however it was left. Only ShowWindow and
+ * SetForegroundWindow on SAI's main window, as for the maximize. */
+static void bring_back_sai(void)
+{
+    struct sai_main m = { NULL, 0 };
+    EnumWindows(find_sai_main, (LPARAM)&m);
+    int what = wh_bring_back_step(m.w != NULL, m.w && IsIconic(m.w), m.w && IsZoomed(m.w));
+    if (what & WH_BACK_RESTORE) ShowWindow(m.w, SW_RESTORE);
+    if (what & WH_BACK_MAXIMIZE) ShowWindow(m.w, SW_MAXIMIZE);
+    if (what & WH_BACK_FRONT) SetForegroundWindow(m.w);
 }
 
 static DWORD WINAPI maximize_sai(LPVOID unused)

@@ -34,7 +34,10 @@ enum {
     /* us -> app: the program we started has ended; then its exit code
      * (GetExitCodeProcess, uint32). 0 is SAI closing itself; a crash is an
      * exception code such as 0xC0000005. SaiEnded tells them apart. */
-    WH_PROGRAM_EXIT = 102
+    WH_PROGRAM_EXIT = 102,
+    /* app -> us: Bring SAI back (on-screen keys, gestures): SAI's window to
+     * the whole screen whatever was done to it (wh_bring_back_step) */
+    WH_BRING_BACK_SAI = 103
 };
 
 /* ---- reading a request -------------------------------------------------- */
@@ -236,6 +239,24 @@ static inline int wh_maximize_step(struct wh_maximize *m, uint32_t pid, int zoom
 static inline int wh_restore_step(int found, int iconic)
 {
     return found && iconic;
+}
+
+/*
+ * BRING_BACK_SAI: the person asked for it, so SAI's window comes back
+ * however it was left: minimized (restored first), made smaller or moved
+ * with its title bar (maximized: the whole screen again), behind another
+ * window (to the front). A bit mask of what to do, in that order.
+ */
+enum { WH_BACK_RESTORE = 1, WH_BACK_MAXIMIZE = 2, WH_BACK_FRONT = 4 };
+
+static inline int wh_bring_back_step(int found, int iconic, int zoomed)
+{
+    if (!found) return 0;
+    int what = WH_BACK_FRONT;
+    if (iconic) what |= WH_BACK_RESTORE;
+    /* a restored window has the size it had before: maximized only if it was */
+    if (iconic || !zoomed) what |= WH_BACK_MAXIMIZE;
+    return what;
 }
 
 /*

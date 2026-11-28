@@ -33,6 +33,7 @@
     <string name="saipen_action_right">Right click (picks a colour)</string>
     <string name="saipen_action_keyboard">The tablet\'s keyboard</string>
     <string name="saipen_action_pad_keyboard">Show or hide SAI Pen\'s keyboard</string>
+    <string name="saipen_action_bring_back">Bring SAI back to the whole screen</string>
     <string name="saipen_action_keys">Show or hide the on-screen keys</string>
     <string name="saipen_action_menu">Menu</string>
     <string name="saipen_action_key">A key…</string>

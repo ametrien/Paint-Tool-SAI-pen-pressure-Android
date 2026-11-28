@@ -122,6 +122,24 @@ public class ShortcutTest {
     }
 
     @Test
+    public void bringBackInTheList() {
+        List<Shortcut> l = Shortcut.parseList("Ctrl+Z\nbring sai back\nKeyboard\nBring SAI back");
+        assertEquals(3, l.size());
+        Shortcut b = l.get(1);
+        assertTrue(b.bringBack);
+        assertFalse(b.exitSai);
+        assertFalse(b.keyboard);
+        assertTrue(b.special());
+        assertFalse("never held", b.held);
+        assertTrue("no keys", b.xKeys().isEmpty());
+        assertEquals("Ctrl+Z\nBring SAI back\nKeyboard", Shortcut.joinList(l));
+        assertEquals(Shortcut.bringBack(), b);
+        assertFalse(b.sameKeys(Shortcut.keyboard()));
+        assertFalse(Shortcut.exitSai().sameKeys(b));
+        assertNull("parse() alone, as gestures read their key", Shortcut.parse("Bring SAI back"));
+    }
+
+    @Test
     public void exitSaiIsNoGesturesKey() {
         assertNull("parse() alone, as gestures read their key", Shortcut.parse("Exit SAI"));
     }

@@ -77,6 +77,9 @@ public final class FloatingKeysSettings {
          * as it is easy to miss in the key list of "Add a button" */
         final TextView addTab = link(a, dp, R.string.saipen_keys_add_tab);
         body.addView(addTab);
+        /* Bring SAI back: SAI's window minimized, made smaller or moved */
+        final TextView addBringBack = link(a, dp, R.string.saipen_keys_add_bring_back);
+        body.addView(addBringBack);
         Switch exitOwn = toggle(a, textColor, R.string.saipen_keys_exit_own, prefs,
             FloatingKeys.PREF_EXIT_OWN, FloatingKeys.EXIT_OWN_BY_DEFAULT, changed);
         body.addView(exitOwn);
@@ -235,7 +238,8 @@ public final class FloatingKeysSettings {
                 });
                 TextView name = new TextView(a);
                 name.setText(s.exitSai ? a.getString(R.string.saipen_keys_exit)
-                    : s.keyboard ? a.getString(R.string.saipen_keys_keyboard_long) : s.label());
+                    : s.keyboard ? a.getString(R.string.saipen_keys_keyboard_long)
+                    : s.bringBack ? a.getString(R.string.saipen_keys_bring_back_long) : s.label());
                 name.setTextColor(textColor);
                 name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                 row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
@@ -301,6 +305,11 @@ public final class FloatingKeysSettings {
             addTab.setVisibility(hasTab ? View.GONE : View.VISIBLE);
             addTab.setEnabled(room);
             addTab.setAlpha(room ? 1f : 0.4f);
+            boolean hasBringBack = false;
+            for (Shortcut s : now) hasBringBack |= s.bringBack;
+            addBringBack.setVisibility(hasBringBack ? View.GONE : View.VISIBLE);
+            addBringBack.setEnabled(room);
+            addBringBack.setAlpha(room ? 1f : 0.4f);
         };
         fill[0].run();
 
@@ -328,6 +337,15 @@ public final class FloatingKeysSettings {
             boolean repeat = false;
             for (Shortcut o : l) repeat |= o.keyboard;
             if (!repeat && l.size() < Shortcut.MAX) l.add(Shortcut.keyboard());
+            save(prefs, l);
+            fill[0].run();
+            changed.run();
+        });
+        addBringBack.setOnClickListener(v -> {
+            List<Shortcut> l = FloatingKeys.buttons(prefs);
+            boolean repeat = false;
+            for (Shortcut o : l) repeat |= o.bringBack;
+            if (!repeat && l.size() < Shortcut.MAX) l.add(Shortcut.bringBack());
             save(prefs, l);
             fill[0].run();
             changed.run();

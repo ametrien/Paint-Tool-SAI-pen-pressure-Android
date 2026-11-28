@@ -25,6 +25,10 @@ import java.util.Locale;
  *   kept in the list as the line "Keyboard". Only the floating keys' list
  *   knows it too.
  *
+ * - BRING_BACK: no keys; brings SAI's window back to the whole screen when
+ *   it was minimized, made smaller or moved with its title bar
+ *   (SaiPenRequests.bringBackSai), kept in the list as "Bring SAI back".
+ *
  * Each person picks their own buttons, up to MAX. Written the way people
  * write keys ("Ctrl+Shift+T", modifiers in the order Ctrl, Alt, Shift; a
  * modifier alone is fine for a held button), and kept in the preferences
@@ -45,6 +49,8 @@ public final class Shortcut {
     public static final String EXIT_SAI = "Exit SAI";
     /** The keyboard button, as kept in the list and as its label. */
     public static final String KEYBOARD = "Keyboard";
+    /** The Bring SAI back button, as kept in the list and as its label. */
+    public static final String BRING_BACK = "Bring SAI back";
 
     /** The first time: Ctrl to hold, undo and redo next to it, copy and
      *  paste, transform, select all and deselect, Hue and Saturation, Enter
@@ -108,6 +114,8 @@ public final class Shortcut {
     public final boolean exitSai;
     /** The keyboard button: no keys, never held. */
     public final boolean keyboard;
+    /** The Bring SAI back button: no keys, never held. */
+    public final boolean bringBack;
 
     public Shortcut(int modifiers, String key, boolean held) {
         this.modifiers = modifiers & (CTRL | ALT | SHIFT);
@@ -116,29 +124,38 @@ public final class Shortcut {
         this.held = held || key == null;
         this.exitSai = false;
         this.keyboard = false;
+        this.bringBack = false;
     }
 
-    private Shortcut(boolean exitSai) {
+    private static final int EXIT = 0, KEYBOARD_BUTTON = 1, BRING_BACK_BUTTON = 2;
+
+    private Shortcut(int which) {
         modifiers = 0;
         key = null;
         held = false;
-        this.exitSai = exitSai;
-        this.keyboard = !exitSai;
+        this.exitSai = which == EXIT;
+        this.keyboard = which == KEYBOARD_BUTTON;
+        this.bringBack = which == BRING_BACK_BUTTON;
     }
 
     /** The Exit SAI button. */
     public static Shortcut exitSai() {
-        return new Shortcut(true);
+        return new Shortcut(EXIT);
     }
 
     /** The button that shows or hides SAI Pen's keyboard. */
     public static Shortcut keyboard() {
-        return new Shortcut(false);
+        return new Shortcut(KEYBOARD_BUTTON);
     }
 
-    /** Exit SAI or the keyboard: a button with no keys of its own. */
+    /** The button that brings SAI's window back to the whole screen. */
+    public static Shortcut bringBack() {
+        return new Shortcut(BRING_BACK_BUTTON);
+    }
+
+    /** Exit SAI, the keyboard or Bring SAI back: a button with no keys of its own. */
     public boolean special() {
-        return exitSai || keyboard;
+        return exitSai || keyboard || bringBack;
     }
 
     /** "Ctrl+Shift+T", "hold Ctrl" -> the button; null for anything that is
@@ -190,6 +207,7 @@ public final class Shortcut {
     public String label() {
         if (exitSai) return EXIT_SAI;
         if (keyboard) return KEYBOARD;
+        if (bringBack) return BRING_BACK;
         StringBuilder sb = new StringBuilder();
         if ((modifiers & CTRL) != 0) sb.append("Ctrl+");
         if ((modifiers & ALT) != 0) sb.append("Alt+");
@@ -204,24 +222,26 @@ public final class Shortcut {
     public String toString() {
         if (exitSai) return EXIT_SAI;
         if (keyboard) return KEYBOARD;
+        if (bringBack) return BRING_BACK;
         return (held ? HOLD : "") + label();
     }
 
     /** The same keys, held or not: a list has each combination once. */
     public boolean sameKeys(Shortcut o) {
-        if (o.special() || special()) return o.exitSai == exitSai && o.keyboard == keyboard;
+        if (o.special() || special()) return o.exitSai == exitSai && o.keyboard == keyboard && o.bringBack == bringBack;
         return o.modifiers == modifiers && (key == null ? o.key == null : key.equals(o.key));
     }
 
     @Override
     public boolean equals(Object o) {
         return o instanceof Shortcut && sameKeys((Shortcut) o) && ((Shortcut) o).held == held
-            && ((Shortcut) o).exitSai == exitSai && ((Shortcut) o).keyboard == keyboard;
+            && ((Shortcut) o).exitSai == exitSai && ((Shortcut) o).keyboard == keyboard
+            && ((Shortcut) o).bringBack == bringBack;
     }
 
     @Override
     public int hashCode() {
-        return modifiers * 31 + (key == null ? 0 : key.hashCode()) + (held ? 7 : 0) + (exitSai ? 101 : 0) + (keyboard ? 211 : 0);
+        return modifiers * 31 + (key == null ? 0 : key.hashCode()) + (held ? 7 : 0) + (exitSai ? 101 : 0) + (keyboard ? 211 : 0) + (bringBack ? 307 : 0);
     }
 
     /** Buttons per row for n buttons when at most `fit` fit side by side
@@ -242,7 +262,8 @@ public final class Shortcut {
         if (saved == null) return out;
         for (String line : saved.split("\n")) {
             String t = line.trim();
-            Shortcut s = EXIT_SAI.equalsIgnoreCase(t) ? exitSai() : KEYBOARD.equalsIgnoreCase(t) ? keyboard() : parse(line);
+            Shortcut s = EXIT_SAI.equalsIgnoreCase(t) ? exitSai() : KEYBOARD.equalsIgnoreCase(t) ? keyboard()
+                : BRING_BACK.equalsIgnoreCase(t) ? bringBack() : parse(line);
             if (s == null || out.size() >= MAX) continue;
             boolean repeat = false;
             for (Shortcut o : out) repeat |= o.sameKeys(s);

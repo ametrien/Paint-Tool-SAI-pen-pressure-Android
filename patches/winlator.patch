@@ -654,7 +654,7 @@ index b144c9f..4a7a8b2 100644
          xServerView.requestRender();
      }
 diff --git a/app/src/main/java/com/winlator/renderer/Texture.java b/app/src/main/java/com/winlator/renderer/Texture.java
-index fb0252f..e3c0be8 100644
+index fb0252f..74e7420 100644
 --- a/app/src/main/java/com/winlator/renderer/Texture.java
 +++ b/app/src/main/java/com/winlator/renderer/Texture.java
 @@ -2,6 +2,7 @@ package com.winlator.renderer;
@@ -665,9 +665,20 @@ index fb0252f..e3c0be8 100644
  import android.opengl.GLES32;
  
  import com.winlator.xserver.Drawable;
-@@ -120,16 +121,33 @@ public class Texture {
+@@ -116,20 +117,42 @@ public class Texture {
+     }
  
+     public void updateFromDrawable() {
+-        if (owner == null || owner.getData() == null) return;
+-
++        /* SAI Pen: owner read once. The X server thread sets it to null when the
++         * window's drawable goes (DrawableManager), as SAI is minimized: read
++         * twice, it could be gone between the check and the use, and the GL
++         * thread crashed the app (NullPointerException, 2026-11-28). */
++        final Drawable owner = this.owner;
++        if (owner == null) return;
          ByteBuffer data = owner.getData();
++        if (data == null) return;
          if (!isAllocated()) {
 +            owner.dirty.take(dirtyBox);   /* all of it goes now */
              allocateTexture(owner.width, owner.height, data);
@@ -1612,7 +1623,7 @@ index b651bc1..b7be9b7 100644
  
      public GLRenderer getRenderer() {
 diff --git a/app/src/main/java/com/winlator/winhandler/WinHandler.java b/app/src/main/java/com/winlator/winhandler/WinHandler.java
-index 3318b9f..d186154 100644
+index 3318b9f..ac52ec3 100644
 --- a/app/src/main/java/com/winlator/winhandler/WinHandler.java
 +++ b/app/src/main/java/com/winlator/winhandler/WinHandler.java
 @@ -405,6 +405,12 @@ public class WinHandler {
