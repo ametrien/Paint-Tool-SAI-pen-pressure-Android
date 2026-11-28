@@ -643,6 +643,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
             + (prefs.getString(SaiLanguage.PREF_CHOICE, null) == null ? " (as the device)" : " (chosen)"));
         r.item("Font for Japanese text", prefs.getString(FontLink.PREF_FONT, FontLink.DEFAULT_FONT));
         r.item("Timelapse", BugReport.onOff(prefs.getBoolean(PREF_TIMELAPSE, FirstRun.TIMELAPSE)));
+        r.item("Processor meter over SAI", BugReport.onOff(prefs.getBoolean(CpuMeter.PREF_ON, CpuMeter.ON_BY_DEFAULT)));
         r.item("Speed log", BugReport.onOff(prefs.getBoolean(SpeedSession.PREF_SPEED_LOG, FirstRun.SPEED_LOG)));
         r.item("On-screen keys", BugReport.onOff(prefs.getBoolean(FloatingKeys.PREF_ON, FloatingKeys.ON_BY_DEFAULT)));
         r.item("Gestures changed", String.valueOf(Gestures.changed(Gestures.actions(prefs.getAll()))));
@@ -1308,6 +1309,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
         android.widget.CompoundButton logs = findViewById(R.id.SaiPenSpeedLog);
         logs.setChecked(prefs.getBoolean(SpeedSession.PREF_SPEED_LOG, FirstRun.SPEED_LOG));
         logs.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(SpeedSession.PREF_SPEED_LOG, on).apply());
+        android.widget.CompoundButton meter = findViewById(R.id.SaiPenCpuMeter);
+        meter.setChecked(prefs.getBoolean(CpuMeter.PREF_ON, CpuMeter.ON_BY_DEFAULT));
+        meter.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean(CpuMeter.PREF_ON, on).apply());
 
         setUpPenPressure();
 

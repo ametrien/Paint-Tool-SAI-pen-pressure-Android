@@ -90,6 +90,7 @@
     <string name="saipen_palm_pen_near">Ignore fingers while the pen is near, and 1.5 s after</string>
     <string name="saipen_palm_big">Ignore large touches, like the side of a hand</string>
     <string name="saipen_palm_pen_near_warn">This one can get in the way of two-finger gestures (zoom, move, rotate): while the pen is near, fingers are not noticed at all. Turn it on only if the other two did not help.</string>
+    <string name="saipen_cpu_meter">Show over SAI how busy its cores are (drag it anywhere)</string>
     <string name="saipen_speed_log">Keep speed logs, to compare the choices</string>
     <string name="saipen_buffer">Screen drawing</string>
     <string name="saipen_buffer_warn">With a front buffer, bits of the picture can stay on the screen (for example the brush circle while the pen hovers), more often on slower devices. If you see them, choose Standard.</string>

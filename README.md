@@ -400,6 +400,8 @@ seen once on a Galaxy Tab S6 Lite, after a line and an undo on a small sketch.
 onto all the cores of the device, and says so. SAI may draw a little slower then: **save your
 drawing**, and close and start SAI again to get the fast cores back. **Report a problem** now also
 lists SAI's processor use a few times per session, so please send it if this happens to you.
+To watch it yourself, switch on **Show over SAI how busy its cores are** under Fast cores: a small
+meter over SAI (bottom right, drag it anywhere) turns yellow as SAI gets busy and red when it is full.
 
 If SAI still doesn't answer after a minute or two, it isn't coming back: swipe SAI Pen away in the
 recent apps. What wasn't saved is lost, so save often.

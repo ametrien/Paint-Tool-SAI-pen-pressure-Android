@@ -121,6 +121,8 @@ public final class StartupCover {
                 showMenuHint(activity);
                 /* Ctrl, Alt and Shift for SAI without a keyboard, once SAI is up */
                 FloatingKeys.attach(activity, root, xServer);
+                /* SAI's processor use, if switched on (CpuMeter) */
+                CpuMeter.attach(activity, root);
                 /* SAI Pen's own keyboard, shown by a gesture or the ⌨ key */
                 PadKeyboard.attach(activity, root, xServer);
                 /* four fingers held still: the gestures' settings over SAI */

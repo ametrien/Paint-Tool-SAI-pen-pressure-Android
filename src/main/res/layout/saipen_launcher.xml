@@ -828,6 +828,15 @@
                     android:minHeight="44dp"
                     android:text="@string/saipen_speed_log"
                     android:textColor="?attr/colorPrimaryText" />
+
+                <!-- SAI's processor use over SAI (CpuMeter) -->
+                <Switch
+                    android:id="@+id/SaiPenCpuMeter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:text="@string/saipen_cpu_meter"
+                    android:textColor="?attr/colorPrimaryText" />
             </LinearLayout>
 
             <View style="@style/SaiPenDivider" />

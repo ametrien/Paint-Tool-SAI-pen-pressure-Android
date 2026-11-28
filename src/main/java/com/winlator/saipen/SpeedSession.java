@@ -285,6 +285,7 @@ public final class SpeedSession {
             cores.back();
         }
         if (samples != null) samples.tick(now, sai, all, clock());
+        CpuMeter.update(sai, busy.cores(), busy.isOpen());
     }
 
     private static String clock() {
