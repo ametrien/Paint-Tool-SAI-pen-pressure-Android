@@ -36,6 +36,17 @@ public class BugReportTest {
     }
 
     @Test
+    public void fileNamesInErrorsAreHidden() {
+        String v = BugReport.safe("java.io.FileNotFoundException: furisode.sai2 (No such file or directory)");
+        assertFalse(v, v.contains("furisode"));
+        assertTrue(v, v.startsWith("java.io.FileNotFoundException: (a file name, hidden)"));
+        assertFalse(BugReport.safe("cannot read Ref-Photo_2.JPG").contains("Ref-Photo"));
+        assertFalse(BugReport.safe("timelapse blanket 2026-11-23.mp4 failed").contains("2026-11-23.mp4"));
+        assertEquals("at com.winlator.renderer.Texture.updateFromDrawable(Texture.java:98)",
+            BugReport.safe("at com.winlator.renderer.Texture.updateFromDrawable(Texture.java:98)"));
+    }
+
+    @Test
     public void ordinaryNumbersStay() {
         assertEquals("1200 (display 2000x1200, 60 Hz)", BugReport.safe("1200 (display 2000x1200, 60 Hz)"));
         assertEquals("Alpha.2026.10.19", BugReport.safe("Alpha.2026.10.19"));

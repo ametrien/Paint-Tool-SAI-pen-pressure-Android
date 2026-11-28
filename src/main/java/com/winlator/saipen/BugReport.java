@@ -30,6 +30,11 @@ public final class BugReport {
     private static final Pattern LICENCE = Pattern.compile("(?i)sai[-_ ]?\\d{6,}");
     /** A long run of digits anywhere (a licence or an ID without its "sai-"). */
     private static final Pattern LONG_NUMBER = Pattern.compile("\\d{9,}");
+    /* a drawing's, picture's or video's file name, as an error message may
+     * carry it without its folder ("furisode.sai2 (No such file)"); code
+     * files (Bar.java:12) are left */
+    private static final Pattern FILE_NAME = Pattern.compile(
+        "(?i)[^\\s:/\\\\()\\[\\]\"']+\\.(sai2?|slc|psd|png|jpe?g|webp|gif|bmp|tiff?|mp4|txt|zip)\\b");
     /** A SAI build in a folder or zip name: "sai2-Alpha-20261019-64bit-en". */
     private static final Pattern BUILD = Pattern.compile("(?i)(alpha|preview|technical[ ._-]?preview)[ ._-]?(\\d{4})[ ._-]?(\\d{2})[ ._-]?(\\d{2})([a-z])?");
 
@@ -80,6 +85,7 @@ public final class BugReport {
         String v = value.replace('\n', ' ').trim();
         v = LICENCE.matcher(v).replaceAll("(hidden)");
         v = LONG_NUMBER.matcher(v).replaceAll("(hidden)");
+        v = FILE_NAME.matcher(v).replaceAll("(a file name, hidden)");
         if (v.contains("/") && v.matches(".*(/storage|/sdcard|/data|/emulated|/mnt).*")) return "(a path, hidden)";
         if (v.matches(".*[A-Za-z]:\\\\.*")) return "(a path, hidden)";
         return v;
