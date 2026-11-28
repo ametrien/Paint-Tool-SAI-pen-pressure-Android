@@ -14,6 +14,8 @@ import java.util.List;
  * three-finger hold while it is on (FloatingKeys.PREF_GESTURE), else the
  * first input set to show or hide them. With neither tip left, the
  * four-finger hold (the gestures' settings), which cannot be changed.
+ * Always one more: gestures, on-screen keys and pen pressure can be changed
+ * under Settings on SAI Pen's screen, before SAI starts.
  *
  * No Android types: the JVM tests check which tips there are.
  */
@@ -28,7 +30,9 @@ public final class LoadingTips {
         /** "input" shows or hides the on-screen keys */
         KEYS,
         /** four fingers held still: change the gestures */
-        CHANGE_GESTURES
+        CHANGE_GESTURES,
+        /** gestures, keys and pen pressure: Settings on SAI Pen's screen */
+        SETTINGS
     }
 
     public static final class Tip {
@@ -66,6 +70,7 @@ public final class LoadingTips {
             if (keys != null) l.add(new Tip(Kind.KEYS, keys));
         }
         if (l.isEmpty()) l.add(new Tip(Kind.CHANGE_GESTURES, null));
+        l.add(new Tip(Kind.SETTINGS, null));
         return Collections.unmodifiableList(l);
     }
 }

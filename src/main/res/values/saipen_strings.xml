@@ -60,6 +60,7 @@
     <string name="saipen_tip_keyboard_any">Tip: to open the keyboard, and to close it again: %1$s.</string>
     <string name="saipen_tip_keys_any">Tip: to show or hide the on-screen keys: %1$s.</string>
     <string name="saipen_tip_change_gestures">Tip: hold four fingers still over SAI to choose what each gesture does.</string>
+    <string name="saipen_tip_settings">Did you know? Gestures, on-screen keys and pen pressure can be changed under Settings at the bottom of SAI Pen\'s screen, before you start SAI.</string>
     <string name="saipen_starting_wine">SAI is starting, %1$d s</string>
     <string name="saipen_starting_wine_first">SAI is starting, %1$d s. The first start takes longer.</string>
     <string name="saipen_starting_drawing">SAI is drawing its window, %1$d s</string>

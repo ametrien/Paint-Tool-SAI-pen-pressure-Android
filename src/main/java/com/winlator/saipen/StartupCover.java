@@ -144,6 +144,8 @@ public final class StartupCover {
                 return activity.getString(R.string.saipen_tip_keys);
             case KEYS:
                 return activity.getString(R.string.saipen_tip_keys_any, gestureName(activity, t.input));
+            case SETTINGS:
+                return activity.getString(R.string.saipen_tip_settings);
             case CHANGE_GESTURES:
             default:
                 return activity.getString(R.string.saipen_tip_change_gestures);
