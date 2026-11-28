@@ -860,6 +860,8 @@ anywhere, and tap it to open your keys:
   *Once* (a tap presses it once) or *Held* (a tap keeps it down until the next tap), any of Ctrl,
   Alt, Shift with a letter, a number, F1–F12, Enter, Space and more. Also the colour, and
   switches to turn the button and the three-finger gesture off.
+- **Change their order** by holding a button's **≡** and dragging it up or down (0.5.3), or with
+  **↑ ↓**. Both on SAI Pen's screen and in the settings over SAI.
 
 ### SAI Pen's keyboard
 

@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -177,6 +178,61 @@ public final class FloatingKeysSettings {
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setMinimumHeight((int) (40 * dp));
+                /* ≡: hold and drag to put the button elsewhere (RowDrag) */
+                TextView handle = new TextView(a);
+                handle.setText("≡");
+                handle.setTextColor(dimColor);
+                handle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+                handle.setGravity(Gravity.CENTER);
+                handle.setContentDescription(a.getString(R.string.saipen_keys_drag_long));
+                handle.setPadding(0, 0, (int) (10 * dp), 0);
+                row.addView(handle, new LinearLayout.LayoutParams((int) (36 * dp), (int) (40 * dp)));
+                if (now.size() > 1) handle.setOnTouchListener(new View.OnTouchListener() {
+                    float startY;
+                    int to = index;
+                    @Override public boolean onTouch(View v, MotionEvent e) {
+                        int step = row.getHeight();
+                        switch (e.getActionMasked()) {
+                            case MotionEvent.ACTION_DOWN:
+                                /* the page must not scroll while dragging */
+                                row.getParent().requestDisallowInterceptTouchEvent(true);
+                                startY = e.getRawY();
+                                to = index;
+                                row.setAlpha(0.8f);
+                                row.setElevation(8 * dp);
+                                row.setBackgroundColor(0x33808080);   /* lifted: a light grey under it */
+                                return true;
+                            case MotionEvent.ACTION_MOVE: {
+                                float dy = e.getRawY() - startY;
+                                row.setTranslationY(dy);
+                                to = RowDrag.target(index, dy, step, list.getChildCount());
+                                for (int j = 0; j < list.getChildCount(); j++)
+                                    if (j != index) list.getChildAt(j).setTranslationY(RowDrag.shift(j, index, to, step));
+                                return true;
+                            }
+                            case MotionEvent.ACTION_UP:
+                            case MotionEvent.ACTION_CANCEL: {
+                                row.getParent().requestDisallowInterceptTouchEvent(false);
+                                for (int j = 0; j < list.getChildCount(); j++) list.getChildAt(j).setTranslationY(0);
+                                row.setAlpha(1f);
+                                row.setElevation(0);
+                                row.setBackground(null);
+                                if (e.getActionMasked() == MotionEvent.ACTION_UP && to != index) {
+                                    List<Shortcut> l = FloatingKeys.buttons(prefs);
+                                    RowDrag.move(l, index, to);
+                                    save(prefs, l);
+                                    /* after this touch is over: fill removes this row */
+                                    list.post(() -> {
+                                        fill[0].run();
+                                        changed.run();
+                                    });
+                                }
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                });
                 TextView name = new TextView(a);
                 name.setText(s.exitSai ? a.getString(R.string.saipen_keys_exit)
                     : s.keyboard ? a.getString(R.string.saipen_keys_keyboard_long) : s.label());

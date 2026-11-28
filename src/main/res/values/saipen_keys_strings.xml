@@ -20,6 +20,7 @@
     <string name="saipen_keys_reset">Back to the first ones</string>
     <string name="saipen_keys_up">↑</string>
     <string name="saipen_keys_down">↓</string>
+    <string name="saipen_keys_drag_long">Hold and drag to move</string>
     <string name="saipen_keys_up_long">Move up</string>
     <string name="saipen_keys_down_long">Move down</string>
     <string name="saipen_keys_remove">Remove</string>

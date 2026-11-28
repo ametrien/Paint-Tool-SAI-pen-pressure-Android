@@ -11,6 +11,7 @@
     <string name="saipen_keys_reset">Вернуть первоначальные</string>
     <string name="saipen_keys_up">↑</string>
     <string name="saipen_keys_down">↓</string>
+    <string name="saipen_keys_drag_long">Зажмите и перетащите, чтобы переставить</string>
     <string name="saipen_keys_up_long">Выше</string>
     <string name="saipen_keys_down_long">Ниже</string>
     <string name="saipen_keys_remove">Убрать</string>
