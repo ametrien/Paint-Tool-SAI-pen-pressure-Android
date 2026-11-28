@@ -65,11 +65,12 @@ public class ShortcutTest {
     @Test
     public void theDefaults() {
         List<Shortcut> d = Shortcut.parseList(Shortcut.DEFAULTS);
-        assertEquals("[hold Ctrl, Ctrl+Z, Ctrl+Y, Ctrl+C, Ctrl+V, Ctrl+T, Ctrl+A, Ctrl+D, Ctrl+U, Enter, Exit SAI]",
+        assertEquals("[hold Ctrl, Ctrl+Z, Ctrl+Y, Ctrl+C, Ctrl+V, Ctrl+T, Ctrl+A, Ctrl+D, Ctrl+U, Enter, Keyboard, Exit SAI]",
                      d.toString());
         assertTrue(d.get(0).held);
-        assertTrue(d.get(10).exitSai);
-        assertEquals("room for one of one's own", Shortcut.MAX - 1, d.size());
+        assertTrue(d.get(10).keyboard);
+        assertTrue(d.get(11).exitSai);
+        assertEquals("two rows of six", Shortcut.MAX, d.size());
     }
 
     @Test
@@ -129,6 +130,9 @@ public class ShortcutTest {
         assertEquals("the old first buttons, untouched, become the new ones",
                      Shortcut.parseList(Shortcut.DEFAULTS).toString(),
                      Shortcut.buttonsOf(Shortcut.DEFAULTS_0_5_1).toString());
+        assertEquals("0.5.2's first buttons, untouched, get the keyboard",
+                     Shortcut.parseList(Shortcut.DEFAULTS).toString(),
+                     Shortcut.buttonsOf(Shortcut.DEFAULTS_0_5_2).toString());
         assertEquals("buttons changed by hand stay as they are",
                      "[Ctrl+Z, Exit SAI]", Shortcut.buttonsOf("Ctrl+Z\nExit SAI").toString());
     }

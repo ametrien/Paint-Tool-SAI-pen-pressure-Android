@@ -47,20 +47,25 @@ public final class Shortcut {
 
     /** The first time: Ctrl to hold, undo and redo next to it, copy and
      *  paste, transform, select all and deselect, Hue and Saturation, Enter
-     *  to finish a transform, and Exit SAI. One under MAX, so a button of
-     *  one's own can be added straight away. */
+     *  to finish a transform, SAI Pen's keyboard and Exit SAI: MAX, two rows
+     *  of six. The keyboard joined them (the owner, 2026-11-28); a button of
+     *  one's own takes the place of one of these. */
     public static final String DEFAULTS =
-        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + KEYBOARD + "\n" + EXIT_SAI;
 
-    /** The first buttons before copy and paste (0.5.1 and earlier). A saved
-     *  list that is exactly these was never changed by hand: it gets the new
-     *  first buttons (buttonsOf). */
+    /** The first buttons of earlier versions. A saved list that is exactly
+     *  one of these was never changed by hand: it gets the new first buttons
+     *  (buttonsOf). 0.5.1 and earlier: before copy and paste; 0.5.2: before
+     *  the keyboard. */
     static final String DEFAULTS_0_5_1 = "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
+    static final String DEFAULTS_0_5_2 =
+        "hold Ctrl\nCtrl+Z\nCtrl+Y\nCtrl+C\nCtrl+V\nCtrl+T\nCtrl+A\nCtrl+D\nCtrl+U\nEnter\n" + EXIT_SAI;
 
     /** The buttons from the saved list (null: never saved): the first ones
      *  when it was never changed by hand. */
     public static List<Shortcut> buttonsOf(String saved) {
-        if (saved == null || saved.trim().equals(DEFAULTS_0_5_1)) return parseList(DEFAULTS);
+        if (saved == null || saved.trim().equals(DEFAULTS_0_5_1) || saved.trim().equals(DEFAULTS_0_5_2))
+            return parseList(DEFAULTS);
         return parseList(saved);
     }
 

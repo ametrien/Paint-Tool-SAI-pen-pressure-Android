@@ -144,6 +144,11 @@ public final class FloatingKeys {
 
     /* what show() put over SAI, to take it away before building again */
     private static Runnable teardown;
+    /* how the keys were when they were taken away: open or the dot, and
+     * where, so the new ones come back the same (the owner, 2026-11-28:
+     * changing the colour over SAI closed them into the dot) */
+    private static boolean lastOpen;
+    private static float lastX = -1, lastY = -1;
     /* kept: SharedPreferences holds its listeners weakly */
     private static SharedPreferences.OnSharedPreferenceChangeListener rebuild;
     /* the keyboard button's light, when PadKeyboard shows or hides */
@@ -164,10 +169,12 @@ public final class FloatingKeys {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         final Handler ui = new Handler(Looper.getMainLooper());
         final Runnable again = () -> {
+            boolean restore = teardown != null;
             if (teardown != null) teardown.run();
             teardown = null;
-            /* being set up: shown, whether they were shown or not */
-            show(activity, root, xServer, true);
+            /* being set up: shown, whether they were shown or not; open if
+             * they were open, where they were */
+            show(activity, root, xServer, true, restore);
         };
         rebuild = (p, key) -> {
             if (key == null) return;
@@ -181,12 +188,13 @@ public final class FloatingKeys {
             ui.postDelayed(again, 100);
         };
         prefs.registerOnSharedPreferenceChangeListener(rebuild);
-        show(activity, root, xServer, prefs.getBoolean(PREF_ON, ON_BY_DEFAULT));
+        show(activity, root, xServer, prefs.getBoolean(PREF_ON, ON_BY_DEFAULT), false);
     }
 
     /** The keys over SAI; `onAtStart`: shown now, else hidden until a gesture. */
     @SuppressLint("ClickableViewAccessibility")
-    private static void show(Activity activity, FrameLayout root, XServer xServer, boolean onAtStart) {
+    private static void show(Activity activity, FrameLayout root, XServer xServer, boolean onAtStart,
+                             boolean restore) {
         final float dp = activity.getResources().getDisplayMetrics().density;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         final List<Shortcut> buttons = buttons(prefs);
@@ -448,6 +456,9 @@ public final class FloatingKeys {
         });
         repaint = paint;
         teardown = () -> {
+            lastOpen = isOpen[0] && panel.getVisibility() == View.VISIBLE;
+            lastX = panel.getX();
+            lastY = panel.getY();
             held.releaseAll();
             root.removeView(panel);
             if (exitOwn != null) root.removeView(exitOwn);
@@ -460,7 +471,15 @@ public final class FloatingKeys {
         open.setVisibility(View.GONE);
         paint.run();
         if (!onAtStart || !hasKeys) panel.setVisibility(View.GONE);
-        panel.post(() -> {
+        if (restore && lastOpen && hasKeys) {
+            /* built again after a change: open, where they were */
+            openButtons.run();
+            panel.post(() -> {
+                panel.setX(lastX);
+                panel.setY(lastY);
+                keepInside.run();
+            });
+        } else panel.post(() -> {
             panel.setX(prefs.getFloat(PREF_X, DEFAULT_X) * Math.max(0, root.getWidth() - panel.getWidth()));
             panel.setY(prefs.getFloat(PREF_Y, DEFAULT_Y) * Math.max(0, root.getHeight() - panel.getHeight()));
             keepInside.run();
