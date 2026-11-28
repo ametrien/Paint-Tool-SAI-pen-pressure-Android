@@ -55,7 +55,7 @@
         <item name="android:background">@drawable/saipen_row</item>
     </style>
     <!-- a row that opens a window or a folder: the one way to do that on
-         the start screen (Statistics, All drawings, My timelapses...) -->
+         the start screen (Statistics, All drawings, All timelapses...) -->
     <style name="SaiPenActionRow" parent="SaiPenRow">
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>

@@ -1,6 +1,5 @@
 package com.winlator.saipen;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -33,7 +32,9 @@ import java.util.concurrent.ExecutorService;
 /**
  * The Mac app's Videos tab on Android: one card per drawing, its still, how
  * many sessions and frames, how long, how big, when last drawn. A tap plays
- * the drawing's video; holding a card offers to delete it. A session that may
+ * the drawing's video. Holding a card selects it, then a tap adds or takes
+ * away more, and Delete removes them after asking once, as in All drawings
+ * (CardSelection). A session that may
  * continue another drawing says so on its card, with the question one tap
  * away. Same colours and shapes as StatisticsDialog.
  */
@@ -47,6 +48,12 @@ final class TimelapsesDialog {
     private DrawingLibrary lib;
     private final LinearLayout root;
     private Dialog dialog;
+    /** Held cards, by drawing id (a reload makes new Drawings). */
+    private final CardSelection<String> selection;
+    /** The title row: "All timelapses" and Close, or what is selected. */
+    private LinearLayout head;
+    /** The cards on the screen, to show the selection on them. */
+    private final java.util.List<Runnable> showOnCards = new java.util.ArrayList<>();
 
     static void show(SaiLauncherActivity activity, DrawingLibrary lib, ExecutorService worker) {
         new TimelapsesDialog(activity, lib, worker).open();
@@ -59,6 +66,20 @@ final class TimelapsesDialog {
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(20), dp(16), dp(20), dp(24));
+        selection = new CardSelection<>(activity, new CardSelection.Host<String>() {
+            @Override public List<String> cards() {
+                List<String> ids = new java.util.ArrayList<>();
+                for (Drawing d : TimelapsesDialog.this.lib.newestFirst()) ids.add(d.id);
+                return ids;
+            }
+            @Override public void selectionChanged() {
+                fillHead();
+                for (Runnable r : showOnCards) r.run();
+            }
+            @Override public void delete(List<String> chosen) {
+                TimelapsesDialog.this.delete(chosen);
+            }
+        }, R.plurals.saipen_timelapses_delete_q, R.string.saipen_timelapses_delete_what);
     }
 
     private void open() {
@@ -74,6 +95,12 @@ final class TimelapsesDialog {
             w.setNavigationBarColor(BG);
             w.setLayout(-1, -1);
         }
+        /* Back while selecting lets go of the selection, not of the window */
+        dialog.setOnKeyListener((d, key, e) -> {
+            if (key != android.view.KeyEvent.KEYCODE_BACK || selection.isEmpty()) return false;
+            if (e.getAction() == android.view.KeyEvent.ACTION_UP) selection.clear();
+            return true;
+        });
         fill();
         dialog.show();
     }
@@ -90,21 +117,20 @@ final class TimelapsesDialog {
 
     private void fill() {
         root.removeAllViews();
-        LinearLayout head = new LinearLayout(activity);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = text(24, true, TEXT);
-        title.setText(R.string.saipen_my_timelapses);
-        head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView close = pill(activity.getString(R.string.saipen_close), false);
-        close.setOnClickListener(v -> dialog.dismiss());
-        head.addView(close);
-        root.addView(head);
+        showOnCards.clear();
+        List<Drawing> drawings = lib.newestFirst();
+        /* only what is there stays selected */
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (Drawing d : drawings) ids.add(d.id);
+        selection.keepOnly(ids);
+        head = new LinearLayout(activity);
+        root.addView(head, lp(-1, -2, 0, 0, 0, 0));
+        fillHead();
 
         TextView intro = text(13, false, TEXT2);
         intro.setText(R.string.saipen_timelapses_intro);
         root.addView(intro, lp(-1, -2, 0, 2, 0, 6));
 
-        List<Drawing> drawings = lib.newestFirst();
         int sessions = 0;
         long bytes = 0;
         for (Drawing d : drawings) {
@@ -113,7 +139,8 @@ final class TimelapsesDialog {
         }
         TextView summary = text(13, false, TEXT3);
         summary.setText(activity.getString(R.string.saipen_timelapses_summary, drawings.size(), sessions,
-                                           Formatter.formatShortFileSize(activity, bytes)));
+                                           Formatter.formatShortFileSize(activity, bytes))
+                        + (drawings.isEmpty() ? "" : " · " + activity.getString(R.string.saipen_drawings_hold_hint)));
         root.addView(summary, lp(-1, -2, 0, 0, 0, 14));
 
         if (drawings.isEmpty()) {
@@ -139,6 +166,24 @@ final class TimelapsesDialog {
         root.addView(folder, lp(-2, -2, 0, 14, 0, 0));
     }
 
+    /** "All timelapses" and Close; while selecting, how many, Select all,
+     *  Delete and Cancel (CardSelection). */
+    private void fillHead() {
+        if (head == null) return;
+        if (!selection.isEmpty()) {
+            selection.fillHead(head);
+            return;
+        }
+        head.removeAllViews();
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = text(24, true, TEXT);
+        title.setText(R.string.saipen_all_timelapses);
+        head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView close = pill(activity.getString(R.string.saipen_close), false);
+        close.setOnClickListener(v -> dialog.dismiss());
+        head.addView(close);
+    }
+
     private View card(Drawing d) {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -149,7 +194,15 @@ final class TimelapsesDialog {
         still.setScaleType(ImageView.ScaleType.FIT_CENTER);
         still.setBackground(round(0xFF24282C, 10));
         still.setAdjustViewBounds(false);
-        card.addView(still, lp(-1, dp(150), 0, 0, 0, 8));
+        /* while selecting: an empty ring, or a tick on the accent colour */
+        android.widget.FrameLayout frame = new android.widget.FrameLayout(activity);
+        frame.addView(still, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        TextView check = selection.newCheck();
+        android.widget.FrameLayout.LayoutParams cp = new android.widget.FrameLayout.LayoutParams(
+            dp(CardSelection.CHECK_DP), dp(CardSelection.CHECK_DP), Gravity.TOP | Gravity.START);
+        cp.setMargins(dp(6), dp(6), dp(6), dp(6));
+        frame.addView(check, cp);
+        card.addView(frame, lp(-1, dp(150), 0, 0, 0, 8));
         File f = TimelapseShelf.still(d);
         worker.execute(() -> {
             Bitmap b = f.isFile() ? BitmapFactory.decodeFile(f.getPath()) : null;
@@ -187,11 +240,17 @@ final class TimelapsesDialog {
             card.addView(ask, lp(-1, -2, 0, 6, 0, 0));
         }
 
-        card.setOnClickListener(v -> play(activity, d));
+        card.setOnClickListener(v -> {
+            if (selection.isEmpty()) play(activity, d);
+            else selection.toggle(d.id);
+        });
         card.setOnLongClickListener(v -> {
-            askDelete(d);
+            selection.toggle(d.id);
             return true;
         });
+        Runnable show = () -> selection.show(card, check, d.id);
+        showOnCards.add(show);
+        show.run();
         return card;
     }
 
@@ -226,21 +285,34 @@ final class TimelapsesDialog {
             }));
     }
 
-    private void askDelete(Drawing d) {
-        new AlertDialog.Builder(activity, SaiLauncherActivity.DIALOG_THEME)
-            .setTitle(d.title.isEmpty() ? d.folder : d.title)
-            .setMessage(R.string.saipen_timelapse_delete_what)
-            .setPositiveButton(R.string.saipen_timelapse_delete, (x, y) -> worker.execute(() -> {
+    /** Deletes the chosen timelapses (videos and sessions; the drawings
+     *  stay), then shows what is left. */
+    private void delete(List<String> ids) {
+        selection.busy = true;
+        DrawingLibrary from = lib;
+        worker.execute(() -> {
+            int gone = 0;
+            for (String id : ids) {
+                Drawing d = from.drawing(id);
+                if (d == null) continue;
                 try {
-                    TimelapseShelf.delete(lib, d);
+                    TimelapseShelf.delete(from, d);
+                    gone++;
                 }
                 catch (Exception e) {
                     android.util.Log.e("SaiPen", "timelapse: delete", e);
                 }
-                reload();
-            }))
-            .setNegativeButton(android.R.string.cancel, null)
-            .show();
+            }
+            int done = gone, failed = ids.size() - gone;
+            activity.runOnUiThread(() -> {
+                selection.busy = false;
+                selection.forget();
+                String msg = activity.getResources().getQuantityString(R.plurals.saipen_timelapses_deleted, done, done);
+                if (failed > 0) msg += ". " + activity.getString(R.string.saipen_drawings_not_deleted, failed);
+                Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+            });
+            reload();
+        });
     }
 
     private static long size(Drawing d) {

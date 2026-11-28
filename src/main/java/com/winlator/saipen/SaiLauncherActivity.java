@@ -887,7 +887,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
                 }
                 new AlertDialog.Builder(this, DIALOG_THEME).setMessage(text)
                     .setPositiveButton(android.R.string.ok, null)
-                    .setNeutralButton(R.string.saipen_my_timelapses, (d, w) -> openTimelapses())
+                    .setNeutralButton(R.string.saipen_all_timelapses, (d, w) -> openTimelapses())
                     .setOnDismissListener(d -> { if (q != null) askContinues(lib, q, null); })
                     .show();
             });

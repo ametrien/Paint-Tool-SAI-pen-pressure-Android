@@ -328,6 +328,12 @@
                 <TextView android:id="@+id/SaiPenAllDrawingsValue" style="@style/SaiPenRowValue" />
                 <TextView style="@style/SaiPenArrow" />
             </LinearLayout>
+            <!-- every drawing's timelapse, selected and deleted as All drawings (TimelapsesDialog) -->
+            <View style="@style/SaiPenDivider" />
+            <LinearLayout android:id="@+id/SaiPenOpenTimelapses" style="@style/SaiPenActionRow">
+                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_all_timelapses" />
+                <TextView style="@style/SaiPenArrow" />
+            </LinearLayout>
             <View style="@style/SaiPenDivider" />
             <LinearLayout android:id="@+id/SaiPenOpenDrawings" style="@style/SaiPenActionRow">
                 <LinearLayout style="@style/SaiPenRowText">
@@ -409,7 +415,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- one list of rows, like Statistics and My timelapses: Browse all
+            <!-- one list of rows, like Statistics and All timelapses: Browse all
                  (BrowseDialog), a PC's settings, add pictures, the folder -->
             <LinearLayout
                 android:id="@+id/SaiPenBrushesActions"
@@ -647,14 +653,6 @@
                 android:text="@string/saipen_discard_frames"
                 android:visibility="gone" />
 
-            <View style="@style/SaiPenDivider" android:layout_marginTop="12dp" />
-
-            <LinearLayout
-                android:id="@+id/SaiPenOpenTimelapses"
-                style="@style/SaiPenActionRow">
-                <TextView style="@style/SaiPenRowTitle" android:text="@string/saipen_my_timelapses" />
-                <TextView style="@style/SaiPenArrow" />
-            </LinearLayout>
         </LinearLayout>
 
         <!-- ===== settings: folded, the value on the right ===== -->

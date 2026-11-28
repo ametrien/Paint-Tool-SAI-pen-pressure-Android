@@ -254,12 +254,12 @@
     <string name="saipen_only_one">No other SAI was found on the device. If you downloaded a newer one, unzip it first (as a whole folder), or choose its folder yourself.</string>
     <string name="saipen_in_use">(in use)</string>
     <string name="saipen_in_folder">in %1$s</string>
-    <string name="saipen_my_timelapses">My timelapses</string>
+    <string name="saipen_all_timelapses">All timelapses</string>
     <string name="saipen_close">Close</string>
     <string name="saipen_timelapses_intro">One video per drawing, every session of it in order. Tap a picture to play it.</string>
     <string name="saipen_timelapses_summary">%1$d drawings · %2$d sessions · %3$s</string>
     <string name="saipen_timelapses_empty">No timelapses yet. Draw in SAI with Record a timelapse on, then tap Make a timelapse video.</string>
-    <string name="saipen_timelapses_hint">Hold a card to delete its timelapse. Videos made before 0.4.31 are in the folder.</string>
+    <string name="saipen_timelapses_hint">Videos made before 0.4.31 are in the folder.</string>
     <string name="saipen_timelapses_folder">Open the folder</string>
     <string name="saipen_seconds_short">%d s</string>
     <string name="saipen_continues_card">More of \"%1$s\"?</string>
@@ -271,8 +271,15 @@
     <string name="saipen_continues_no">No, another drawing</string>
     <string name="saipen_timelapse_missing">The video is not there any more.</string>
     <string name="saipen_timelapse_no_player">No app here plays videos.</string>
-    <string name="saipen_timelapse_delete_what">Delete this drawing\'s timelapse: its video and every session of it? The drawing itself stays. This cannot be undone.</string>
-    <string name="saipen_timelapse_delete">Delete</string>
+    <plurals name="saipen_timelapses_delete_q">
+        <item quantity="one">Delete %d timelapse?</item>
+        <item quantity="other">Delete %d timelapses?</item>
+    </plurals>
+    <string name="saipen_timelapses_delete_what">This can\'t be undone: each video and every session of it go for good. The drawings themselves stay.</string>
+    <plurals name="saipen_timelapses_deleted">
+        <item quantity="one">%d timelapse deleted</item>
+        <item quantity="other">%d timelapses deleted</item>
+    </plurals>
     <plurals name="saipen_sessions">
         <item quantity="one">%d session</item>
         <item quantity="other">%d sessions</item>
@@ -387,7 +394,7 @@
     <string name="saipen_tl_has_drawing">has a drawing</string>
     <string name="saipen_tl_not_this">Not this drawing\'s timelapse?</string>
     <string name="saipen_tl_not_this_q">Unlink this timelapse from “%1$s”?</string>
-    <string name="saipen_tl_not_this_what">SAI Pen will not link the two again by itself. The timelapse stays in My timelapses, and you can link it to the right drawing under Without a file.</string>
+    <string name="saipen_tl_not_this_what">SAI Pen will not link the two again by itself. The timelapse stays in All timelapses, and you can link it to the right drawing under Without a file.</string>
     <string name="saipen_tl_unlink">Unlink</string>
     <plurals name="saipen_lost_row">
         <item quantity="one">1 thing has no drawing file</item>
@@ -406,7 +413,7 @@
     <string name="saipen_lost_close_sai">Close SAI first: while it runs, it is counting the time on drawings.</string>
     <string name="saipen_lost_forget_q">Forget “%1$s”?</string>
     <string name="saipen_lost_forget_time">Its time is deleted for good.</string>
-    <string name="saipen_lost_forget_video">Its timelapse stays in My timelapses, it is just not listed here any more.</string>
+    <string name="saipen_lost_forget_video">Its timelapse stays in All timelapses, it is just not listed here any more.</string>
     <string name="saipen_video_other_app">Other app</string>
     <string name="saipen_drawing_watch">Watch</string>
     <string name="saipen_drawing_open">Open in SAI</string>

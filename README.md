@@ -914,8 +914,10 @@ Later, **Make a timelapse video** turns the frames into an MP4 in
 
 Since 0.4.31 there is **one video per drawing**: when you open a drawing again, even after
 closing SAI, its new session is added to the same video. If SAI Pen is not sure a session
-continues a drawing, it asks. **My timelapses** on SAI Pen's screen shows a card for each
-drawing: tap it to play the video, hold it to delete the timelapse (the drawing itself stays).
+continues a drawing, it asks. **All timelapses**, under **All drawings** on SAI Pen's screen,
+shows a card for each drawing: tap it to play the video. As in All drawings, hold a card to
+select it, tap more to add them, and **Delete** removes those timelapses after asking once
+(the drawings themselves stay).
 Videos made before 0.4.31 stay in the folder.
 
 <details>
