@@ -1073,13 +1073,13 @@ how it went.
 - **Huawei:** MatePad 11.5 PaperMatte, MatePad 11.5 S
 - **Huion:** Kamvas Slate 11
 - **Lenovo:** Legion Tab Gen 3, Yoga Tab Plus Gen 2
-- **Samsung:** Galaxy Tab S6 Lite, Galaxy S26 Ultra, Galaxy Tab S9 FE+, Galaxy Tab S8, Galaxy Tab S8 Ultra, Galaxy S25 Ultra (?), Galaxy Tab S11
+- **Samsung:** Galaxy Tab S6 Lite, Galaxy S26 Ultra, Galaxy S24 Ultra, Galaxy Tab S9 FE+, Galaxy Tab S8, Galaxy Tab S8 Ultra, Galaxy S25 Ultra (?), Galaxy Tab S11
 - **Ugee:** UT2, Triopad UT3
 - **Wacom:** MovinkPad 14
 - **Xiaomi:** Pad 7 Pro, Pad 6
 - **XP-Pen:** Magic Note Pad
 
-SAI draws with pressure on all of them (18 models, sorted by company below).
+SAI draws with pressure on all of them (19 models, sorted by company below).
 
 | Device and pen | Android | SAI build | Result | Reports |
 |---|---|---|---|---|
@@ -1090,6 +1090,7 @@ SAI draws with pressure on all of them (18 models, sorted by company below).
 | Lenovo Yoga Tab Plus Gen 2, Lenovo Precision Pen 3 (active) |  |  | works, no issues so far (same user as the Legion Tab Gen 3) | [1](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19t8neucgwsg1/) |
 | Samsung Galaxy Tab S6 Lite (2022), SM-P613, S Pen | 14 | Alpha.2026.10.19 | pen, pressure, gestures, saving with a licence, timelapse: work. Works but feels a little slow (Snapdragon 720G, 4 GB) | the author's |
 | Samsung Galaxy S26 Ultra, S Pen |  | Alpha.2026.10.19 | without a licence: SAI found by itself, starts, the pen draws with pressure. Looks good at sharpness 1080 and 200% scaling | the author's |
+| Samsung Galaxy S24 Ultra, S Pen |  |  | everything works super smooth and fast, SAI loads very quickly, feels just like SAI on Windows. The S Pen's Air actions work too, which is fun | the author's |
 | Samsung Galaxy Tab S9 FE+, S Pen |  | Preview.2026.07.02b | works. Sharpness 1600 with SAI's scaling at 150% looks good. Speed log 20 to 24 ms. Shaped brushes lag on fast strokes, the round one doesn't (SAI's own brush drawing is heavier, reproduced). Bluetooth keyboard works since 0.4.24, shortcuts with Shift too. A second user: SAI restarted after switching apps until *Enable Background Protection* was ticked in Winlator settings, then layout and brushes stayed; a 6000 × 6000 canvas and the vector tools run smoothly. Since 0.4.35 (SAI sees only the fast cores) the brushes that used to lag work much better, by one of them | user 1: [1](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19swod9vn4ohx/), [2](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19sxiltaa3t38/), [3](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19sxrc9i8tzb5/); user 2: [1](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19szjrilnas5d/), [2](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19t06t824gqv9/) |
 | Samsung Galaxy Tab S8, S Pen (Snapdragon 8 Gen 1) |  | 64bit Alpha | works, with a very slight lag. The 32bit SAI crashed after adding the licence | [1](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19t14tbgwe9kx/), [2](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19t1papotytqb/) |
 | Samsung Galaxy Tab S8 Ultra |  | Preview.2026.07.02b | works | [1](https://www.reddit.com/r/PaintToolSAI/comments/1y0k3bk/comment/19t33xaqqyj9e/) |
