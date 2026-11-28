@@ -126,6 +126,9 @@ On a Mac? The same, also by me:
 >   licence. A drawing's time follows its file through *Save As*, a rename or a move, and a
 >   wrong timelapse can be unlinked by hand. Ctrl+C and Ctrl+V among the first on-screen keys,
 >   up to 12 keys. New loading tips: where Settings is and which drive in SAI is which folder.
+>   [SAI Pen's keyboard](#sai-pens-keyboard) floats over SAI in the keys' colour, with ⌨ among
+>   the first keys. ⚙ on the keys opens their settings right over SAI, with Cancel and Done. The
+>   three-finger hold is a gesture you can change.
 >
 > </details>
 
