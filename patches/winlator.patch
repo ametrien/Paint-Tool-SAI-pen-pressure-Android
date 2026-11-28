@@ -1611,6 +1611,23 @@ index b651bc1..b7be9b7 100644
      }
  
      public GLRenderer getRenderer() {
+diff --git a/app/src/main/java/com/winlator/winhandler/WinHandler.java b/app/src/main/java/com/winlator/winhandler/WinHandler.java
+index 3318b9f..d186154 100644
+--- a/app/src/main/java/com/winlator/winhandler/WinHandler.java
++++ b/app/src/main/java/com/winlator/winhandler/WinHandler.java
+@@ -405,6 +405,12 @@ public class WinHandler {
+                 }
+                 break;
+             }
++            case 101: {
++                /* SAI Pen: winhandler.exe's PROGRAM_EXIT (protocol.h): SAI ended
++                 * with this exit code; SaiEnded tells a crash from a close */
++                com.winlator.saipen.SaiEnded.programExited(receiveData.getInt());
++                break;
++            }
+             case RequestCodes.PRE_EXEC: {
+                 int requestLength = receiveData.getInt();
+                 boolean shouldExit = false;
 diff --git a/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java b/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java
 index 08fbf80..9d6fb43 100644
 --- a/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java

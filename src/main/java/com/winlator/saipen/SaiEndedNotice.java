@@ -70,9 +70,8 @@ public final class SaiEndedNotice {
         long bootMs = System.currentTimeMillis() - SystemClock.elapsedRealtime();
         SaiEnded.Why why = SaiEnded.why(m, versionCode(activity), bootMs, reason, description);
         Log.i(TAG, "SAI did not close by itself last time: " + why + " (reason " + reason + ", " + description + ")");
-        prefs.edit().putString(PREF_LAST, SaiEnded.word(why) + ", "
-            + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.ROOT).format(new java.util.Date(m.startedMs))
-            + " (SAI started)").apply();
+        prefs.edit().putString(PREF_LAST, SaiEnded.summary(why, m)
+            + (reason >= 0 ? ", Android: " + reason + (description != null ? " " + description : "") : "")).apply();
 
         int what;
         switch (why) {
@@ -80,11 +79,12 @@ public final class SaiEndedNotice {
             case IN_BACKGROUND: what = R.string.saipen_ended_background; break;
             case SWIPED: what = R.string.saipen_ended_swiped; break;
             case CRASHED: what = R.string.saipen_ended_crashed; break;
+            case SAI_CRASHED: what = R.string.saipen_ended_sai_crashed; break;
             case UPDATED: what = R.string.saipen_ended_updated; break;
             case RESTARTED: what = R.string.saipen_ended_restarted; break;
             default: what = R.string.saipen_ended_unknown;
         }
-        String message = activity.getString(what) + "\n\n" + activity.getString(R.string.saipen_ended_lost);
+        String message = (why == SaiEnded.Why.SAI_CRASHED ? activity.getString(what, m.detail) : activity.getString(what)) + "\n\n" + activity.getString(R.string.saipen_ended_lost);
         if (SaiEnded.batteryHelps(why)) message += "\n\n" + activity.getString(R.string.saipen_ended_battery_help);
 
         AlertDialog.Builder b = new AlertDialog.Builder(activity, dialogTheme)
@@ -92,7 +92,7 @@ public final class SaiEndedNotice {
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null);
         if (SaiEnded.batteryHelps(why)) b.setNeutralButton(R.string.saipen_ended_open_app_settings, (d, w) -> openAppSettings(activity));
-        else if (why == SaiEnded.Why.CRASHED) b.setNeutralButton(R.string.saipen_report, (d, w) -> report.run());
+        else if (why == SaiEnded.Why.CRASHED || why == SaiEnded.Why.SAI_CRASHED) b.setNeutralButton(R.string.saipen_report, (d, w) -> report.run());
         b.show();
     }
 

@@ -209,6 +209,20 @@ static void test_close_sai(void)
     CHECK(wh_close_step(1, 0, 0) == WH_CLOSE_NOTHING, "disabled with no dialog to show: nothing");
 }
 
+static void test_program_exit(void)
+{
+    unsigned char out[WH_PROGRAM_EXIT_SIZE];
+    wh_program_exit(out, 0xC0000005u);
+    CHECK(WH_PROGRAM_EXIT_SIZE == 5 && out[0] == 101, "PROGRAM_EXIT: byte 0 is 101, then an int");
+    struct wh_reader r = { out, sizeof(out), 1 };
+    CHECK((uint32_t)wh_read_i32(&r) == 0xC0000005u, "PROGRAM_EXIT: the exit code, little-endian");
+    wh_program_exit(out, 0);
+    CHECK(out[1] == 0 && out[2] == 0 && out[3] == 0 && out[4] == 0, "PROGRAM_EXIT: 0 when SAI closed itself");
+    int clash = 0;
+    for (int c = 0; c <= 22; c++) clash |= c == WH_PROGRAM_EXIT;
+    CHECK(!clash && WH_PROGRAM_EXIT != WH_CLOSE_SAI, "PROGRAM_EXIT: none of Winlator's codes");
+}
+
 int main(void)
 {
     test_exec();
@@ -221,6 +235,7 @@ int main(void)
     test_copy_string();
     test_maximize();
     test_close_sai();
+    test_program_exit();
     printf("%d winhandler protocol case(s), %d failure(s)\n", cases, failures);
     return failures ? 1 : 0;
 }
