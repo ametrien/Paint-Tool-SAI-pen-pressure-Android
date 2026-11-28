@@ -390,6 +390,23 @@ uninstall the app to get it in, they are gone. So first open SAI, save each draw
 ### Using SAI
 
 <details>
+<summary><b>SAI stopped answering and its red ✕ did nothing</b></summary>
+
+It can happen, rarely, on a device with few fast cores: SAI keeps every core it may use busy
+(both of 2, for example) and has nothing left to answer you with, the red **✕** included. It was
+seen once on a Galaxy Tab S6 Lite, after a line and an undo on a small sketch.
+
+**From 0.5.4**, SAI Pen notices when SAI has used every core it may use for 10 seconds, lets it
+onto all the cores of the device, and says so. SAI may draw a little slower then: **save your
+drawing**, and close and start SAI again to get the fast cores back. **Report a problem** now also
+lists SAI's processor use a few times per session, so please send it if this happens to you.
+
+If SAI still doesn't answer after a minute or two, it isn't coming back: swipe SAI Pen away in the
+recent apps. What wasn't saved is lost, so save often.
+
+</details>
+
+<details>
 <summary><b>SAI forgot my new tools or settings after I closed it</b></summary>
 
 Close SAI with its own red **✕** in the top right corner (or **File > Exit**). SAI saves its
@@ -1180,7 +1197,7 @@ instead, and check the [FAQ](#faq) first.
 **Since 0.5.2: Report a problem**, at the bottom of SAI Pen's screen, shows everything that
 helps in one text: the device, Android, its processor cores, SAI's build, SAI Pen's and
 Winlator's settings (Box64 too), free memory and storage, battery and temperature, and how fast
-SAI drew on your device. Tap **Copy** and paste it into your comment. There is no licence, System
+SAI drew on your device (from 0.5.4 also SAI's processor use a few times per session). Tap **Copy** and paste it into your comment. There is no licence, System
 ID or file name in it, and nothing is sent: it is only copied. Then add:
 
 - **SAI's version** (SAI's title bar), if the text says it isn't known;

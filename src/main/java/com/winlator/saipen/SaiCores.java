@@ -103,9 +103,36 @@ public final class SaiCores {
         }
     }
 
+    /** BusySai: SAI filled every core it can use, so its threads may run
+     *  anywhere until back(); nothing is pinned in between. */
+    private boolean open;
+
+    /** Every SAI thread on every core, at once (BusySai.Step.OPEN_ALL). */
+    public void openAll() {
+        if (mode == Mode.OFF || open) return;
+        open = true;
+        int moved = 0;
+        for (int tid : sorted(pinned)) if (pinner.pin(tid, cores.allMask())) moved++;
+        pinned.clear();
+        log.accept("cores: SAI filled every core it can use: " + moved + " thread(s) let onto all cores");
+    }
+
+    /** The fast cores again, from the next tick (BusySai.Step.BACK). */
+    public void back() {
+        if (!open) return;
+        open = false;
+        lastPick = "";
+        log.accept("cores: SAI is calm again: back on " + range(cores.fast));
+    }
+
+    /** The cores SAI's threads may run on with this mode. */
+    public int allowedCores() {
+        return mode == Mode.ALL ? cores.fast.length : cores.cores.length;
+    }
+
     /** Once a second. penDown: the pen touched since the last tick. */
     public void tick(long now, boolean penDown) {
-        if (mode == Mode.OFF) return;
+        if (mode == Mode.OFF || open) return;
         if (pid < 0 || !new File(proc, Integer.toString(pid)).isDirectory()) {
             int found = findPid();
             if (found != pid) {

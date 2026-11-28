@@ -109,6 +109,11 @@
     <string name="saipen_cores_all">Весь SAI</string>
     <string name="saipen_cores_off">Выключено</string>
     <string name="saipen_cores_drawing_what">Быстрые ядра получают потоки, которые рисуют. Меню и всё остальное в SAI как раньше.</string>
+    <string name="saipen_busy_title">SAI занял все свои ядра</string>
+    <string name="saipen_busy_all_cores">Уже 10 секунд SAI занимает все %1$d ядра, которые ему можно, а так занятый SAI может перестать отвечать. Поэтому SAI Pen по необходимости отдал ему все ядра устройства. Пока он не успокоится, рисование может быть чуть медленнее.
+
+Сохраните рисунок сейчас. Если закрыть и снова запустить SAI, быстрые ядра вернутся.</string>
+    <string name="saipen_busy_no_pin">Уже 10 секунд SAI занимает все %1$d ядра, которые ему можно, а так занятый SAI может перестать отвечать. Сохраните рисунок сейчас и перезапустите SAI, если он так и будет тормозить.</string>
     <string name="saipen_cores_all_what">Весь SAI на быстрых ядрах. Рисование быстрее всего, но меню могут тормозить.</string>
     <string name="saipen_cores_off_what">SAI работает на всех ядрах, как решит Android.</string>
     <string name="saipen_cores_past">От пера до экрана в прошлых сеансах. Чем меньше, тем быстрее.</string>

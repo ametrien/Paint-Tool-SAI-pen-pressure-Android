@@ -201,4 +201,37 @@ public class SaiCoresTest {
         write(new File(task(25566), "status"), "Cpus_allowed:\t00000000,000000c0\n");
         assertEquals(0xc0, c.allowedMask(25566));
     }
+
+    @Test
+    public void aFullSaiGoesOntoEveryCoreUntilBack() throws Exception {
+        SaiCores c = cores(SaiCores.Mode.ALL);
+        assertEquals(2, c.allowedCores());
+        thread(25560, 0);
+        thread(25566, 0);
+        c.tick(0, false);
+        assertEquals(Long.valueOf(0xc0), moved.get(25566));
+        c.openAll();
+        assertEquals(Long.valueOf(0xff), moved.get(25560));
+        assertEquals(Long.valueOf(0xff), moved.get(25566));
+        /* while open, neither new threads nor Wine's moves are pinned */
+        moved.clear();
+        thread(25601, 0);
+        c.tick(1000, true);
+        assertTrue("nothing pinned while open: " + moved, moved.isEmpty());
+        c.back();
+        c.tick(2000, false);
+        assertEquals(Long.valueOf(0xc0), moved.get(25560));
+        assertEquals(Long.valueOf(0xc0), moved.get(25601));
+        assertTrue(String.join("\n", log), log.stream().anyMatch(l -> l.contains("let onto all cores")));
+    }
+
+    @Test
+    public void offHasNothingToOpen() throws Exception {
+        SaiCores c = cores(SaiCores.Mode.OFF);
+        thread(25560, 0);
+        c.openAll();
+        c.back();
+        assertTrue(moved.isEmpty());
+        assertEquals(8, c.allowedCores());
+    }
 }

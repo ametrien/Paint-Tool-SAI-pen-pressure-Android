@@ -560,6 +560,9 @@ public class SaiLauncherActivity extends AppCompatActivity {
 
     /** Everything that helps with a bug report, as text (BugReport says
      *  what never goes in). */
+    /** The report's last lines of CpuSamples: about the last five sessions. */
+    private static final int REPORT_CPU_LINES = 30;
+
     private String bugReportText() {
         String versionName = "?";
         try {
@@ -680,6 +683,12 @@ public class SaiLauncherActivity extends AppCompatActivity {
             r.item("At sharpness " + e.getKey(), (ms >= 0 ? ms + " ms" : "too few strokes")
                 + ", " + e.getValue().sessions + " session(s), " + e.getValue().strokes() + " strokes");
         }
+
+        /* SAI's processor use now and then, and when it filled its cores (CpuSamples) */
+        java.util.List<String> cpu = CpuSamples.lines(getFilesDir());
+        r.heading("SAI's processor use, last sessions (100% = one core, now and then)");
+        if (cpu.isEmpty()) r.line(2, "nothing noted yet");
+        for (int i = Math.max(0, cpu.size() - REPORT_CPU_LINES); i < cpu.size(); i++) r.line(2, cpu.get(i).trim().startsWith("session") ? cpu.get(i).trim() : "  " + cpu.get(i).trim());
 
         r.heading("Last time SAI did not close by itself");
         r.item("What", prefs.getString(SaiEndedNotice.PREF_LAST, "never noticed"));
