@@ -151,8 +151,8 @@ public final class SpeedSession {
                 .getInt(SaiProcessors.PREF, SaiProcessors.AUTO), fc.fast.length, total);
             double share = BusySai.FULL_SHARE;
             try {
-                String p = PenInput.systemProperty(BusySai.PROP_SHARE).trim();
-                if (!p.isEmpty()) share = Double.parseDouble(p);
+                String prop = PenInput.systemProperty(BusySai.PROP_SHARE).trim();
+                if (!prop.isEmpty()) share = Double.parseDouble(prop);
             }
             catch (NumberFormatException ignored) {}
             s.busy = new BusySai(seen, s.cores.mode() == SaiCores.Mode.OFF ? total : s.cores.allowedCores(), share);
