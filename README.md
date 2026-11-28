@@ -7,6 +7,11 @@
 Run **PaintTool SAI Ver.2** on a Samsung tablet or phone with the **S Pen**, with **real pen
 pressure**, and record a **timelapse of your canvas** (experimental). Free and open source.
 
+> [!IMPORTANT]
+> **I'm on a break for now.** For a while there will probably be no replies on Reddit and no new
+> releases. SAI Pen keeps working as it is: [0.5.3](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-Android/releases/latest)
+> is the latest version.
+
 On a Mac? The same, also by me:
 **[SAI Pen Pressure for macOS](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix)**.
 
