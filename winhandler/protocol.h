@@ -30,7 +30,11 @@ enum {
 /* SAI Pen's own requests, far from Winlator's codes (0 to 22) so a new one
  * of theirs cannot mean the same byte. SaiPenRequests.java sends them. */
 enum {
-    WH_CLOSE_SAI = 100, WH_RESTORE_SAI = 101
+    WH_CLOSE_SAI = 100, WH_RESTORE_SAI = 101,
+    /* us -> app: the program we started has ended; then its exit code
+     * (GetExitCodeProcess, uint32). 0 is SAI closing itself; a crash is an
+     * exception code such as 0xC0000005. SaiEnded tells them apart. */
+    WH_PROGRAM_EXIT = 102
 };
 
 /* ---- reading a request -------------------------------------------------- */
@@ -134,6 +138,15 @@ static inline void wh_put_i32(unsigned char *p, int32_t v)
 static inline void wh_put_i64(unsigned char *p, int64_t v)
 {
     for (int i = 0; i < 8; i++) p[i] = (unsigned char)((uint64_t)v >> (8 * i));
+}
+
+#define WH_PROGRAM_EXIT_SIZE (1 + 4)
+
+/* PROGRAM_EXIT: byte 102, int exit code */
+static inline void wh_program_exit(unsigned char out[WH_PROGRAM_EXIT_SIZE], uint32_t code)
+{
+    out[0] = WH_PROGRAM_EXIT;
+    wh_put_i32(out + 1, (int32_t)code);
 }
 
 /* code + int: OPEN_URL and GET_EXECUTABLE_PATH, before their data datagram */

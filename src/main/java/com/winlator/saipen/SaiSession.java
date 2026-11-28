@@ -38,6 +38,9 @@ public final class SaiSession {
      *  own few dozen processes. */
     private static final long POLL_MS = 250;
 
+    /** How long to wait for SAI's exit code once its process has gone. */
+    private static final long EXIT_CODE_WAIT_MS = 1500;
+
     /**
      * Watches for `exeName` (sai2.exe). When SAI's main window goes, puts up
      * the closing cover at once (SaiClosing); when SAI's process has gone,
@@ -90,6 +93,7 @@ public final class SaiSession {
 
         /* SAI is open: if nothing removes this, SAI did not close by itself (SaiEnded) */
         SaiEnded.started(activity.getFilesDir(), SaiEndedNotice.versionCode(activity), System.currentTimeMillis());
+        SaiEnded.catchAppErrors(activity.getFilesDir());
         final boolean[] onScreen = {true};
 
         final TimelapseRecorder timelapse = TimelapseRecorder.start(SaiPenSetup.containerRoot);
@@ -169,10 +173,22 @@ public final class SaiSession {
                 try { observer.stopWatching(); } catch (Throwable ignored) {}
             }
             activity.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);
+            /* SAI's exit code from winhandler.exe: it may come a moment
+             * after the process has gone from /proc */
+            long code = SaiEnded.programExitCode();
+            for (int i = 0; code < 0 && i < EXIT_CODE_WAIT_MS / 50; i++) {
+                SystemClock.sleep(50);
+                code = SaiEnded.programExitCode();
+            }
+            Log.i(TAG, "SAI's exit code: " + (code < 0 ? "not told" : SaiEnded.code(code)));
             if (!onScreen[0]) {
                 /* nobody closes SAI with its cross from another app: Android ended it */
                 Log.i(TAG, "SAI went away while SAI Pen was in the background");
                 SaiEnded.goneInBackground(activity.getFilesDir());
+            }
+            else if (SaiEnded.saiCrashed(code)) {
+                Log.i(TAG, "SAI stopped with an error of its own");
+                SaiEnded.saiError(activity.getFilesDir(), code);
             }
             Log.i(TAG, "SAI closed: back to SAI Pen's screen");
             SpeedSession.finish();

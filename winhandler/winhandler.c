@@ -263,16 +263,34 @@ static void set_clipboard(const char *text, int n)
 
 /* ---- starting programs ------------------------------------------------ */
 
-static void run(const wchar_t *file, const wchar_t *args, const wchar_t *dir)
+/* the started program's process, or NULL (a document, or it did not start) */
+static HANDLE run(const wchar_t *file, const wchar_t *args, const wchar_t *dir)
 {
     SHELLEXECUTEINFOW info = { .cbSize = sizeof(info) };
-    info.fMask = SEE_MASK_NOASYNC | SEE_MASK_FLAG_NO_UI;
+    info.fMask = SEE_MASK_NOASYNC | SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
     info.lpVerb = L"open";
     info.lpFile = file;
     info.lpParameters = (args && args[0]) ? args : NULL;
     info.lpDirectory = (dir && dir[0]) ? dir : NULL;
     info.nShow = SW_SHOWNORMAL;
-    ShellExecuteExW(&info);
+    if (!ShellExecuteExW(&info)) return NULL;
+    return info.hProcess;
+}
+
+/* Waits for the started program (SAI) to end and tells the app how: its
+ * exit code is 0 when SAI closed itself, an exception code when it crashed
+ * (PROGRAM_EXIT, protocol.h). The app decides on it once sai2.exe is gone. */
+static DWORD WINAPI watch_program(LPVOID process)
+{
+    HANDLE h = (HANDLE)process;
+    WaitForSingleObject(h, INFINITE);
+    DWORD code = 0;
+    if (!GetExitCodeProcess(h, &code)) code = 0;
+    CloseHandle(h);
+    unsigned char out[WH_PROGRAM_EXIT_SIZE];
+    wh_program_exit(out, (uint32_t)code);
+    send_to_app(out, sizeof(out));
+    return 0;
 }
 
 /* ---- requests --------------------------------------------------------- */
@@ -291,7 +309,10 @@ static void handle(const unsigned char *d, int n)
         if (!file || fn == 0) break;
         wchar_t *wf = utf8_to_wide(file, fn);
         wchar_t *wa = args ? utf8_to_wide(args, an) : NULL;
-        if (wf) run(wf, wa, NULL);
+        if (wf) {
+            HANDLE h = run(wf, wa, NULL);
+            if (h) CloseHandle(h);
+        }
         free(wf);
         free(wa);
         break;
@@ -536,6 +557,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
         return 0;
     }
 
+    HANDLE program = NULL;
     if (!open_socket(1)) {
         /* another winhandler already serves the app: only start the program */
         sock = INVALID_SOCKET;
@@ -545,14 +567,18 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
         static wchar_t args[8192];
         args[0] = 0;
         for (int i = 4; i < argc; i++) append_quoted(args, sizeof(args) / sizeof(args[0]), argv[i]);
-        run(argv[3], args, argv[2]);
+        program = run(argv[3], args, argv[2]);
     }
     LocalFree(argv);
-    if (sock == INVALID_SOCKET) return 0;
+    if (sock == INVALID_SOCKET) {
+        if (program) CloseHandle(program);
+        return 0;
+    }
 
     unsigned char init = WH_INIT;
     send_to_app(&init, 1);
     CreateThread(NULL, 0, maximize_sai, NULL, 0, NULL);
+    if (program && !CreateThread(NULL, 0, watch_program, program, 0, NULL)) CloseHandle(program);
 
     unsigned char buf[WH_REQUEST_MAX];
     for (;;) {

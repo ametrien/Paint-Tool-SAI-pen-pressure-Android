@@ -462,6 +462,7 @@
     <string name="saipen_ended_low_memory">Android closed SAI Pen to free memory for other apps, while SAI was open.</string>
     <string name="saipen_ended_background">Android ended SAI while SAI Pen was in the background, after you switched to another app.</string>
     <string name="saipen_ended_swiped">SAI Pen was swiped away in the recent apps (or stopped in Settings) while SAI was open. Next time close SAI with its own red ✕ or File > Exit.</string>
+    <string name="saipen_ended_sai_crashed">SAI itself stopped with an error while it was open (error code %1$s). Sorry! If it happens again, please tell me: Report a problem, at the bottom of this screen, shows what to send.</string>
     <string name="saipen_ended_crashed">SAI Pen stopped with an error while SAI was open. Sorry! If it happens again, please tell me: Report a problem, at the bottom of this screen, shows what to send.</string>
     <string name="saipen_ended_updated">A new SAI Pen was installed while SAI was open, and installing closes SAI at once. Next time, save your drawing and close SAI before you update.</string>
     <string name="saipen_ended_restarted">The device was turned off or restarted while SAI was open.</string>

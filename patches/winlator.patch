@@ -1,5 +1,5 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index 5a2f248..147925b 100644
+index 5a2f248..3e2d048 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
 @@ -5,14 +5,45 @@ android {
@@ -275,10 +275,19 @@ index 3bb2d01..02d6a4f 100644
              cbEnableBackgroundWakelock.setVisibility(isChecked ? View.VISIBLE : View.GONE);
              if (!isChecked) cbEnableBackgroundWakelock.setChecked(false);
 diff --git a/app/src/main/java/com/winlator/XServerDisplayActivity.java b/app/src/main/java/com/winlator/XServerDisplayActivity.java
-index 18acd68..e0036e0 100644
+index 18acd68..fe7e36f 100644
 --- a/app/src/main/java/com/winlator/XServerDisplayActivity.java
 +++ b/app/src/main/java/com/winlator/XServerDisplayActivity.java
-@@ -141,6 +141,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -115,6 +115,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private FrameRating frameRating;
+     private Runnable editInputControlsCallback;
+     private Shortcut shortcut;
++    /* SAI Pen: exit() ran (closed on purpose), onDestroy() came without it */
++    private volatile boolean exiting, destroying;
+     private String[] graphicsDriver = {GraphicsDrivers.DEFAULT_VULKAN_DRIVER, GraphicsDrivers.DEFAULT_OPENGL_DRIVER};
+     private String audioDriver = Container.DEFAULT_AUDIO_DRIVER;
+     private String dxwrapper = Container.DEFAULT_DXWRAPPER;
+@@ -141,6 +143,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
      public void onCreate(Bundle savedInstanceState) {
          AppUtils.setActivityTheme(this);
          super.onCreate(savedInstanceState);
@@ -291,7 +300,7 @@ index 18acd68..e0036e0 100644
          AppUtils.hideSystemUI(this);
          AppUtils.keepScreenOn(this);
          setContentView(R.layout.xserver_display_activity);
-@@ -224,13 +230,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -224,13 +232,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                  if (intent.hasExtra("exec_path")) win32AppWorkarounds.applyStartupWorkarounds(FileUtils.getName(intent.getStringExtra("exec_path")));
              }
  
@@ -312,7 +321,22 @@ index 18acd68..e0036e0 100644
  
          inputControlsManager = new InputControlsManager(this);
          xServer = new XServer(this, screenInfo);
-@@ -419,6 +431,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -341,6 +355,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     @Override
+     protected void onDestroy() {
++        /* SAI Pen: not after exit(): SAI Pen was swiped away in the recent
++         * apps (or Android ended it). Stopping Wine below ends SAI, and its
++         * termination callback must not pass that off as closed on purpose
++         * (SaiEnded) or reopen SAI Pen's screen. */
++        if (!exiting) {
++            destroying = true;
++            com.winlator.saipen.SaiEnded.taskRemoved(getFilesDir());
++        }
+         winHandler.stop();
+         if (environment != null) environment.stopEnvironmentComponents();
+         ForegroundService.stopSession(this);
+@@ -419,6 +441,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
              case R.id.menu_item_exit:
                  exit();
                  break;
@@ -324,16 +348,18 @@ index 18acd68..e0036e0 100644
          }
          return true;
      }
-@@ -428,6 +445,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -428,6 +455,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
      }
  
      private void exit() {
++        if (destroying) return;   /* SAI Pen: see onDestroy() */
++        exiting = true;
 +        com.winlator.saipen.SpeedSession.finish();   /* SAI Pen: the speed log's summary */
 +        com.winlator.saipen.SaiEnded.closed(getFilesDir());   /* SAI Pen: closed on purpose (SaiEnded) */
          winHandler.stop();
          if (environment != null) environment.stopEnvironmentComponents();
  
-@@ -438,7 +457,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -438,7 +469,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
              options.startPath = FileUtils.getDirname(intent.getStringExtra("exec_path"));
              AppUtils.restartApplication(this, options);
          }
@@ -349,7 +375,7 @@ index 18acd68..e0036e0 100644
          ForegroundService.stopSession(this);
      }
  
-@@ -508,6 +534,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -508,6 +546,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
          GuestProgramLauncherComponent guestProgramLauncherComponent = new GuestProgramLauncherComponent();
  
          if (container != null) {
@@ -358,7 +384,7 @@ index 18acd68..e0036e0 100644
              if (container.getHUDMode() == FrameRating.Mode.FULL.ordinal()) envVars.put("X11_WND_GPU_INFO", "1");
  
              String desktopName = shortcut != null || getIntent().hasExtra("exec_path") ? "nogui" : "shell";
-@@ -595,7 +623,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -595,7 +635,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
          capturePointerOnExternalMouse = preferences.getBoolean("capture_pointer_on_external_mouse", true);
          touchpadView = new TouchpadView(this, xServer, capturePointerOnExternalMouse);
          touchpadView.setSensitivity(globalCursorSpeed);
@@ -379,7 +405,7 @@ index 18acd68..e0036e0 100644
          touchpadView.setFourFingersTapCallback(() -> {
              if (!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(GravityCompat.START);
          });
-@@ -629,6 +669,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -629,6 +681,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
          if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
          AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
@@ -404,7 +430,7 @@ index 18acd68..e0036e0 100644
      }
  
      private void showInputControlsDialog() {
-@@ -797,6 +855,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -797,6 +867,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
  
      @Override
      public boolean dispatchKeyEvent(KeyEvent event) {
@@ -426,7 +452,7 @@ index 18acd68..e0036e0 100644
          return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
                 (!ExternalController.isGameController(event.getDevice()) && super.dispatchKeyEvent(event));
      }
-@@ -972,6 +1045,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+@@ -972,6 +1057,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                      execPath = null;
                  }
              }
@@ -676,7 +702,7 @@ index fb0252f..e3c0be8 100644
          return textureId > 0;
      }
 diff --git a/app/src/main/java/com/winlator/services/ForegroundService.java b/app/src/main/java/com/winlator/services/ForegroundService.java
-index 0940581..a217866 100644
+index 0940581..888c6ad 100644
 --- a/app/src/main/java/com/winlator/services/ForegroundService.java
 +++ b/app/src/main/java/com/winlator/services/ForegroundService.java
 @@ -64,7 +64,8 @@ public class ForegroundService extends Service {
@@ -689,6 +715,15 @@ index 0940581..a217866 100644
                  Log.i(TAG, "startSession called with background protection disabled; ignoring");
                  return;
              }
+@@ -321,6 +322,8 @@ public class ForegroundService extends Service {
+     public void onTaskRemoved(Intent rootIntent) {
+         super.onTaskRemoved(rootIntent);
+         Log.i(TAG, "Task removed by user. Tearing down session and exiting process.");
++        /* SAI Pen: if SAI was open, it did not close by itself (SaiEnded) */
++        com.winlator.saipen.SaiEnded.taskRemoved(getFilesDir());
+ 
+         sessionActive.set(false);
+         isSessionInBackground = false;
 diff --git a/app/src/main/java/com/winlator/widget/TouchpadView.java b/app/src/main/java/com/winlator/widget/TouchpadView.java
 index 89dd3fe..1649c6b 100644
 --- a/app/src/main/java/com/winlator/widget/TouchpadView.java
@@ -1576,6 +1611,23 @@ index b651bc1..b7be9b7 100644
      }
  
      public GLRenderer getRenderer() {
+diff --git a/app/src/main/java/com/winlator/winhandler/WinHandler.java b/app/src/main/java/com/winlator/winhandler/WinHandler.java
+index 3318b9f..d186154 100644
+--- a/app/src/main/java/com/winlator/winhandler/WinHandler.java
++++ b/app/src/main/java/com/winlator/winhandler/WinHandler.java
+@@ -405,6 +405,12 @@ public class WinHandler {
+                 }
+                 break;
+             }
++            case 102: {
++                /* SAI Pen: winhandler.exe's PROGRAM_EXIT (protocol.h): SAI ended
++                 * with this exit code; SaiEnded tells a crash from a close */
++                com.winlator.saipen.SaiEnded.programExited(receiveData.getInt());
++                break;
++            }
+             case RequestCodes.PRE_EXEC: {
+                 int requestLength = receiveData.getInt();
+                 boolean shouldExit = false;
 diff --git a/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java b/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java
 index 08fbf80..9d6fb43 100644
 --- a/app/src/main/java/com/winlator/xenvironment/RootFSInstaller.java

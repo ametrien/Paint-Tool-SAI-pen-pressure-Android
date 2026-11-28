@@ -54,6 +54,15 @@ public final class BugReport {
         return this;
     }
 
+    /** A line of its own, indented by `indent` spaces (a crash's details). */
+    public BugReport line(int indent, String text) {
+        if (text == null || text.trim().isEmpty()) return this;
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < indent; i++) b.append(' ');
+        lines.add(b + safe(text));
+        return this;
+    }
+
     public BugReport heading(String name) {
         lines.add("");
         lines.add(name + ":");
