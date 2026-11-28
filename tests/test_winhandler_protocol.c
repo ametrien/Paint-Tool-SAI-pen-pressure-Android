@@ -171,14 +171,16 @@ static void test_copy_string(void)
 static void test_maximize(void)
 {
     struct wh_maximize m = { 0, 0 };
-    CHECK(!wh_maximize_step(&m, 0, 0, 0, 1000), "no SAI window: nothing");
-    CHECK(wh_maximize_step(&m, 42, 0, 0, 1000), "SAI's window, not maximized: maximize");
-    CHECK(!wh_maximize_step(&m, 42, 1, 0, 1100), "already maximized: nothing");
-    CHECK(wh_maximize_step(&m, 42, 0, 0, 1500), "SAI put its own size back: maximize again");
-    CHECK(!wh_maximize_step(&m, 42, 0, 1, 2000), "minimized: left minimized");
-    CHECK(wh_maximize_step(&m, 42, 0, 0, 1000 + WH_MAXIMIZE_MS), "the last moment of the window: maximize");
-    CHECK(!wh_maximize_step(&m, 42, 0, 0, 1001 + WH_MAXIMIZE_MS), "later: the person made it smaller, left alone");
-    CHECK(!wh_maximize_step(&m, 42, 0, 0, 999999), "much later: still left alone");
+    CHECK(wh_maximize_step(&m, 0, 0, 0, 1000) == WH_SHOW_NOTHING, "no SAI window: nothing");
+    CHECK(wh_maximize_step(&m, 42, 0, 0, 1000) == WH_SHOW_MAXIMIZE, "SAI's window, not maximized: maximize");
+    CHECK(wh_maximize_step(&m, 42, 1, 0, 1100) == WH_SHOW_NOTHING, "already maximized: nothing");
+    CHECK(wh_maximize_step(&m, 42, 0, 0, 1500) == WH_SHOW_MAXIMIZE, "SAI put its own size back: maximize again");
+    CHECK(wh_maximize_step(&m, 42, 0, 1, 2000) == WH_SHOW_RESTORE, "minimized while starting: restored, not maximized");
+    CHECK(wh_maximize_step(&m, 42, 0, 0, 1000 + WH_MAXIMIZE_MS) == WH_SHOW_MAXIMIZE, "the last moment of the window: maximize");
+    CHECK(wh_maximize_step(&m, 42, 0, 0, 1001 + WH_MAXIMIZE_MS) == WH_SHOW_NOTHING, "later: the person made it smaller, left alone");
+    CHECK(wh_maximize_step(&m, 42, 0, 0, 999999) == WH_SHOW_NOTHING, "much later: still left alone");
+    CHECK(wh_maximize_step(&m, 42, 0, 1, 999999) == WH_SHOW_RESTORE, "minimized much later: restored, no taskbar to come back from");
+    CHECK(wh_maximize_step(&m, 42, 1, 1, 999999) == WH_SHOW_RESTORE, "minimized from maximized: restored (SW_RESTORE gives maximized back)");
 
     struct wh_maximize n = { 0, 0 };
     CHECK(wh_maximize_next_ms(&n, 5000) == WH_LOOK_FAST_MS, "no SAI yet: look often");
@@ -187,9 +189,22 @@ static void test_maximize(void)
     CHECK(wh_maximize_next_ms(&n, 5001 + WH_MAXIMIZE_MS) == WH_LOOK_SLOW_MS, "after: rarely, only for a SAI started again");
     wh_maximize_step(&n, 43, 0, 0, 20000);
     CHECK(wh_maximize_next_ms(&n, 20000) == WH_LOOK_FAST_MS, "a new SAI: often again");
-    CHECK(wh_maximize_step(&m, 43, 0, 0, 1000000), "SAI started again (new process): maximize");
-    CHECK(!wh_maximize_step(&m, 0, 0, 0, 1000100), "SAI closed: nothing");
-    CHECK(!wh_maximize_step(&m, 43, 0, 0, 1000000 + WH_MAXIMIZE_MS + 1), "the same process after SAI's window came back: not again");
+    CHECK(wh_maximize_step(&m, 43, 0, 0, 1000000) == WH_SHOW_MAXIMIZE, "SAI started again (new process): maximize");
+    CHECK(wh_maximize_step(&m, 0, 0, 0, 1000100) == WH_SHOW_NOTHING, "SAI closed: nothing");
+    CHECK(wh_maximize_step(&m, 43, 0, 0, 1000000 + WH_MAXIMIZE_MS + 1) == WH_SHOW_NOTHING, "the same process after SAI's window came back: not again");
+}
+
+static void test_restore_sai(void)
+{
+    struct req q; r_start(&q, WH_RESTORE_SAI);
+    CHECK(q.d[0] == 101, "RESTORE_SAI: byte 0 is 101");
+    int clash = 0;
+    for (int c = 0; c <= 22; c++) clash |= c == WH_RESTORE_SAI;
+    CHECK(!clash, "RESTORE_SAI: none of Winlator's codes");
+
+    CHECK(!wh_restore_step(0, 0), "no SAI window (it closed): nothing");
+    CHECK(!wh_restore_step(1, 0), "SAI's window on screen (closing, or shown anew): left alone");
+    CHECK(wh_restore_step(1, 1), "SAI minimized: restore");
 }
 
 static void test_close_sai(void)
@@ -221,6 +236,7 @@ int main(void)
     test_copy_string();
     test_maximize();
     test_close_sai();
+    test_restore_sai();
     printf("%d winhandler protocol case(s), %d failure(s)\n", cases, failures);
     return failures ? 1 : 0;
 }

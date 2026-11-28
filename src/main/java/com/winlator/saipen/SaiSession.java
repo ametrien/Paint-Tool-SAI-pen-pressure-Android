@@ -14,6 +14,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.winlator.R;
+import com.winlator.XServerDisplayActivity;
+import com.winlator.winhandler.SaiPenRequests;
 import com.winlator.xserver.Window;
 import com.winlator.xserver.WindowManager;
 import com.winlator.xserver.XServer;
@@ -69,6 +71,11 @@ public final class SaiSession {
                     Log.i(TAG, "SAI's window went: closing cover up");
                     activity.runOnUiThread(showCover);
                 }
+                /* minimized with its title bar's button, not closed: no taskbar
+                 * to bring it back from, so winhandler.exe restores it (only a
+                 * minimized one; a closing SAI is left to close) */
+                if (activity instanceof XServerDisplayActivity)
+                    SaiPenRequests.restoreSai(((XServerDisplayActivity) activity).getWinHandler());
             }
 
             @Override

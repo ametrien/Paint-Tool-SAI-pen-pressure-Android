@@ -278,6 +278,7 @@ static void run(const wchar_t *file, const wchar_t *args, const wchar_t *dir)
 /* ---- requests --------------------------------------------------------- */
 
 static void close_sai(void);
+static void restore_sai(void);
 
 static void handle(const unsigned char *d, int n)
 {
@@ -379,6 +380,9 @@ static void handle(const unsigned char *d, int n)
     }
     case WH_CLOSE_SAI:
         close_sai();
+        break;
+    case WH_RESTORE_SAI:
+        restore_sai();
         break;
     default:
         break;
@@ -483,6 +487,14 @@ static void close_sai(void)
     }
 }
 
+/* RESTORE_SAI (wh_restore_step, protocol.h): a minimized SAI back on screen */
+static void restore_sai(void)
+{
+    struct sai_main m = { NULL, 0 };
+    EnumWindows(find_sai_main, (LPARAM)&m);
+    if (wh_restore_step(m.w != NULL, m.w && IsIconic(m.w))) ShowWindow(m.w, SW_RESTORE);
+}
+
 static DWORD WINAPI maximize_sai(LPVOID unused)
 {
     (void)unused;
@@ -490,8 +502,17 @@ static DWORD WINAPI maximize_sai(LPVOID unused)
     for (;;) {
         struct sai_main m = { NULL, 0 };
         EnumWindows(find_sai_main, (LPARAM)&m);
-        if (m.w && wh_maximize_step(&state, m.pid, IsZoomed(m.w), IsIconic(m.w), (int64_t)GetTickCount64()))
+        switch (m.w ? wh_maximize_step(&state, m.pid, IsZoomed(m.w), IsIconic(m.w), (int64_t)GetTickCount64())
+                    : WH_SHOW_NOTHING) {
+        case WH_SHOW_MAXIMIZE:
             ShowWindow(m.w, SW_MAXIMIZE);
+            break;
+        case WH_SHOW_RESTORE:
+            ShowWindow(m.w, SW_RESTORE);
+            break;
+        default:
+            break;
+        }
         Sleep((DWORD)wh_maximize_next_ms(&state, (int64_t)GetTickCount64()));
     }
     return 0;

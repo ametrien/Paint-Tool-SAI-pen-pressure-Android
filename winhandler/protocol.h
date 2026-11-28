@@ -30,7 +30,7 @@ enum {
 /* SAI Pen's own requests, far from Winlator's codes (0 to 22) so a new one
  * of theirs cannot mean the same byte. SaiPenRequests.java sends them. */
 enum {
-    WH_CLOSE_SAI = 100
+    WH_CLOSE_SAI = 100, WH_RESTORE_SAI = 101
 };
 
 /* ---- reading a request -------------------------------------------------- */
@@ -187,8 +187,15 @@ static inline void wh_pack_process(unsigned char out[WH_PROCESS_SIZE], uint16_t 
  * minimized), maximize it. SAI may put its saved size back just after
  * showing the window, so one maximize is not enough. After that the window
  * is left alone: the person may make it smaller on purpose.
+ *
+ * A minimized SAI is restored, always, at any time: the Wine desktop has no
+ * taskbar (nogui), so a SAI minimized with its title bar's button had
+ * nowhere to come back from, only a black screen. SW_RESTORE gives back the
+ * size it had, maximized if it was.
  */
 #define WH_MAXIMIZE_MS 3000
+
+enum { WH_SHOW_NOTHING = 0, WH_SHOW_MAXIMIZE = 1, WH_SHOW_RESTORE = 2 };
 
 struct wh_maximize {
     uint32_t pid;             /* the SAI process last seen; 0: none yet */
@@ -197,13 +204,25 @@ struct wh_maximize {
 
 static inline int wh_maximize_step(struct wh_maximize *m, uint32_t pid, int zoomed, int iconic, int64_t now_ms)
 {
-    if (pid == 0) return 0;
+    if (pid == 0) return WH_SHOW_NOTHING;
     if (pid != m->pid) {
         m->pid = pid;
         m->first_seen_ms = now_ms;
     }
-    if (now_ms - m->first_seen_ms > WH_MAXIMIZE_MS) return 0;
-    return !zoomed && !iconic;
+    if (iconic) return WH_SHOW_RESTORE;
+    if (now_ms - m->first_seen_ms > WH_MAXIMIZE_MS) return WH_SHOW_NOTHING;
+    return zoomed ? WH_SHOW_NOTHING : WH_SHOW_MAXIMIZE;
+}
+
+/*
+ * RESTORE_SAI: the app saw SAI's window go (SaiSession). It may be closing,
+ * or minimized: only a minimized one is restored, so a SAI that is closing
+ * is left to close. Without this the slow look (WH_LOOK_SLOW_MS) would
+ * bring it back too, only later.
+ */
+static inline int wh_restore_step(int found, int iconic)
+{
+    return found && iconic;
 }
 
 /*
@@ -214,7 +233,8 @@ static inline int wh_maximize_step(struct wh_maximize *m, uint32_t pid, int zoom
  * window has been seen and its maximize time is over; then only slow
  * (WH_LOOK_SLOW_MS), enough to catch a SAI started again: its new window is
  * maximized for WH_MAXIMIZE_MS from when it is first seen, so a late look
- * loses nothing.
+ * loses nothing. A minimized SAI is restored at once on the app's
+ * RESTORE_SAI; the slow look is only the second chance.
  */
 #define WH_LOOK_FAST_MS 100
 #define WH_LOOK_SLOW_MS 2000
