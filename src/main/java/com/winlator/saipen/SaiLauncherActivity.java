@@ -694,6 +694,8 @@ public class SaiLauncherActivity extends AppCompatActivity {
         float dp = getResources().getDisplayMetrics().density;
         TextView view = new TextView(this);
         view.setText(text);
+        // The screen's theme is dark (white text) but this dialog is light.
+        view.setTextColor(0xFF1D1F23);
         view.setTextIsSelectable(true);
         view.setTypeface(android.graphics.Typeface.MONOSPACE);
         view.setTextSize(12);
