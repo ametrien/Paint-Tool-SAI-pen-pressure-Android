@@ -64,7 +64,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.5.2</summary>
+> <summary>What's new, 0.4.19 to 0.5.3</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -129,6 +129,11 @@ On a Mac? The same, also by me:
 >   [SAI Pen's keyboard](#sai-pens-keyboard) floats over SAI in the keys' colour, with ⌨ among
 >   the first keys. ⚙ on the keys opens their settings right over SAI, with Cancel and Done. The
 >   three-finger hold is a gesture you can change.
+> - **0.5.3:** a swipe in the recent apps and SAI crashing are told as such, and *Report a
+>   problem* lists the last crashes. Minimizing SAI no longer crashes SAI Pen: SAI comes right
+>   back, and **⤢ Bring SAI back** puts its window to the whole screen again. Tab among the first
+>   on-screen keys, up to 14, in the order you drag them to. *All timelapses* under *All
+>   drawings*.
 >
 > </details>
 
@@ -852,6 +857,7 @@ anywhere, and tap it to open your keys:
 | **Enter** | finishes a transform |
 | **Tab** | shows or hides all of SAI's panels (0.5.3) |
 | **⌨** | shows or hides [SAI Pen's keyboard](#sai-pens-keyboard) (0.5.2) |
+| **⤢ SAI** | brings SAI's window back to the whole screen when it was minimized, made smaller or moved by its title bar (0.5.3, add it with **+ ⤢ Bring SAI back**; also a gesture's action) |
 
 - **Move** the open buttons by the **⋮** on the left, **close** them with **×**.
 - **⚙** (0.5.2) opens their settings right over SAI: a change shows at once, and the open keys
