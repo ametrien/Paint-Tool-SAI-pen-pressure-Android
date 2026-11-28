@@ -1030,7 +1030,7 @@ public class SaiLauncherActivity extends AppCompatActivity {
         final long asked = android.os.SystemClock.uptimeMillis();
         worker.execute(() -> {
             DrawingLibrary lib = TimelapseShelf.load();
-            java.util.Map<String, Long> sizes = TimelapsesDialog.sizes(lib);
+            java.util.Map<String, Long> sizes = TimelapsesDialog.sizes();
             long read = android.os.SystemClock.uptimeMillis();
             ui.post(() -> {
                 if (isFinishing()) return;
