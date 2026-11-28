@@ -27,7 +27,7 @@ public class LoadingTipsTest {
 
     @Test
     public void theStandardGesturesGiveTheTwoThreeFingerTips() {
-        assertEquals(Arrays.asList("KEYBOARD:THREE_TAP", "KEYS_HOLD", "SETTINGS"),
+        assertEquals(Arrays.asList("KEYBOARD:THREE_TAP", "KEYS_HOLD", "SETTINGS", "DRIVES"),
             names(LoadingTips.tips(standard(), true)));
     }
 
@@ -36,7 +36,7 @@ public class LoadingTipsTest {
         Gestures.Action[] a = standard();
         set(a, Gestures.Input.THREE_TAP, Gestures.Type.NONE);
         set(a, Gestures.Input.TWO_DOUBLE_TAP, Gestures.Type.KEYBOARD);
-        assertEquals(Arrays.asList("KEYBOARD:TWO_DOUBLE_TAP", "KEYS_HOLD", "SETTINGS"),
+        assertEquals(Arrays.asList("KEYBOARD:TWO_DOUBLE_TAP", "KEYS_HOLD", "SETTINGS", "DRIVES"),
             names(LoadingTips.tips(a, true)));
     }
 
@@ -53,22 +53,22 @@ public class LoadingTipsTest {
     public void noKeyboardGestureNoKeyboardTip() {
         Gestures.Action[] a = standard();
         set(a, Gestures.Input.THREE_TAP, Gestures.Type.RIGHT_CLICK);
-        assertEquals(Arrays.asList("KEYS_HOLD", "SETTINGS"), names(LoadingTips.tips(a, true)));
+        assertEquals(Arrays.asList("KEYS_HOLD", "SETTINGS", "DRIVES"), names(LoadingTips.tips(a, true)));
         assertNull(LoadingTips.first(a, Gestures.Type.KEYBOARD));
     }
 
     @Test
     public void theHoldOffNamesAnotherKeysGestureIfThereIsOne() {
         Gestures.Action[] a = standard();
-        assertEquals(Arrays.asList("KEYBOARD:THREE_TAP", "SETTINGS"), names(LoadingTips.tips(a, false)));
+        assertEquals(Arrays.asList("KEYBOARD:THREE_TAP", "SETTINGS", "DRIVES"), names(LoadingTips.tips(a, false)));
         set(a, Gestures.Input.LONG_PRESS, Gestures.Type.ON_SCREEN_KEYS);
-        assertEquals(Arrays.asList("KEYBOARD:THREE_TAP", "KEYS:LONG_PRESS", "SETTINGS"), names(LoadingTips.tips(a, false)));
+        assertEquals(Arrays.asList("KEYBOARD:THREE_TAP", "KEYS:LONG_PRESS", "SETTINGS", "DRIVES"), names(LoadingTips.tips(a, false)));
     }
 
     @Test
     public void withNothingElseLeftTheFourFingerHold() {
         Gestures.Action[] a = standard();
         set(a, Gestures.Input.THREE_TAP, Gestures.Type.NONE);
-        assertEquals(Arrays.asList("CHANGE_GESTURES", "SETTINGS"), names(LoadingTips.tips(a, false)));
+        assertEquals(Arrays.asList("CHANGE_GESTURES", "SETTINGS", "DRIVES"), names(LoadingTips.tips(a, false)));
     }
 }

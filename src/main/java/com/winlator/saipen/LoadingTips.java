@@ -15,7 +15,8 @@ import java.util.List;
  * first input set to show or hide them. With neither tip left, the
  * four-finger hold (the gestures' settings), which cannot be changed.
  * Always one more: gestures, on-screen keys and pen pressure can be changed
- * under Settings on SAI Pen's screen, before SAI starts.
+ * under Settings on SAI Pen's screen, before SAI starts. And which drive in
+ * SAI is which folder (F: drawings, G: gallery, ...).
  *
  * No Android types: the JVM tests check which tips there are.
  */
@@ -32,7 +33,9 @@ public final class LoadingTips {
         /** four fingers held still: change the gestures */
         CHANGE_GESTURES,
         /** gestures, keys and pen pressure: Settings on SAI Pen's screen */
-        SETTINGS
+        SETTINGS,
+        /** which drive is which folder: F: for drawings */
+        DRIVES
     }
 
     public static final class Tip {
@@ -71,6 +74,7 @@ public final class LoadingTips {
         }
         if (l.isEmpty()) l.add(new Tip(Kind.CHANGE_GESTURES, null));
         l.add(new Tip(Kind.SETTINGS, null));
+        l.add(new Tip(Kind.DRIVES, null));
         return Collections.unmodifiableList(l);
     }
 }

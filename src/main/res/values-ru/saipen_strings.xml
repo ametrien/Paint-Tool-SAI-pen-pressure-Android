@@ -63,6 +63,7 @@
     <string name="saipen_tip_keys_any">Совет: показать или спрятать кнопки на экране: %1$s.</string>
     <string name="saipen_tip_change_gestures">Совет: задержите четыре пальца над SAI, чтобы выбрать, что делает каждый жест.</string>
     <string name="saipen_tip_settings">А вы знали? Жесты, клавиши на экране и нажим пера можно поменять в настройках внизу экрана SAI Pen, перед запуском SAI.</string>
+    <string name="saipen_tip_drives">А вы знали? В SAI диск F: это ваши рисунки (Documents/SAI Drawings), G: галерея, D: «Загрузки», E: вся память устройства. На C: не сохраняйте: он стирается вместе с приложением.</string>
     <string name="saipen_starting_wine">SAI запускается, %1$d с</string>
     <string name="saipen_starting_wine_first">SAI запускается, %1$d с. Первый запуск дольше.</string>
     <string name="saipen_starting_drawing">SAI рисует окно, %1$d с</string>
