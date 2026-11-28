@@ -15,8 +15,8 @@ index 5a2f248..147925b 100644
          targetSdkVersion 28
 -        versionCode 33
 -        versionName "11.2"
-+        versionCode 57
-+        versionName "0.5.1"
++        versionCode 58
++        versionName "0.5.2"
 +    }
 +
 +    /* SAI Pen: the release key lives outside the repository (build.sh says

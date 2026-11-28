@@ -64,7 +64,7 @@ On a Mac? The same, also by me:
 > [Reporting a problem](#reporting-a-problem).
 >
 > <details>
-> <summary>What's new, 0.4.19 to 0.5.1</summary>
+> <summary>What's new, 0.4.19 to 0.5.2</summary>
 >
 > Made in my free time, together with the
 > [macOS version](https://github.com/ametrien/Paint-Tool-SAI-pen-pressure-macOS-fix). After the
@@ -121,6 +121,11 @@ On a Mac? The same, also by me:
 >   session joins its timelapse. Statistics by day for each drawing, with *Export CSV*. Every
 >   brush, texture and shape previews with a line, S-curve or heart. Loading tips follow your
 >   gestures. The timelapse is still experimental: ⚠ by its name.
+> - **0.5.2:** SAI Pen's screen says why SAI closed when it didn't close by itself, and what
+>   helps. *Report a problem* gathers the device and settings for you to copy, never the
+>   licence. A drawing's time follows its file through *Save As*, a rename or a move, and a
+>   wrong timelapse can be unlinked by hand. Ctrl+C and Ctrl+V among the first on-screen keys,
+>   up to 12 keys. New loading tips: where Settings is and which drive in SAI is which folder.
 >
 > </details>
 
