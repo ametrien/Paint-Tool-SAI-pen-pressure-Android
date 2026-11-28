@@ -85,4 +85,14 @@ public class BusySaiTest {
         assertEquals(0, count(run(b, 6, 10, 199), BusySai.Step.OPEN_ALL));
         assertEquals(BusySai.Step.OPEN_ALL, b.tick(16_000, 199));
     }
+
+    @Test
+    public void aTestsLowerShareOpensOnOrdinaryDrawingAndComesBack() {
+        BusySai b = new BusySai(2, 2, 0.2);                 /* full from 40%, calm under 20% */
+        assertEquals(1, count(run(b, 0, 11, 60), BusySai.Step.OPEN_ALL));
+        assertEquals(0, count(run(b, 11, 40, 30), BusySai.Step.BACK));
+        assertEquals(1, count(run(b, 51, 31, 5), BusySai.Step.BACK));
+        /* nonsense falls back to the normal share */
+        assertEquals(0, count(run(new BusySai(2, 2, 7), 0, 20, 150), BusySai.Step.OPEN_ALL));
+    }
 }

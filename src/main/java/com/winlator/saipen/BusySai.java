@@ -29,6 +29,11 @@ public final class BusySai {
     public static final long CALM_FOR_MS = 30_000;
     static final double FULL_SHARE = 0.9;
     static final double CALM_SHARE = 0.6;
+    /** A speed test's lower "full" (adb shell setprop debug.saipen.busy_share 0.2),
+     *  so ordinary drawing shows the switch to every core and back. */
+    public static final String PROP_SHARE = "debug.saipen.busy_share";
+
+    private final double fullShare, calmShare;
 
     public enum Step { NONE, OPEN_ALL, BACK }
 
@@ -45,6 +50,14 @@ public final class BusySai {
      *                cores with Fast cores: All of SAI, else every core)
      */
     public BusySai(int seen, int allowed) {
+        this(seen, allowed, FULL_SHARE);
+    }
+
+    /** fullShare: "full" from this share of all SAI can use (a test's lower one);
+     *  calm is then under CALM_SHARE or half of it, whichever is less. */
+    public BusySai(int seen, int allowed, double fullShare) {
+        this.fullShare = fullShare > 0 && fullShare <= 1 ? fullShare : FULL_SHARE;
+        this.calmShare = Math.min(CALM_SHARE, this.fullShare / 2);
         int c = allowed;
         if (seen > 0 && seen < c) c = seen;
         cores = Math.max(1, c);
@@ -71,7 +84,7 @@ public final class BusySai {
             return Step.NONE;
         }
         double s = share(saiPercent);
-        boolean full = s >= FULL_SHARE;
+        boolean full = s >= fullShare;
         if (full && lastAt >= 0) {
             fullMs += now - lastAt;
             if (fullSince >= 0) longestFullMs = Math.max(longestFullMs, now - fullSince);
@@ -81,7 +94,7 @@ public final class BusySai {
             if (fullSince < 0) fullSince = now;
         }
         else fullSince = -1;
-        if (s < CALM_SHARE) {
+        if (s < calmShare) {
             if (calmSince < 0) calmSince = now;
         }
         else calmSince = -1;

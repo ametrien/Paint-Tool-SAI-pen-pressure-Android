@@ -149,7 +149,13 @@ public final class SpeedSession {
             int total = fc.cores.length > 0 ? fc.cores.length : Runtime.getRuntime().availableProcessors();
             int seen = SaiProcessors.resolve(androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
                 .getInt(SaiProcessors.PREF, SaiProcessors.AUTO), fc.fast.length, total);
-            s.busy = new BusySai(seen, s.cores.mode() == SaiCores.Mode.OFF ? total : s.cores.allowedCores());
+            double share = BusySai.FULL_SHARE;
+            try {
+                String p = PenInput.systemProperty(BusySai.PROP_SHARE).trim();
+                if (!p.isEmpty()) share = Double.parseDouble(p);
+            }
+            catch (NumberFormatException ignored) {}
+            s.busy = new BusySai(seen, s.cores.mode() == SaiCores.Mode.OFF ? total : s.cores.allowedCores(), share);
             Date now = new Date();
             s.samples = new CpuSamples(activity.getFilesDir(), new java.util.Random(), SystemClock.uptimeMillis(),
                 s.busy.cores(), new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(now), clock(),
@@ -211,7 +217,7 @@ public final class SpeedSession {
     /** The speed-test properties set for this session (adb shell setprop), so a log says what it measured. */
     private static String speedTests() {
         StringBuilder b = new StringBuilder("speed tests:");
-        for (String p : new String[]{PenInput.PROP_CURSOR_MS, PenWire.PROP_KEEPALIVE_MS, AppCores.PROP, DebugEnv.PROP}) {
+        for (String p : new String[]{PenInput.PROP_CURSOR_MS, PenWire.PROP_KEEPALIVE_MS, AppCores.PROP, DebugEnv.PROP, BusySai.PROP_SHARE}) {
             String v = PenInput.systemProperty(p).trim();
             if (!v.isEmpty()) b.append(' ').append(p).append('=').append(v);
         }
