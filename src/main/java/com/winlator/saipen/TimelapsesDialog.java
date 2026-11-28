@@ -55,13 +55,46 @@ final class TimelapsesDialog {
     /** The cards on the screen, to show the selection on them. */
     private final java.util.List<Runnable> showOnCards = new java.util.ArrayList<>();
 
-    static void show(SaiLauncherActivity activity, DrawingLibrary lib, ExecutorService worker) {
-        new TimelapsesDialog(activity, lib, worker).open();
+    /** Each drawing's videos' size, by id: read on the worker (sizes()), as
+     *  eight file lookups a drawing on the UI thread made the window slow to
+     *  open with many drawings (69 on a Tab S6 Lite, 2026-11-28). */
+    private java.util.Map<String, Long> sizes;
+    private ScrollView scroll;
+
+    /** A card's picture, read only when the card is on the screen or about
+     *  to be: with 69 drawings, reading every picture first kept the window
+     *  slow to fill (2026-11-28). */
+    private static final class LazyStill {
+        final View card;
+        final ImageView view;
+        final File file;
+        boolean asked;
+
+        LazyStill(View card, ImageView view, File file) {
+            this.card = card;
+            this.view = view;
+            this.file = file;
+        }
+    }
+    private final List<LazyStill> stills = new java.util.ArrayList<>();
+
+    /** On the worker: `lib`'s sizes, for show(). */
+    static java.util.Map<String, Long> sizes(DrawingLibrary lib) {
+        java.util.Map<String, Long> out = new java.util.HashMap<>();
+        for (Drawing d : lib.drawings) out.put(d.id, size(d));
+        return out;
     }
 
-    private TimelapsesDialog(SaiLauncherActivity activity, DrawingLibrary lib, ExecutorService worker) {
+    static void show(SaiLauncherActivity activity, DrawingLibrary lib, java.util.Map<String, Long> sizes,
+                     ExecutorService worker) {
+        new TimelapsesDialog(activity, lib, sizes, worker).open();
+    }
+
+    private TimelapsesDialog(SaiLauncherActivity activity, DrawingLibrary lib, java.util.Map<String, Long> sizes,
+                             ExecutorService worker) {
         this.activity = activity;
         this.lib = lib;
+        this.sizes = sizes;
         this.worker = worker;
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -84,9 +117,12 @@ final class TimelapsesDialog {
 
     private void open() {
         dialog = new Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar);
-        ScrollView scroll = new ScrollView(activity);
+        scroll = new ScrollView(activity);
         scroll.setBackgroundColor(BG);
         scroll.addView(root);
+        /* pictures as their cards come near the screen */
+        scroll.setOnScrollChangeListener((v, x, y, oldX, oldY) -> loadVisible());
+        root.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> loadVisible());
         dialog.setContentView(scroll);
         Window w = dialog.getWindow();
         if (w != null) {
@@ -108,8 +144,10 @@ final class TimelapsesDialog {
     private void reload() {
         worker.execute(() -> {
             DrawingLibrary fresh = TimelapseShelf.load();
+            java.util.Map<String, Long> freshSizes = sizes(fresh);
             activity.runOnUiThread(() -> {
                 lib = fresh;
+                sizes = freshSizes;
                 fill();
             });
         });
@@ -117,6 +155,7 @@ final class TimelapsesDialog {
 
     private void fill() {
         root.removeAllViews();
+        stills.clear();
         showOnCards.clear();
         List<Drawing> drawings = lib.newestFirst();
         /* only what is there stays selected */
@@ -135,7 +174,7 @@ final class TimelapsesDialog {
         long bytes = 0;
         for (Drawing d : drawings) {
             sessions += d.pieces.size();
-            bytes += size(d);
+            bytes += sizeOf(d);
         }
         TextView summary = text(13, false, TEXT3);
         summary.setText(activity.getString(R.string.saipen_timelapses_summary, drawings.size(), sessions,
@@ -203,11 +242,7 @@ final class TimelapsesDialog {
         cp.setMargins(dp(6), dp(6), dp(6), dp(6));
         frame.addView(check, cp);
         card.addView(frame, lp(-1, dp(150), 0, 0, 0, 8));
-        File f = TimelapseShelf.still(d);
-        worker.execute(() -> {
-            Bitmap b = f.isFile() ? BitmapFactory.decodeFile(f.getPath()) : null;
-            if (b != null) activity.runOnUiThread(() -> still.setImageBitmap(b));
-        });
+        stills.add(new LazyStill(card, still, TimelapseShelf.still(d)));
 
         TextView name = text(15, true, TEXT);
         name.setText(d.title.isEmpty() ? d.folder : d.title);
@@ -226,7 +261,7 @@ final class TimelapsesDialog {
         card.addView(line1, lp(-1, -2, 0, 2, 0, 0));
 
         TextView line2 = text(12, false, TEXT3);
-        line2.setText(Formatter.formatShortFileSize(activity, size(d)) + " · "
+        line2.setText(Formatter.formatShortFileSize(activity, sizeOf(d)) + " · "
                       + DateFormat.getDateInstance(DateFormat.MEDIUM).format(new Date(DrawingLibrary.lastDrawn(d))));
         line2.setSingleLine();
         card.addView(line2);
@@ -313,6 +348,54 @@ final class TimelapsesDialog {
             });
             reload();
         });
+    }
+
+    /** Reads the pictures of the cards on the screen and of the next
+     *  screenful below it (and half one above), each once. */
+    private void loadVisible() {
+        if (scroll == null || scroll.getHeight() == 0) return;
+        int top = scroll.getScrollY(), height = scroll.getHeight();
+        int from = top - height / 2, to = top + 2 * height;
+        for (LazyStill s : stills) {
+            if (s.asked || s.card.getHeight() == 0) continue;
+            int y = yInRoot(s.card);
+            if (y < 0 || y > to || y + s.card.getHeight() < from) continue;
+            s.asked = true;
+            final int width = Math.max(1, s.view.getWidth());
+            worker.execute(() -> {
+                Bitmap b = s.file.isFile() ? decode(s.file, width) : null;
+                if (b != null) activity.runOnUiThread(() -> s.view.setImageBitmap(b));
+            });
+        }
+    }
+
+    /** Where `v` is from the top of the scrolled content, or -1 if not in it. */
+    private int yInRoot(View v) {
+        int y = 0;
+        View at = v;
+        while (at != null && at != root) {
+            y += at.getTop();
+            if (!(at.getParent() instanceof View)) return -1;
+            at = (View) at.getParent();
+        }
+        return at == root ? y : -1;
+    }
+
+    /** The picture, no wider than needed for a card `width` pixels wide. */
+    private static Bitmap decode(File f, int width) {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(f.getPath(), o);
+        int sample = 1;
+        while (o.outWidth / (sample * 2) >= width) sample *= 2;
+        BitmapFactory.Options d = new BitmapFactory.Options();
+        d.inSampleSize = sample;
+        return BitmapFactory.decodeFile(f.getPath(), d);
+    }
+
+    private long sizeOf(Drawing d) {
+        Long n = sizes.get(d.id);
+        return n == null ? 0 : n;
     }
 
     private static long size(Drawing d) {
